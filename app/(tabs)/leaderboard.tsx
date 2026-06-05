@@ -13,6 +13,7 @@ function formatDate(ts: number): string {
 
 function DiffBadge({ diff }: { diff: RunRecord['difficulty'] }) {
   const { colors } = useTheme();
+  if (!diff) return null;
   const color = diff === 'easy' ? '#27AE60' : diff === 'hard' ? '#E45757' : colors.textMuted;
   return (
     <Text style={[styles.badge, { color, borderColor: color }]}>
