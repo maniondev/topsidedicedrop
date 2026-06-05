@@ -17,13 +17,12 @@ import GameOverModal from '@/components/game/GameOverModal';
 import EmergencyCondenseOverlay from '@/components/game/EmergencyCondenseOverlay';
 import AdBanner from '@/components/AdBanner';
 import AdInterstitial from '@/components/AdInterstitial';
-import AppLogo from '@/components/AppLogo';
 import { onRunComplete } from '@/lib/adCounter';
 import { Board } from '@/lib/board';
 import { COLS, ROWS } from '@/constants/game';
 
-const HEADER_H   = 52;
-const HUD_H      = 50;
+const HEADER_H   = 0;
+const HUD_H      = 60;
 const CONTROLS_H = 76;
 const BANNER_H   = 52;
 const TAB_BAR_H  = 60;
@@ -96,15 +95,7 @@ export default function PlayScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
 
-      {/* Header: centered logo + title */}
-      <View style={[styles.header, { height: HEADER_H }]}>
-        <AppLogo size={24} />
-        <Text style={{ fontSize: 17, color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }}>
-          Topside: Merge
-        </Text>
-      </View>
-
-      {/* Score | Best | Next — all inline */}
+      {/* Logo left · Score|Best centered · Next right — single row */}
       <View style={[styles.hudRow, { height: HUD_H }]}>
         <HUD score={game.score} bestScore={bestScore} nextPiece={game.queue[0]} />
       </View>
@@ -167,8 +158,6 @@ export default function PlayScreen() {
 
 const styles = StyleSheet.create({
   safe:         { flex: 1, alignItems: 'center' },
-  header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-                  width: '100%', gap: 8 },
   hudRow:       { alignItems: 'center', justifyContent: 'center', width: '100%' },
   boardWrap:    { borderRadius: 4, overflow: 'hidden' },
   controlsRow:  { alignItems: 'center', justifyContent: 'center', marginTop: 8 },
