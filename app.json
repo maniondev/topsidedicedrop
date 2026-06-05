@@ -41,6 +41,14 @@
     "plugins": [
       "expo-router",
       [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.0"
+          }
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#EDE8DF",
@@ -62,7 +70,8 @@
           "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
       ],
-      "expo-tracking-transparency"
+      "expo-tracking-transparency",
+      "expo-build-properties"
     ],
     "experiments": {
       "typedRoutes": true
