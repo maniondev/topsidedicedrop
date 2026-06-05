@@ -38,12 +38,19 @@ export default function LobbyScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-        {/* Logo */}
-        <View style={styles.logoRow}>
-          <AppLogo size={52} />
-          <Text style={[styles.title, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-            Topside: Merge
-          </Text>
+        {/* Header — logo left of title, CubePuzzle style */}
+        <View style={styles.titleRow}>
+          <AppLogo size={62} />
+          <View style={styles.titleTextBlock}>
+            <Text style={styles.titleText} numberOfLines={1} adjustsFontSizeToFit>
+              <Text style={[styles.titleTopside, { color: colors.text }]}>Topside</Text>
+              <Text style={[styles.titleColon, { color: colors.text }]}>: </Text>
+              <Text style={[styles.titleDiceDrop, { color: colors.accent }]}>Dice Drop</Text>
+            </Text>
+            <Text style={[styles.subtitleText, { color: colors.textSecondary }]}>
+              Stack. Merge. Survive.
+            </Text>
+          </View>
         </View>
 
         {/* Best Score hero */}
@@ -129,8 +136,13 @@ export default function LobbyScreen() {
 const styles = StyleSheet.create({
   safe:        { flex: 1 },
   content:     { padding: 24, gap: 20, paddingBottom: 40 },
-  logoRow:     { alignItems: 'center', gap: 12, paddingTop: 8 },
-  title:       { fontSize: 26 },
+  titleRow:       { flexDirection: 'row', alignItems: 'center', paddingTop: 8, marginLeft: -8 },
+  titleTextBlock: { flex: 1, marginLeft: 4 },
+  titleText:      { fontSize: 30 },
+  titleTopside:   { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 30, letterSpacing: 0.5 },
+  titleColon:     { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 30 },
+  titleDiceDrop:  { fontFamily: 'Fredoka_700Bold', fontSize: 28, letterSpacing: 0.5 },
+  subtitleText:   { fontSize: 13, fontWeight: '600', letterSpacing: 0.3, marginTop: 3, marginLeft: 2 },
   heroCard:    { borderRadius: 18, borderWidth: 1, padding: 28, alignItems: 'center', gap: 4 },
   heroLabel:   { fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
   heroValue:   { fontSize: 60, lineHeight: 68 },

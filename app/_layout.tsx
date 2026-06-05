@@ -4,6 +4,7 @@ import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, Platform } from 'react-native';
 import { useFonts, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
+import { Fredoka_600SemiBold, Fredoka_700Bold } from '@expo-google-fonts/fredoka';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
@@ -35,7 +36,7 @@ function AppShell() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({ PlayfairDisplay_700Bold });
+  const [fontsLoaded] = useFonts({ PlayfairDisplay_700Bold, Fredoka_600SemiBold, Fredoka_700Bold });
 
   useEffect(() => {
     if (fontsLoaded) SplashScreen.hideAsync();
