@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Canvas, RoundedRect, Circle, Group } from '@shopify/react-native-skia';
 import { useTheme, useDieColors } from '@/contexts/ThemeContext';
 import { QueuedPiece } from '@/hooks/useGame';
@@ -50,18 +50,26 @@ interface Props {
   score: number;
   bestScore: number;
   nextPiece?: QueuedPiece;
+  onLogoPress?: () => void;
 }
 
-export default function HUD({ score, bestScore, nextPiece }: Props) {
+export default function HUD({ score, bestScore, nextPiece, onLogoPress }: Props) {
   const { colors } = useTheme();
   const { faceColor, dotColor } = useDieColors();
 
   return (
     <View style={styles.row}>
 
-      {/* Left — Logo, same flex as right so BEST stays centered */}
+      {/* Left — Logo doubles as a pause button in-game */}
       <View style={styles.side}>
-        <AppLogo size={36} />
+        <TouchableOpacity
+          onPress={onLogoPress}
+          disabled={!onLogoPress}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          activeOpacity={0.6}
+        >
+          <AppLogo size={36} />
+        </TouchableOpacity>
       </View>
 
       {/* Center — Score | Best, always centered */}

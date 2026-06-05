@@ -135,8 +135,8 @@ export default function LobbyScreen() {
 
 const styles = StyleSheet.create({
   safe:        { flex: 1 },
-  content:     { padding: 24, gap: 20, paddingBottom: 40 },
-  titleRow:       { flexDirection: 'row', alignItems: 'center', paddingTop: 8, marginLeft: -8 },
+  content:     { paddingTop: 16, paddingHorizontal: 20, gap: 20, paddingBottom: 40 },
+  titleRow:       { flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginLeft: -8 },
   titleTextBlock: { flex: 1, marginLeft: 4 },
   titleText:      { fontSize: 30 },
   titleTopside:   { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 30, letterSpacing: 0.5 },

@@ -200,7 +200,12 @@ export default function GameScreen() {
 
       {/* Score | Best | Next */}
       <View style={[styles.hudRow, { height: HUD_H }]}>
-        <HUD score={game.score} bestScore={bestScore} nextPiece={game.queue[0]} />
+        <HUD
+          score={game.score}
+          bestScore={bestScore}
+          nextPiece={game.queue[0]}
+          onLogoPress={() => setPaused(true)}
+        />
       </View>
 
       {/* Board with swipe gestures */}
