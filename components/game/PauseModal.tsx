@@ -5,8 +5,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 interface Props {
   visible: boolean;
   onResume: () => void;
-  onContinueLater: () => void;
-  onNewGame: () => void;
+  onContinueLater: () => void; // saves state and quits to lobby
+  onNewGame: () => void;       // quits to lobby without saving
 }
 
 export default function PauseModal({ visible, onResume, onContinueLater, onNewGame }: Props) {
@@ -27,12 +27,12 @@ export default function PauseModal({ visible, onResume, onContinueLater, onNewGa
             style={[styles.outlineBtn, { borderColor: colors.accent }]}
             onPress={onContinueLater}
           >
-            <Text style={[styles.outlineText, { color: colors.accent }]}>💾  Continue Later</Text>
-            <Text style={[styles.subText, { color: colors.textMuted }]}>Save & quit — resume next time</Text>
+            <Text style={[styles.outlineText, { color: colors.accent }]}>💾  Save & Quit</Text>
+            <Text style={[styles.subText, { color: colors.textMuted }]}>Resume next time you play</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[styles.outlineBtn, { borderColor: colors.border }]} onPress={onNewGame}>
-            <Text style={[styles.outlineText, { color: colors.textSecondary }]}>New Game</Text>
+            <Text style={[styles.outlineText, { color: colors.textSecondary }]}>✕  Quit Without Saving</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
   title:      { fontSize: 28, marginBottom: 4 },
   btn:        { width: '100%', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   btnText:    { fontSize: 17, fontWeight: '700' },
-  outlineBtn: { width: '100%', paddingVertical: 12, borderRadius: 12, alignItems: 'center', borderWidth: 1.5, gap: 2 },
+  outlineBtn: { width: '100%', paddingVertical: 12, borderRadius: 12, alignItems: 'center', borderWidth: 1.5, gap: 3 },
   outlineText:{ fontSize: 16, fontWeight: '600' },
   subText:    { fontSize: 11 },
 });

@@ -24,6 +24,10 @@ function AppShell() {
     <>
       <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="game/index"
+          options={{ presentation: 'card', animation: 'slide_from_bottom', headerShown: false }}
+        />
       </Stack>
       <StatusBar style={colors.statusBar} />
     </>
