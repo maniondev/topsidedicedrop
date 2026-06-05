@@ -23,21 +23,17 @@ export const PIECES: PieceShape[] = [
     ],
   },
   {
-    id: 'P2', // domino (horizontal start)
+    id: 'P2', // domino — 2 unique orientations, toggles H↔V
     rotations: [
-      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }], // 0°  H
-      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }], // 90° V
-      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }], // 180° H (repeats)
-      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }], // 270° V (repeats)
+      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }], // H
+      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }], // V
     ],
   },
   {
-    id: 'P3', // domino (vertical start)
+    id: 'P3', // domino (vertical start) — toggles V↔H
     rotations: [
-      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }], // 0°  V
-      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }], // 90° H
-      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }], // 180° V (repeats)
-      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }], // 270° H (repeats)
+      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }], // V
+      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }], // H
     ],
   },
   {
@@ -50,12 +46,10 @@ export const PIECES: PieceShape[] = [
     ],
   },
   {
-    id: 'P5', // 3-in-a-row
+    id: 'P5', // 3-in-a-row — 2 unique orientations, toggles H↔V
     rotations: [
-      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }, { dr: 0, dc: 2 }], // 0°  H
-      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }, { dr: 2, dc: 0 }], // 90° V
-      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }, { dr: 0, dc: 2 }], // 180° H (repeats)
-      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }, { dr: 2, dc: 0 }], // 270° V (repeats)
+      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }, { dr: 0, dc: 2 }], // H
+      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }, { dr: 2, dc: 0 }], // V
     ],
   },
 ];

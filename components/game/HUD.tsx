@@ -15,8 +15,9 @@ const DOT_POSITIONS: Record<number, Array<[number, number]>> = {
   6: [[0.28, 0.22], [0.72, 0.22], [0.28, 0.50], [0.72, 0.50], [0.28, 0.78], [0.72, 0.78]],
 };
 
-const CS = 22;
-const NEXT_CANVAS_W = 76; // fixed width so piece changes never shift layout
+const CS = 18;            // smaller tiles for the inline preview
+const NEXT_CANVAS_W = 64; // fixed width so piece changes never shift layout
+const NEXT_CANVAS_H = 60; // fixed height handles up to 3-tile-tall pieces (3*18+2=56)
 
 function InlinePiece({ piece }: { piece: QueuedPiece }) {
   const maxDr = Math.max(...piece.tiles.map(t => t.dr));
@@ -85,8 +86,8 @@ export default function HUD({ score, bestScore, nextPiece }: Props) {
         {nextPiece && (
           <View style={styles.nextWrap}>
             <Text style={[styles.label, { color: colors.textMuted }]}>NEXT</Text>
-            {/* Fixed canvas width so the piece never shifts the layout */}
-            <View style={{ width: NEXT_CANVAS_W, alignItems: 'center', justifyContent: 'center', height: 32 }}>
+            {/* Fixed container — piece can be 1-3 tiles tall/wide, never shifts layout */}
+            <View style={{ width: NEXT_CANVAS_W, height: NEXT_CANVAS_H, alignItems: 'center', justifyContent: 'center' }}>
               <InlinePiece piece={nextPiece} />
             </View>
           </View>
@@ -104,6 +105,6 @@ const styles = StyleSheet.create({
   block:    { alignItems: 'center', paddingHorizontal: 14 },
   label:    { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
   value:    { fontSize: 24, marginTop: 1 },
-  divider:  { width: 1, height: 32 },
+  divider:  { width: 1, height: 48 },
   nextWrap: { alignItems: 'center', gap: 2 },
 });

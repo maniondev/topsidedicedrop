@@ -22,7 +22,7 @@ import { Board } from '@/lib/board';
 import { COLS, ROWS } from '@/constants/game';
 
 const HEADER_H   = 0;
-const HUD_H      = 60;
+const HUD_H      = 72;
 const CONTROLS_H = 76;
 const BANNER_H   = 52;
 const TAB_BAR_H  = 60;
