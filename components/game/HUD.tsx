@@ -14,9 +14,9 @@ const DOT_POSITIONS: Record<number, Array<[number, number]>> = {
   6: [[0.28, 0.22], [0.72, 0.22], [0.28, 0.50], [0.72, 0.50], [0.28, 0.78], [0.72, 0.78]],
 };
 
-const CS = 18;            // smaller tiles for the inline preview
-const NEXT_CANVAS_W = 64; // fixed width so piece changes never shift layout
-const NEXT_CANVAS_H = 60; // fixed height handles up to 3-tile-tall pieces (3*18+2=56)
+const CS = 22;            // tile size for the inline preview
+const NEXT_CANVAS_W = 78; // fixed width so piece changes never shift layout
+const NEXT_CANVAS_H = 72; // fixed height handles up to 3-tile-tall pieces (3*22+2=68)
 
 function InlinePiece({ piece, faceColor, dotColor }: { piece: QueuedPiece; faceColor: (v: number) => string; dotColor: (v: number) => string }) {
   const maxDr = Math.max(...piece.tiles.map(t => t.dr));
@@ -68,7 +68,7 @@ export default function HUD({ score, bestScore, nextPiece, onLogoPress }: Props)
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           activeOpacity={0.6}
         >
-          <AppLogo size={36} />
+          <AppLogo size={46} />
         </TouchableOpacity>
       </View>
 
@@ -110,9 +110,9 @@ const styles = StyleSheet.create({
   row:      { flexDirection: 'row', alignItems: 'center', width: '100%', paddingHorizontal: 12 },
   side:     { flex: 1, alignItems: 'center' },
   center:   { flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  block:    { alignItems: 'center', paddingHorizontal: 14 },
-  label:    { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
-  value:    { fontSize: 24, marginTop: 1 },
-  divider:  { width: 1, height: 48 },
+  block:    { alignItems: 'center', paddingHorizontal: 12 },
+  label:    { fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
+  value:    { fontSize: 30, marginTop: 2 },
+  divider:  { width: 1, height: 56 },
   nextWrap: { alignItems: 'center', gap: 2 },
 });

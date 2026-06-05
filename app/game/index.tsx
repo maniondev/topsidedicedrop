@@ -28,10 +28,10 @@ import { Board } from '@/lib/board';
 import { COLS, ROWS } from '@/constants/game';
 
 // No tab bar in this screen — more space for the board
-const HUD_H      = 72;
+const HUD_H      = 96;
 const CONTROLS_H = 76;
 const BANNER_H   = 52;
-const V_PAD      = 12;
+const V_PAD      = 40; // slack so the centered game block sits a bit lower / balanced
 
 export default function GameScreen() {
   const { colors } = useTheme();
@@ -198,46 +198,50 @@ export default function GameScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
 
-      {/* Score | Best | Next */}
-      <View style={[styles.hudRow, { height: HUD_H }]}>
-        <HUD
-          score={game.score}
-          bestScore={bestScore}
-          nextPiece={game.queue[0]}
-          onLogoPress={() => setPaused(true)}
-        />
-      </View>
-
-      {/* Board with swipe gestures */}
-      <GestureDetector gesture={controlsDisabled ? Gesture.Tap() : boardGesture}>
-        <View style={[styles.boardWrap, { backgroundColor: colors.surfaceRaise }]}>
-          <GameBoard
-            board={game.board}
-            activePiece={game.activePiece}
-            ghostAnchorRow={game.ghostAnchorRow}
-            cellSize={cellSize}
-          />
-          <EmergencyCondenseOverlay
-            visible={game.phase === 'condensing'}
-            board={game.board}
-            onComplete={handleCondenseComplete}
+      {/* Game block — vertically centered so board sits lower & balanced */}
+      <View style={styles.gameArea}>
+        {/* Score | Best | Next */}
+        <View style={[styles.hudRow, { height: HUD_H }]}>
+          <HUD
+            score={game.score}
+            bestScore={bestScore}
+            nextPiece={game.queue[0]}
+            onLogoPress={() => setPaused(true)}
           />
         </View>
-      </GestureDetector>
 
-      {/* Controls — width matches board */}
-      <View style={[styles.controlsRow, { height: CONTROLS_H, width: boardW }]}>
-        <Controls
-          onLeft={game.moveLeft}
-          onRight={game.moveRight}
-          onRotate={game.rotate}
-          onSoftDrop={game.softDrop}
-          onHardDrop={game.hardDrop}
-          onPause={() => setPaused(true)}
-          disabled={controlsDisabled}
-        />
+        {/* Board with swipe gestures */}
+        <GestureDetector gesture={controlsDisabled ? Gesture.Tap() : boardGesture}>
+          <View style={[styles.boardWrap, { backgroundColor: colors.surfaceRaise }]}>
+            <GameBoard
+              board={game.board}
+              activePiece={game.activePiece}
+              ghostAnchorRow={game.ghostAnchorRow}
+              cellSize={cellSize}
+            />
+            <EmergencyCondenseOverlay
+              visible={game.phase === 'condensing'}
+              board={game.board}
+              onComplete={handleCondenseComplete}
+            />
+          </View>
+        </GestureDetector>
+
+        {/* Controls — width matches board */}
+        <View style={[styles.controlsRow, { height: CONTROLS_H, width: boardW }]}>
+          <Controls
+            onLeft={game.moveLeft}
+            onRight={game.moveRight}
+            onRotate={game.rotate}
+            onSoftDrop={game.softDrop}
+            onHardDrop={game.hardDrop}
+            onPause={() => setPaused(true)}
+            disabled={controlsDisabled}
+          />
+        </View>
       </View>
 
+      {/* Banner pinned at bottom — always visible */}
       {!isPremium && <AdBanner />}
 
       <GameOverModal
@@ -264,8 +268,9 @@ export default function GameScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe:        { flex: 1, alignItems: 'center' },
+  safe:        { flex: 1 },
+  gameArea:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
   hudRow:      { alignItems: 'center', justifyContent: 'center', width: '100%' },
-  boardWrap:   { borderRadius: 4, overflow: 'hidden' },
+  boardWrap:   { borderRadius: 4, overflow: 'hidden', marginVertical: 8 },
   controlsRow: { alignItems: 'center', justifyContent: 'center', marginTop: 8 },
 });
