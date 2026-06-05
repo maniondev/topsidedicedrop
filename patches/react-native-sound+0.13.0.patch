@@ -1,0 +1,32 @@
+diff --git a/node_modules/react-native-sound/ios/RNSound.mm b/node_modules/react-native-sound/ios/RNSound.mm
+index 94b2335..e545fb1 100644
+--- a/node_modules/react-native-sound/ios/RNSound.mm
++++ b/node_modules/react-native-sound/ios/RNSound.mm
+@@ -216,20 +216,13 @@ - (NSString *)categoryForName:(NSString *)categoryName {
+ }
+ 
+ RCT_EXPORT_METHOD(play:(double)key callback:(RCTResponseSenderBlock)callback) {
+-    [[AVAudioSession sharedInstance] setActive:YES error:nil];
+-    
+-    [[NSNotificationCenter defaultCenter]
+-     addObserver:self
+-        selector:@selector(audioSessionChangeObserver:)
+-            name:AVAudioSessionRouteChangeNotification
+-          object:[AVAudioSession sharedInstance]];
+-    
+-    [[NSNotificationCenter defaultCenter]
+-     addObserver:self
+-        selector:@selector(audioSessionChangeObserver:)
+-            name:AVAudioSessionInterruptionNotification
+-          object:[AVAudioSession sharedInstance]];
+-    
++    // PATCHED (Topside): upstream play() re-activated the AVAudioSession
++    // ([session setActive:YES]) and re-registered two NotificationCenter
++    // observers on EVERY play. setActive:YES is a synchronous OS-level audio
++    // session negotiation that stalls and visibly stutters animations on every
++    // SFX, and the observers accumulated (a leak). The session is activated once
++    // at app startup (Sound.setActive(true) in SoundContext) and stays active, so
++    // none of that is needed here — play() just plays the prepared buffer now.
+     self._key = key;
+     AVAudioPlayer *player = [self playerForKey:key];
+ 

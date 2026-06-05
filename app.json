@@ -1,0 +1,78 @@
+{
+  "expo": {
+    "name": "Topside: Merge",
+    "slug": "topside-merge",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "topside-merge",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.topside.merge",
+      "minimumOsVersion": "16.0",
+      "infoPlist": {
+        "NSUserTrackingUsageDescription": "This helps us show you relevant ads.",
+        "SKAdNetworkItems": [
+          {
+            "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
+          }
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.topside.merge",
+      "adaptiveIcon": {
+        "backgroundColor": "#EDE8DF",
+        "foregroundImage": "./assets/images/icon.png"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "com.google.android.gms.permission.AD_ID"
+      ]
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#EDE8DF",
+          "resizeMode": "contain",
+          "ios": {
+            "image": "./assets/images/splash-logo.png",
+            "imageWidth": 400
+          },
+          "android": {
+            "image": "./assets/images/splash-logo.png",
+            "imageWidth": 280
+          }
+        }
+      ],
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ],
+      "expo-tracking-transparency"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ba11a1c2-2cf1-43e1-8558-6b0652efbfd0"
+      }
+    },
+    "owner": "johnmanion"
+  }
+}
