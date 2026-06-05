@@ -101,12 +101,24 @@ function inContact(board: Board, p: ActivePiece): boolean {
 function rotatePiece(p: ActivePiece): ActivePiece {
   const shape = PIECE_MAP[p.shapeId];
   const nextRot = (p.rotation + 1) % shape.rotations.length;
-  const offsets = shape.rotations[nextRot];
-  return {
-    ...p,
-    rotation: nextRot,
-    tiles: offsets.map((o, i) => ({ dr: o.dr, dc: o.dc, value: p.tiles[i % p.tiles.length].value })),
-  };
+  const newOffsets = shape.rotations[nextRot];
+
+  // Proper 90° CW rotation: (dr, dc) → (dc, maxDr - dr), then normalize.
+  // This keeps each die value attached to its tile as it moves through space,
+  // so all 4 rotation states are visually distinct (e.g. [3][5] → [5][3] at 180°).
+  const maxDr = Math.max(...p.tiles.map(t => t.dr));
+  const rotated = p.tiles.map(t => ({ dr: t.dc, dc: maxDr - t.dr, value: t.value }));
+  const minDr   = Math.min(...rotated.map(t => t.dr));
+  const minDc   = Math.min(...rotated.map(t => t.dc));
+  const normed  = rotated.map(t => ({ dr: t.dr - minDr, dc: t.dc - minDc, value: t.value }));
+
+  // Map each canonical offset in the new rotation to its geometrically-rotated value.
+  const newTiles = newOffsets.map(offset => {
+    const match = normed.find(t => t.dr === offset.dr && t.dc === offset.dc);
+    return { dr: offset.dr, dc: offset.dc, value: match?.value ?? p.tiles[0].value };
+  });
+
+  return { ...p, rotation: nextRot, tiles: newTiles };
 }
 
 function tryRotate(board: Board, p: ActivePiece): ActivePiece | null {
