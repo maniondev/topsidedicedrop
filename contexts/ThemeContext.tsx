@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GameColors, GameColorsDim, ThemeColors, ThemeId, Themes } from '@/constants/theme';
+import { VALUE_TO_FACE, VALUE_DOT_COLORS_DEFAULT } from '@/constants/game';
 import { THEME_KEY } from '@/lib/storage';
 
 interface ThemeContextValue {
@@ -44,4 +45,30 @@ export function useGameColors() {
     gameColors:    { ...GameColors,    ...(colors.gameColors    ?? {}) } as typeof GameColors,
     gameColorsDim: { ...GameColorsDim, ...(colors.gameColorsDim ?? {}) } as typeof GameColorsDim,
   }), [colors]);
+}
+
+/** Returns {faceColor, dotColor} for each die value 1-6, respecting the active theme. */
+export function useDieColors(): { faceColor: (v: number) => string; dotColor: (v: number) => string } {
+  const { colors } = useContext(ThemeContext);
+  return useMemo(() => {
+    const merged = { ...GameColors, ...(colors.gameColors ?? {}) };
+    const darkDots = colors.lightGameColors ?? false;
+    const darken   = new Set(colors.darkenFaceColors ?? []);
+
+    const faceColor = (v: number): string => {
+      const face = VALUE_TO_FACE[v];
+      return face ? (merged[face] ?? VALUE_DOT_COLORS_DEFAULT[v]) : '#888';
+    };
+
+    const dotColor = (v: number): string => {
+      if (v === 3) return '#000000'; // yellow always black pips
+      const face = VALUE_TO_FACE[v];
+      if (face && darken.has(face)) {
+        return colors.darkenFaceColorsDot?.[face] ?? '#1A1A1A';
+      }
+      return darkDots ? '#1A1A1A' : '#ffffff';
+    };
+
+    return { faceColor, dotColor };
+  }, [colors]);
 }

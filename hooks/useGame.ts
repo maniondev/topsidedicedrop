@@ -50,6 +50,7 @@ interface GameState {
   continueAvailable: boolean;
   continueUsed: boolean;
   chainPass: number;
+  runBestChain: number;
   triggers: Set<string>;
   lockResetKey: number;
   lastMergeEvents: MergeEvent[];
@@ -159,6 +160,7 @@ function initialState(): GameState {
     continueAvailable: true,
     continueUsed: false,
     chainPass: 0,
+    runBestChain: 0,
     triggers: EMPTY_TRIGGERS,
     lockResetKey: 0,
     lastMergeEvents: [],
@@ -303,6 +305,7 @@ function reducer(state: GameState, action: Action): GameState {
         board: gravBoard,
         score: state.score + gain,
         chainPass: pass,
+        runBestChain: Math.max(state.runBestChain, pass),
         triggers: newTriggers,
         lastMergeEvents: events,
       };
@@ -370,7 +373,7 @@ function drawShape(bag: string[], rng: RNG): { shapeId: string; newBag: string[]
   return { shapeId: bag[0], newBag: bag.slice(1) };
 }
 
-export function useGame() {
+export function useGame(gravityMs: number = GRAVITY_BASE_MS) {
   const rngRef = useRef<RNG>(new RNG(Date.now()));
   const bagRef = useRef<string[]>([]);
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
@@ -386,7 +389,7 @@ export function useGame() {
   // Gravity tick
   useEffect(() => {
     if (state.phase !== 'falling') return;
-    const id = setInterval(() => dispatch({ type: 'TICK' }), GRAVITY_BASE_MS);
+    const id = setInterval(() => dispatch({ type: 'TICK' }), gravityMs);
     return () => clearInterval(id);
   }, [state.phase]);
 
@@ -452,6 +455,7 @@ export function useGame() {
     score: state.score,
     phase: state.phase,
     continueAvailable: state.continueAvailable && !state.continueUsed,
+    runBestChain: state.runBestChain,
     lastMergeEvents: state.lastMergeEvents,
     startGame,
     resetGame,

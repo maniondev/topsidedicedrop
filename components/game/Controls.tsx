@@ -10,6 +10,7 @@ interface Props {
   onRotate: () => void;
   onSoftDrop: () => void;
   onHardDrop: () => void;
+  onPause: () => void;
   disabled?: boolean;
 }
 
@@ -30,15 +31,15 @@ function CtrlBtn({ onPress, children, size = 60 }: {
   );
 }
 
-// Tap = soft drop one cell. Hold (300ms) = hard drop (snap to bottom).
+// Tap = soft drop one cell. Hold 300ms = hard drop (snap to bottom).
 function DropButton({ onSoftDrop, onHardDrop }: { onSoftDrop: () => void; onHardDrop: () => void }) {
   const { colors } = useTheme();
-  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const didHardDropRef = useRef(false);
+  const holdTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didHardDropRef  = useRef(false);
 
   return (
     <TouchableOpacity
-      style={[styles.btn, styles.dropBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+      style={[styles.btn, styles.sideBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
       onPressIn={() => {
         didHardDropRef.current = false;
         holdTimerRef.current = setTimeout(() => {
@@ -48,16 +49,10 @@ function DropButton({ onSoftDrop, onHardDrop }: { onSoftDrop: () => void; onHard
         }, 300);
       }}
       onPressOut={() => {
-        if (holdTimerRef.current) {
-          clearTimeout(holdTimerRef.current);
-          holdTimerRef.current = null;
-        }
+        if (holdTimerRef.current) { clearTimeout(holdTimerRef.current); holdTimerRef.current = null; }
       }}
       onPress={() => {
-        if (!didHardDropRef.current) {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          onSoftDrop();
-        }
+        if (!didHardDropRef.current) { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onSoftDrop(); }
         didHardDropRef.current = false;
       }}
       activeOpacity={0.65}
@@ -67,19 +62,22 @@ function DropButton({ onSoftDrop, onHardDrop }: { onSoftDrop: () => void; onHard
   );
 }
 
-export default function Controls({ onLeft, onRight, onRotate, onSoftDrop, onHardDrop, disabled }: Props) {
+export default function Controls({ onLeft, onRight, onRotate, onSoftDrop, onHardDrop, onPause, disabled }: Props) {
   const { colors } = useTheme();
   if (disabled) return <View style={styles.placeholder} />;
 
-  const DROP_SIZE = 52;
-
   return (
-    // Full-width row matching board width (set by parent)
     <View style={styles.row}>
-      {/* Invisible spacer = drop button width, keeps the trio truly centered */}
-      <View style={{ width: DROP_SIZE }} />
+      {/* Pause — left, mirrors down button on right */}
+      <TouchableOpacity
+        style={[styles.btn, styles.sideBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPause(); }}
+        activeOpacity={0.65}
+      >
+        <Ionicons name="pause" size={20} color={colors.textMuted} />
+      </TouchableOpacity>
 
-      {/* [←] [↺] [→] — centered in remaining space */}
+      {/* [←] [↺] [→] centered in remaining space */}
       <View style={styles.centerGroup}>
         <CtrlBtn onPress={onLeft}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -92,36 +90,16 @@ export default function Controls({ onLeft, onRight, onRotate, onSoftDrop, onHard
         </CtrlBtn>
       </View>
 
-      {/* Down — tap 1 cell, hold to snap */}
+      {/* Down — tap = 1 cell, hold = snap */}
       <DropButton onSoftDrop={onSoftDrop} onHardDrop={onHardDrop} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  centerGroup: {
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'center',
-    flex: 1,
-  },
-  btn: {
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dropBtn: {
-    width: 52,
-    height: 52,
-  },
-  placeholder: {
-    height: 60,
-  },
+  row:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' },
+  centerGroup: { flexDirection: 'row', gap: 12, justifyContent: 'center', flex: 1 },
+  btn:         { borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  sideBtn:     { width: 52, height: 52 },
+  placeholder: { height: 60 },
 });

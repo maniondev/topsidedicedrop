@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Canvas, RoundedRect, Circle, Group } from '@shopify/react-native-skia';
 import { QueuedPiece } from '@/hooks/useGame';
-import { VALUE_COLORS, VALUE_DOT_COLORS } from '@/constants/game';
+import { useDieColors } from '@/contexts/ThemeContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
 const DOT_POSITIONS: Record<number, Array<[number, number]>> = {
@@ -17,6 +17,7 @@ const DOT_POSITIONS: Record<number, Array<[number, number]>> = {
 const PREVIEW_CS = 26;
 
 function PiecePreview({ piece }: { piece: QueuedPiece }) {
+  const { faceColor, dotColor: getDotColor } = useDieColors();
   const maxDr = Math.max(...piece.tiles.map(t => t.dr));
   const maxDc = Math.max(...piece.tiles.map(t => t.dc));
   const canvasW = (maxDc + 1) * PREVIEW_CS + 4;
@@ -27,8 +28,8 @@ function PiecePreview({ piece }: { piece: QueuedPiece }) {
       {piece.tiles.map((t, i) => {
         const x = t.dc * PREVIEW_CS + 2;
         const y = t.dr * PREVIEW_CS + 2;
-        const fill = VALUE_COLORS[t.value] ?? '#888';
-        const dotColor = VALUE_DOT_COLORS[t.value] ?? '#fff';
+        const fill = faceColor(t.value);
+        const dotColor = getDotColor(t.value);
         const rw = PREVIEW_CS - 2;
         const dotR = Math.max(PREVIEW_CS * 0.085, 2);
         const dots = DOT_POSITIONS[t.value] ?? DOT_POSITIONS[1];

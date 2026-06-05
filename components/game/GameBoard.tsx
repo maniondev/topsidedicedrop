@@ -1,13 +1,10 @@
 import React, { useMemo } from 'react';
-import {
-  Canvas, RoundedRect, Circle, Group, Paint,
-} from '@shopify/react-native-skia';
+import { Canvas, RoundedRect, Circle, Group } from '@shopify/react-native-skia';
 import { Board, CellValue } from '@/lib/board';
 import { ActivePiece } from '@/hooks/useGame';
-import { COLS, ROWS, VALUE_COLORS, VALUE_DOT_COLORS } from '@/constants/game';
-import { useTheme } from '@/contexts/ThemeContext';
+import { COLS, ROWS } from '@/constants/game';
+import { useTheme, useDieColors } from '@/contexts/ThemeContext';
 
-// Die dot positions as [xFrac, yFrac] within tile interior
 const DOT_POSITIONS: Record<number, Array<[number, number]>> = {
   1: [[0.50, 0.50]],
   2: [[0.72, 0.28], [0.28, 0.72]],
@@ -18,35 +15,23 @@ const DOT_POSITIONS: Record<number, Array<[number, number]>> = {
 };
 
 interface TileDrawProps {
-  x: number;
-  y: number;
-  cs: number;
-  value: CellValue;
-  opacity?: number;
+  x: number; y: number; cs: number; value: CellValue; opacity?: number;
+  faceColor: string; dotColor: string;
 }
 
-function TileDraw({ x, y, cs, value, opacity = 1 }: TileDrawProps) {
-  const pad = 2;
-  const rx = x + pad;
-  const ry = y + pad;
-  const rw = cs - pad * 2;
-  const radius = 8;
-  const fill = VALUE_COLORS[value] ?? '#888';
-  const dotColor = VALUE_DOT_COLORS[value] ?? '#fff';
+function TileDraw({ x, y, cs, value, opacity = 1, faceColor, dotColor }: TileDrawProps) {
+  const pad  = 2;
+  const rx   = x + pad;
+  const ry   = y + pad;
+  const rw   = cs - pad * 2;
   const dotR = Math.max(cs * 0.085, 3);
   const dots = DOT_POSITIONS[value] ?? DOT_POSITIONS[1];
 
   return (
     <Group opacity={opacity}>
-      <RoundedRect x={rx} y={ry} width={rw} height={rw} r={radius} color={fill} />
+      <RoundedRect x={rx} y={ry} width={rw} height={rw} r={8} color={faceColor} />
       {dots.map(([xf, yf], i) => (
-        <Circle
-          key={i}
-          cx={rx + xf * rw}
-          cy={ry + yf * rw}
-          r={dotR}
-          color={dotColor}
-        />
+        <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR} color={dotColor} />
       ))}
     </Group>
   );
@@ -61,28 +46,22 @@ interface Props {
 
 export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize }: Props) {
   const { colors } = useTheme();
-
+  const { faceColor, dotColor } = useDieColors();
   const cs = cellSize;
   const boardW = cs * COLS;
   const boardH = cs * ROWS;
 
-  // Grid lines
   const gridLines = useMemo(() => {
     const lines: React.ReactNode[] = [];
     for (let r = 0; r <= ROWS; r++) {
-      lines.push(
-        <RoundedRect key={`hr${r}`} x={0} y={r * cs} width={boardW} height={1} r={0} color={colors.separator} />
-      );
+      lines.push(<RoundedRect key={`hr${r}`} x={0} y={r * cs} width={boardW} height={1} r={0} color={colors.separator} />);
     }
     for (let c = 0; c <= COLS; c++) {
-      lines.push(
-        <RoundedRect key={`vc${c}`} x={c * cs} y={0} width={1} height={boardH} r={0} color={colors.separator} />
-      );
+      lines.push(<RoundedRect key={`vc${c}`} x={c * cs} y={0} width={1} height={boardH} r={0} color={colors.separator} />);
     }
     return lines;
   }, [cs, boardW, boardH, colors.separator]);
 
-  // Board tiles
   const boardTiles = useMemo(() => {
     const tiles: React.ReactNode[] = [];
     for (let r = 0; r < ROWS; r++) {
@@ -90,15 +69,15 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
         const cell = board[r][c];
         if (cell) {
           tiles.push(
-            <TileDraw key={cell.id} x={c * cs} y={r * cs} cs={cs} value={cell.value} />
+            <TileDraw key={cell.id} x={c * cs} y={r * cs} cs={cs} value={cell.value}
+              faceColor={faceColor(cell.value)} dotColor={dotColor(cell.value)} />
           );
         }
       }
     }
     return tiles;
-  }, [board, cs]);
+  }, [board, cs, faceColor, dotColor]);
 
-  // Ghost piece (landing preview)
   const ghostTiles = useMemo(() => {
     if (!activePiece || ghostAnchorRow === null || ghostAnchorRow === activePiece.anchorRow) return null;
     return activePiece.tiles.map((t, i) => {
@@ -106,19 +85,12 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
       const c = activePiece.anchorCol + t.dc;
       if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return null;
       return (
-        <TileDraw
-          key={`ghost_${i}`}
-          x={c * cs}
-          y={r * cs}
-          cs={cs}
-          value={t.value}
-          opacity={0.20}
-        />
+        <TileDraw key={`ghost_${i}`} x={c * cs} y={r * cs} cs={cs} value={t.value} opacity={0.18}
+          faceColor={faceColor(t.value)} dotColor={dotColor(t.value)} />
       );
     });
-  }, [activePiece, ghostAnchorRow, cs]);
+  }, [activePiece, ghostAnchorRow, cs, faceColor, dotColor]);
 
-  // Active falling piece
   const activeTiles = useMemo(() => {
     if (!activePiece) return null;
     return activePiece.tiles.map((t, i) => {
@@ -126,14 +98,14 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
       const c = activePiece.anchorCol + t.dc;
       if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return null;
       return (
-        <TileDraw key={`active_${i}`} x={c * cs} y={r * cs} cs={cs} value={t.value} />
+        <TileDraw key={`active_${i}`} x={c * cs} y={r * cs} cs={cs} value={t.value}
+          faceColor={faceColor(t.value)} dotColor={dotColor(t.value)} />
       );
     });
-  }, [activePiece, cs]);
+  }, [activePiece, cs, faceColor, dotColor]);
 
   return (
     <Canvas style={{ width: boardW, height: boardH }}>
-      {/* Background */}
       <RoundedRect x={0} y={0} width={boardW} height={boardH} r={0} color={colors.surface} />
       {gridLines}
       {boardTiles}

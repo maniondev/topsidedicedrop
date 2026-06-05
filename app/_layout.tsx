@@ -13,6 +13,7 @@ import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { PremiumProvider } from '@/contexts/PremiumContext';
 import { SoundProvider } from '@/contexts/SoundContext';
 import { StatsProvider } from '@/contexts/StatsContext';
+import { DifficultyProvider } from '@/contexts/DifficultyContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -53,9 +54,11 @@ export default function RootLayout() {
       <ThemeProvider>
         <PremiumProvider>
           <StatsProvider>
-            <SoundProvider>
-              <AppShell />
-            </SoundProvider>
+            <DifficultyProvider>
+              <SoundProvider>
+                <AppShell />
+              </SoundProvider>
+            </DifficultyProvider>
           </StatsProvider>
         </PremiumProvider>
       </ThemeProvider>
