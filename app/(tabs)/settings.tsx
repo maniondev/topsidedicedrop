@@ -6,7 +6,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSound } from '@/contexts/SoundContext';
 import { usePremium } from '@/contexts/PremiumContext';
-import AdBanner from '@/components/AdBanner';
 import PremiumModal from '@/components/PremiumModal';
 import { ThemeId, ThemeMeta, THEME_IDS } from '@/constants/theme';
 
@@ -126,8 +125,6 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         )}
       </ScrollView>
-
-      {!isPremium && <AdBanner />}
 
       <PremiumModal visible={premiumModalOpen} onClose={() => setPremiumModalOpen(false)} />
     </SafeAreaView>

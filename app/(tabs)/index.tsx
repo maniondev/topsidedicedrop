@@ -7,9 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useStats } from '@/contexts/StatsContext';
 import { useDifficulty, Difficulty, GRAVITY_MS } from '@/contexts/DifficultyContext';
 import { useGameStatus } from '@/contexts/GameStatusContext';
-import { usePremium } from '@/contexts/PremiumContext';
 import AppLogo from '@/components/AppLogo';
-import AdBanner from '@/components/AdBanner';
 import { loadSavedGame } from '@/lib/storage';
 
 const DIFFICULTIES: { id: Difficulty; label: string }[] = [
@@ -23,7 +21,6 @@ export default function LobbyScreen() {
   const { stats } = useStats();
   const { difficulty, setDifficulty } = useDifficulty();
   const { isGameActive } = useGameStatus();
-  const { isPremium } = usePremium();
   const [hasSavedGame, setHasSavedGame] = useState(false);
 
   useEffect(() => {
@@ -126,8 +123,6 @@ export default function LobbyScreen() {
         </View>
 
       </ScrollView>
-
-      {!isPremium && <AdBanner />}
     </SafeAreaView>
   );
 }
