@@ -30,7 +30,7 @@ import { COLS, ROWS } from '@/constants/game';
 // No tab bar in this screen — more space for the board
 const HUD_H      = 96;
 const CONTROLS_H = 76;
-const BANNER_H   = 52;
+const BANNER_H   = 60; // matches BANNER_RESERVED_H in AdBanner
 const V_PAD      = 40; // slack so the centered game block sits a bit lower / balanced
 
 export default function GameScreen() {
@@ -97,6 +97,12 @@ export default function GameScreen() {
     play(game.lastMergeEvents.some(e => e.newValue === 'clear') ? 'clear' : 'merge');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.lastMergeEvents]);
+
+  // Rotate with a subtle click. Discrete action — safe for the pooled audio engine.
+  const rotateWithSound = useCallback(() => {
+    play('drop');
+    game.rotate();
+  }, [play, game.rotate]);
 
   const handleFreeContinue = useCallback(() => {
     setFreeContinueUsed(true);
@@ -165,7 +171,7 @@ export default function GameScreen() {
   const boardGesture = Gesture.Race(
     Gesture.Tap()
       .maxDuration(250)
-      .onEnd(() => { runOnJS(game.rotate)(); }),
+      .onEnd(() => { runOnJS(rotateWithSound)(); }),
     Gesture.Pan()
       .minDistance(8)
       .onStart(() => { accX.current = 0; accY.current = 0; prevX.current = 0; prevY.current = 0; })
@@ -232,7 +238,7 @@ export default function GameScreen() {
           <Controls
             onLeft={game.moveLeft}
             onRight={game.moveRight}
-            onRotate={game.rotate}
+            onRotate={rotateWithSound}
             onSoftDrop={game.softDrop}
             onHardDrop={game.hardDrop}
             onPause={() => setPaused(true)}

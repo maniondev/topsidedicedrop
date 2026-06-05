@@ -10,6 +10,10 @@ const adUnitId = __DEV__
   ? TestIds.ADAPTIVE_BANNER
   : Platform.OS === 'ios' ? IOS_ID : ANDROID_ID;
 
+// Reserved height so the layout never shifts between "ad not loaded" and "ad loaded".
+// Keep this in sync with BANNER_H in the screens that compute board size.
+export const BANNER_RESERVED_H = 60;
+
 export default function AdBanner() {
   return (
     <View style={styles.container}>
@@ -23,5 +27,7 @@ export default function AdBanner() {
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center' },
+  // Fixed height + centered: an unloaded banner reserves the same space as a loaded one,
+  // so the board above never jumps when the ad populates.
+  container: { height: BANNER_RESERVED_H, alignItems: 'center', justifyContent: 'center' },
 });
