@@ -102,10 +102,8 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     width: '100%',
-    paddingHorizontal: 16,
-    gap: 16,
   },
   centerGroup: {
     flexDirection: 'row',
