@@ -104,6 +104,12 @@ export default function GameScreen() {
     game.rotate();
   }, [play, game.rotate]);
 
+  // Hard drop with a satisfying "thunk" (hint.m4a). Discrete — one per piece at most.
+  const hardDropWithSound = useCallback(() => {
+    play('lock');
+    game.hardDrop();
+  }, [play, game.hardDrop]);
+
   const handleFreeContinue = useCallback(() => {
     setFreeContinueUsed(true);
     game.startCondense();
@@ -194,7 +200,7 @@ export default function GameScreen() {
       })
       .onEnd(e => {
         if (e.velocityY > 1200 && Math.abs(e.translationX) < 60) {
-          runOnJS(game.hardDrop)();
+          runOnJS(hardDropWithSound)();
         }
       }),
   );
@@ -240,7 +246,7 @@ export default function GameScreen() {
             onRight={game.moveRight}
             onRotate={rotateWithSound}
             onSoftDrop={game.softDrop}
-            onHardDrop={game.hardDrop}
+            onHardDrop={hardDropWithSound}
             onPause={() => setPaused(true)}
             disabled={controlsDisabled}
           />

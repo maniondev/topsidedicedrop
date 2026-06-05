@@ -8,6 +8,7 @@ import { SOUND_KEY } from '@/lib/storage';
 
 const SOUND_SOURCES = {
   drop:     require('@/assets/sounds/drop.m4a'),
+  lock:     require('@/assets/sounds/lock.m4a'),
   merge:    require('@/assets/sounds/merge.m4a'),
   clear:    require('@/assets/sounds/clear.m4a'),
   chain:    require('@/assets/sounds/chain.m4a'),
@@ -18,11 +19,11 @@ const SOUND_SOURCES = {
 export type SoundName = keyof typeof SOUND_SOURCES;
 
 const POOL_SIZE: Record<SoundName, number> = {
-  drop: 6, merge: 4, clear: 2, chain: 3, gameover: 1, condense: 1,
+  drop: 6, lock: 3, merge: 4, clear: 2, chain: 3, gameover: 1, condense: 1,
 };
 
 const VOLUME: Record<SoundName, number> = {
-  drop: 0.30, merge: 0.80, clear: 0.70, chain: 0.55, gameover: 0.35, condense: 0.35,
+  drop: 0.30, lock: 0.60, merge: 0.80, clear: 0.70, chain: 0.55, gameover: 0.35, condense: 0.35,
 };
 
 interface SoundCtxType {

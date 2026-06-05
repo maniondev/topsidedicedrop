@@ -68,7 +68,7 @@ export default function HUD({ score, bestScore, nextPiece, onLogoPress }: Props)
         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         activeOpacity={0.6}
       >
-        <AppLogo size={46} />
+        <AppLogo size={58} />
       </TouchableOpacity>
 
       {/* Three aligned columns: labels share a baseline, values share a centered row */}
