@@ -26,7 +26,7 @@ import { COLS, ROWS } from '@/constants/game';
 const HEADER_H   = 44;
 const HUD_H      = 52;
 const QUEUE_H    = 80;
-const CONTROLS_H = 116;
+const CONTROLS_H = 76;
 const BANNER_H   = 52;
 const TAB_BAR_H  = 60;
 const V_PAD      = 20;

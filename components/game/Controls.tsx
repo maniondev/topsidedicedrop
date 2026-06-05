@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -13,7 +13,11 @@ interface Props {
   disabled?: boolean;
 }
 
-function CtrlBtn({ onPress, children, size = 56 }: { onPress: () => void; children: React.ReactNode; size?: number }) {
+function CtrlBtn({ onPress, children, size = 60 }: {
+  onPress: () => void;
+  children: React.ReactNode;
+  size?: number;
+}) {
   const { colors } = useTheme();
   return (
     <TouchableOpacity
@@ -26,54 +30,94 @@ function CtrlBtn({ onPress, children, size = 56 }: { onPress: () => void; childr
   );
 }
 
-export default function Controls({ onLeft, onRight, onRotate, onSoftDrop, onHardDrop, disabled }: Props) {
+// Tap = soft drop one cell. Hold (300ms) = hard drop (snap to bottom).
+function DropButton({ onSoftDrop, onHardDrop }: { onSoftDrop: () => void; onHardDrop: () => void }) {
   const { colors } = useTheme();
-  if (disabled) return <View style={styles.row} />;
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didHardDropRef = useRef(false);
 
   return (
-    <View style={styles.container}>
-      {/* Main row: [←]  [↺]  [→]  —spacer—  [↓] */}
-      <View style={styles.row}>
-        <View style={styles.leftGroup}>
-          <CtrlBtn onPress={onLeft}>
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
-          </CtrlBtn>
-          <CtrlBtn onPress={onRotate}>
-            <MaterialCommunityIcons name="rotate-right" size={22} color={colors.accent} />
-          </CtrlBtn>
-          <CtrlBtn onPress={onRight}>
-            <Ionicons name="arrow-forward" size={22} color={colors.text} />
-          </CtrlBtn>
-        </View>
+    <TouchableOpacity
+      style={[styles.btn, styles.dropBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+      onPressIn={() => {
+        didHardDropRef.current = false;
+        holdTimerRef.current = setTimeout(() => {
+          didHardDropRef.current = true;
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          onHardDrop();
+        }, 300);
+      }}
+      onPressOut={() => {
+        if (holdTimerRef.current) {
+          clearTimeout(holdTimerRef.current);
+          holdTimerRef.current = null;
+        }
+      }}
+      onPress={() => {
+        if (!didHardDropRef.current) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onSoftDrop();
+        }
+        didHardDropRef.current = false;
+      }}
+      activeOpacity={0.65}
+    >
+      <Ionicons name="arrow-down" size={22} color={colors.textSecondary} />
+    </TouchableOpacity>
+  );
+}
 
-        <View style={styles.rightGroup}>
-          <CtrlBtn onPress={onSoftDrop} size={52}>
-            <Ionicons name="arrow-down" size={20} color={colors.textSecondary} />
-          </CtrlBtn>
-        </View>
+export default function Controls({ onLeft, onRight, onRotate, onSoftDrop, onHardDrop, disabled }: Props) {
+  const { colors } = useTheme();
+  if (disabled) return <View style={styles.placeholder} />;
+
+  return (
+    <View style={styles.row}>
+      {/* Centered movement group */}
+      <View style={styles.centerGroup}>
+        <CtrlBtn onPress={onLeft}>
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
+        </CtrlBtn>
+        <CtrlBtn onPress={onRotate}>
+          <MaterialCommunityIcons name="rotate-right" size={24} color={colors.accent} />
+        </CtrlBtn>
+        <CtrlBtn onPress={onRight}>
+          <Ionicons name="arrow-forward" size={24} color={colors.text} />
+        </CtrlBtn>
       </View>
 
-      {/* Hard drop — full width accent button */}
-      <TouchableOpacity
-        style={[styles.hardDropBtn, { backgroundColor: colors.accent }]}
-        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onHardDrop(); }}
-        activeOpacity={0.75}
-      >
-        <Ionicons name="chevron-down" size={18} color={colors.accentText} />
-        <Ionicons name="chevron-down" size={18} color={colors.accentText} style={{ marginLeft: -10 }} />
-      </TouchableOpacity>
+      {/* Down button — tap for 1 cell, hold to snap */}
+      <DropButton onSoftDrop={onSoftDrop} onHardDrop={onHardDrop} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container:  { alignItems: 'center', gap: 8, width: '100%', paddingHorizontal: 20 },
-  row:        { flexDirection: 'row', alignItems: 'center', width: '100%', justifyContent: 'space-between' },
-  leftGroup:  { flexDirection: 'row', gap: 10 },
-  rightGroup: { flexDirection: 'row' },
-  btn:        { borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  hardDropBtn:{
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    width: '100%', paddingVertical: 10, borderRadius: 12,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingHorizontal: 16,
+    gap: 16,
+  },
+  centerGroup: {
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'center',
+    flex: 1,
+  },
+  btn: {
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dropBtn: {
+    width: 52,
+    height: 52,
+  },
+  placeholder: {
+    height: 60,
   },
 });
