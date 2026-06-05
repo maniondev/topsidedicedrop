@@ -13,6 +13,7 @@ interface PremiumCtxType {
   upgrade: () => Promise<void>;
   restorePurchases: () => Promise<void>;
   downgrade: () => void;
+  devToggle: () => void; // dev-only: toggle without RevenueCat
 }
 
 const PremiumCtx = createContext<PremiumCtxType>({
@@ -21,6 +22,7 @@ const PremiumCtx = createContext<PremiumCtxType>({
   upgrade: async () => {},
   restorePurchases: async () => {},
   downgrade: () => {},
+  devToggle: () => {},
 });
 
 function hasEntitlement(info: CustomerInfo): boolean {
@@ -73,11 +75,12 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const downgrade = useCallback(() => { if (__DEV__) setIsPremium(false); }, []);
+  const downgrade  = useCallback(() => { if (__DEV__) setIsPremium(false); }, []);
+  const devToggle  = useCallback(() => { if (__DEV__) setIsPremium(p => !p); }, []);
 
   const value = useMemo(
-    () => ({ isPremium, isLoading, upgrade, restorePurchases, downgrade }),
-    [isPremium, isLoading, upgrade, restorePurchases, downgrade],
+    () => ({ isPremium, isLoading, upgrade, restorePurchases, downgrade, devToggle }),
+    [isPremium, isLoading, upgrade, restorePurchases, downgrade, devToggle],
   );
 
   return <PremiumCtx.Provider value={value}>{children}</PremiumCtx.Provider>;

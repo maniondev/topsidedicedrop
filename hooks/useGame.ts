@@ -58,6 +58,7 @@ interface GameState {
 
 type Action =
   | { type: 'START'; initialQueue: QueuedPiece[] }
+  | { type: 'LOAD_SAVED'; board: Board; score: number; queue: QueuedPiece[]; runBestChain: number }
   | { type: 'TICK' }
   | { type: 'MOVE'; dir: 'left' | 'right' }
   | { type: 'ROTATE' }
@@ -178,6 +179,19 @@ function reducer(state: GameState, action: Action): GameState {
       return {
         ...initialState(),
         queue: q,
+        phase: 'spawning',
+        continueAvailable: true,
+        continueUsed: false,
+      };
+    }
+
+    case 'LOAD_SAVED': {
+      return {
+        ...initialState(),
+        board: action.board,
+        score: action.score,
+        queue: action.queue,
+        runBestChain: action.runBestChain,
         phase: 'spawning',
         continueAvailable: true,
         continueUsed: false,
@@ -373,7 +387,7 @@ function drawShape(bag: string[], rng: RNG): { shapeId: string; newBag: string[]
   return { shapeId: bag[0], newBag: bag.slice(1) };
 }
 
-export function useGame(gravityMs: number = GRAVITY_BASE_MS) {
+export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = false) {
   const rngRef = useRef<RNG>(new RNG(Date.now()));
   const bagRef = useRef<string[]>([]);
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
@@ -386,37 +400,37 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS) {
     return makePiece(shapeId, score, rngRef.current);
   }, []);
 
-  // Gravity tick
+  // Gravity tick — stops when paused
   useEffect(() => {
-    if (state.phase !== 'falling') return;
+    if (state.phase !== 'falling' || paused) return;
     const id = setInterval(() => dispatch({ type: 'TICK' }), gravityMs);
     return () => clearInterval(id);
-  }, [state.phase]);
+  }, [state.phase, gravityMs, paused]);
 
-  // Lock delay (resets on lockResetKey change so moves reset the timer)
+  // Lock delay — stops when paused; resets on lockResetKey change
   useEffect(() => {
-    if (state.phase !== 'locking') return;
+    if (state.phase !== 'locking' || paused) return;
     const id = setTimeout(() => dispatch({ type: 'LOCK_PIECE' }), LOCK_DELAY_MS);
     return () => clearTimeout(id);
-  }, [state.phase, state.lockResetKey]);
+  }, [state.phase, state.lockResetKey, paused]);
 
-  // Board resolution steps
+  // Board resolution — stops when paused
   useEffect(() => {
-    if (state.phase !== 'resolving') return;
+    if (state.phase !== 'resolving' || paused) return;
     const id = setTimeout(() => dispatch({ type: 'RESOLVE_STEP' }), RESOLVE_PAUSE_MS);
     return () => clearTimeout(id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.phase, state.board]);
+  }, [state.phase, state.board, paused]);
 
-  // Spawn next piece
+  // Spawn next piece — stops when paused
   useEffect(() => {
-    if (state.phase !== 'spawning') return;
+    if (state.phase !== 'spawning' || paused) return;
     const score = stateRef.current.score;
     const id = setTimeout(() => {
       dispatch({ type: 'SPAWN_NEXT', newPiece: nextPiece(score) });
     }, SPAWN_DELAY_MS);
     return () => clearTimeout(id);
-  }, [state.phase, nextPiece]);
+  }, [state.phase, nextPiece, paused]);
 
   // ── Controls ───────────────────────────────────────────────────────────────
 
@@ -447,6 +461,28 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS) {
 
   const ghost = state.activePiece ? ghostRow(state.board, state.activePiece) : null;
 
+  /** Serialise current state for "Continue Later" */
+  const exportState = useCallback(() => ({
+    board: state.board,
+    score: state.score,
+    queue: state.queue,
+    runBestChain: state.runBestChain,
+  }), [state.board, state.score, state.queue, state.runBestChain]);
+
+  /** Restore from a saved game (board + score + queue) */
+  const loadSaved = useCallback((
+    board: Board, score: number, queue: QueuedPiece[], runBestChain: number,
+  ) => {
+    rngRef.current = new RNG(Date.now());
+    bagRef.current = [];
+    // Refill queue to QUEUE_SIZE+1 if needed
+    const filledQueue = [...queue];
+    while (filledQueue.length < QUEUE_SIZE + 1) {
+      filledQueue.push(nextPiece(score));
+    }
+    dispatch({ type: 'LOAD_SAVED', board, score, queue: filledQueue, runBestChain });
+  }, [nextPiece]);
+
   return {
     board: state.board,
     activePiece: state.activePiece,
@@ -466,5 +502,7 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS) {
     hardDrop,
     startCondense,
     finishCondense,
+    exportState,
+    loadSaved,
   };
 }

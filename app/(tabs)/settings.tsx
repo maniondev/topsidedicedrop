@@ -3,10 +3,12 @@ import {
   View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Alert } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSound } from '@/contexts/SoundContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useDifficulty, Difficulty } from '@/contexts/DifficultyContext';
+import { useGameStatus } from '@/contexts/GameStatusContext';
 import AppLogo from '@/components/AppLogo';
 import AdBanner from '@/components/AdBanner';
 import PremiumModal from '@/components/PremiumModal';
@@ -23,8 +25,9 @@ const DIFFICULTIES: { id: Difficulty; label: string; desc: string }[] = [
 export default function SettingsScreen() {
   const { colors, themeId, setTheme } = useTheme();
   const { soundEnabled, setSoundEnabled } = useSound();
-  const { isPremium, upgrade, restorePurchases } = usePremium();
+  const { isPremium, upgrade, restorePurchases, devToggle } = usePremium();
   const { difficulty, setDifficulty } = useDifficulty();
+  const { isGameActive, endGame } = useGameStatus();
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
 
   return (
@@ -70,7 +73,22 @@ export default function SettingsScreen() {
                     { borderColor: active ? colors.accent : colors.border },
                     active && { backgroundColor: colors.accentDim },
                   ]}
-                  onPress={() => setDifficulty(d.id)}
+                  onPress={() => {
+                    if (d.id === difficulty) return;
+                    if (isGameActive) {
+                      Alert.alert(
+                        'End Current Run?',
+                        "Switching difficulty will end your current run. Your score won't be saved.",
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { text: 'Switch & End Run', style: 'destructive',
+                            onPress: () => { endGame(); setDifficulty(d.id); } },
+                        ],
+                      );
+                    } else {
+                      setDifficulty(d.id);
+                    }
+                  }}
                 >
                   <Text style={[styles.diffLabel, { color: active ? colors.accent : colors.text }]}>
                     {d.label}
@@ -151,6 +169,18 @@ export default function SettingsScreen() {
             <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>Restore Purchase</Text>
           </TouchableOpacity>
         )}
+
+        {/* DEV ONLY: premium toggle */}
+        {__DEV__ && (
+          <TouchableOpacity
+            style={[styles.devBtn, { borderColor: '#FF6B00' }]}
+            onPress={devToggle}
+          >
+            <Text style={[styles.devBtnText, { color: '#FF6B00' }]}>
+              DEV: {isPremium ? '⭐ Premium ON — tap to disable' : '○ Premium OFF — tap to enable'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
       {!isPremium && <AdBanner />}
@@ -187,4 +217,6 @@ const styles = StyleSheet.create({
   premiumTitle:   { fontSize: 18, fontWeight: '700' },
   premiumSub:     { fontSize: 13, textAlign: 'center' },
   restoreBtn:     { alignItems: 'center' },
+  devBtn:         { borderRadius: 10, borderWidth: 1.5, borderStyle: 'dashed', padding: 12, alignItems: 'center' },
+  devBtnText:     { fontSize: 13, fontWeight: '600' },
 });

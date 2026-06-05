@@ -18,9 +18,35 @@ export interface Stats {
   recentRuns: RunRecord[];
 }
 
-const STATS_KEY   = `${PREFIX}stats`;
+const STATS_KEY      = `${PREFIX}stats`;
+const SAVED_GAME_KEY = `${PREFIX}saved_game`;
 export const THEME_KEY = `${PREFIX}theme`;
 export const SOUND_KEY = `${PREFIX}sound`;
+
+export interface SavedGame {
+  board: Array<Array<{ value: number; id: string } | null>>;
+  score: number;
+  queue: unknown[]; // QueuedPiece[] serialized
+  runBestChain: number;
+  difficulty: Difficulty;
+  savedAt: number;
+}
+
+export async function saveGame(game: SavedGame): Promise<void> {
+  try { await AsyncStorage.setItem(SAVED_GAME_KEY, JSON.stringify(game)); } catch {}
+}
+
+export async function loadSavedGame(): Promise<SavedGame | null> {
+  try {
+    const raw = await AsyncStorage.getItem(SAVED_GAME_KEY);
+    if (raw) return JSON.parse(raw) as SavedGame;
+  } catch {}
+  return null;
+}
+
+export async function clearSavedGame(): Promise<void> {
+  try { await AsyncStorage.removeItem(SAVED_GAME_KEY); } catch {}
+}
 
 export async function loadStats(): Promise<Stats> {
   try {
