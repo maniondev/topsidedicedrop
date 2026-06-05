@@ -11,7 +11,6 @@ import { usePremium } from '@/contexts/PremiumContext';
 import { useGame } from '@/hooks/useGame';
 import { useRewardedAd } from '@/hooks/useRewardedAd';
 import GameBoard from '@/components/game/GameBoard';
-import NextQueue from '@/components/game/NextQueue';
 import HUD from '@/components/game/HUD';
 import Controls from '@/components/game/Controls';
 import GameOverModal from '@/components/game/GameOverModal';
@@ -98,20 +97,17 @@ export default function PlayScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
 
-      {/* Header: logo + title on left, next piece on right */}
+      {/* Header: centered logo + title */}
       <View style={[styles.header, { height: HEADER_H }]}>
-        <View style={styles.headerLeft}>
-          <AppLogo size={24} />
-          <Text style={{ fontSize: 17, color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }}>
-            Topside: Merge
-          </Text>
-        </View>
-        <NextQueue queue={game.queue} />
+        <AppLogo size={24} />
+        <Text style={{ fontSize: 17, color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }}>
+          Topside: Merge
+        </Text>
       </View>
 
-      {/* Score */}
+      {/* Score | Best | Next — all inline */}
       <View style={[styles.hudRow, { height: HUD_H }]}>
-        <HUD score={game.score} bestScore={bestScore} />
+        <HUD score={game.score} bestScore={bestScore} nextPiece={game.queue[0]} />
       </View>
 
       {/* Board */}
@@ -172,9 +168,8 @@ export default function PlayScreen() {
 
 const styles = StyleSheet.create({
   safe:         { flex: 1, alignItems: 'center' },
-  header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                  width: '100%', paddingHorizontal: 16 },
-  headerLeft:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+                  width: '100%', gap: 8 },
   hudRow:       { alignItems: 'center', justifyContent: 'center', width: '100%' },
   boardWrap:    { borderRadius: 4, overflow: 'hidden' },
   controlsRow:  { alignItems: 'center', justifyContent: 'center', marginTop: 8 },
