@@ -1,7 +1,7 @@
 export const COLS = 6;
 export const ROWS = 8;
 
-export const GRAVITY_BASE_MS = 800;
+export const GRAVITY_BASE_MS = 960;
 export const LOCK_DELAY_MS = 300;
 export const RESOLVE_PAUSE_MS = 110;
 export const MERGE_ANIM_MS = 150;

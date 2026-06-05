@@ -61,7 +61,7 @@ export default function HUD({ score, bestScore, nextPiece }: Props) {
 
       {/* Left — Logo, same flex as right so BEST stays centered */}
       <View style={styles.side}>
-        <AppLogo size={26} />
+        <AppLogo size={36} />
       </View>
 
       {/* Center — Score | Best, always centered */}
