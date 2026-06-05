@@ -42,9 +42,9 @@ export default function GameOverModal({
               disabled={!adLoaded}
             >
               <Text style={[styles.continueBtnText, { color: colors.accentText }]}>
-                ▶ Emergency Condense
+                ▶ Continue
               </Text>
-              <Text style={[styles.continueSub, { color: colors.accentText }]}>Watch ad to continue</Text>
+              <Text style={[styles.continueSub, { color: colors.accentText }]}>Watch a short ad</Text>
             </TouchableOpacity>
           )}
 

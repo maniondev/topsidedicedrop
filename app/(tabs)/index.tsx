@@ -172,7 +172,7 @@ export default function PlayScreen() {
         visible={game.phase === 'gameOver'}
         score={game.score}
         bestScore={bestScore}
-        continueAvailable={game.continueAvailable}
+        continueAvailable={adLoaded}
         adLoaded={adLoaded}
         onContinue={handleContinue}
         onNewGame={handleNewGame}

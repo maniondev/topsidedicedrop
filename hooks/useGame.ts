@@ -328,8 +328,6 @@ function reducer(state: GameState, action: Action): GameState {
         ...state,
         board: action.board,
         score: state.score + action.scoreGained,
-        continueAvailable: false,
-        continueUsed: true,
         phase: 'spawning',
       };
     }

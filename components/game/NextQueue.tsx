@@ -3,7 +3,6 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Canvas, RoundedRect, Circle, Group } from '@shopify/react-native-skia';
 import { QueuedPiece } from '@/hooks/useGame';
 import { VALUE_COLORS, VALUE_DOT_COLORS } from '@/constants/game';
-import { CellValue } from '@/lib/board';
 import { useTheme } from '@/contexts/ThemeContext';
 
 const DOT_POSITIONS: Record<number, Array<[number, number]>> = {
@@ -15,10 +14,9 @@ const DOT_POSITIONS: Record<number, Array<[number, number]>> = {
   6: [[0.28, 0.22], [0.72, 0.22], [0.28, 0.50], [0.72, 0.50], [0.28, 0.78], [0.72, 0.78]],
 };
 
-const PREVIEW_CS = 22; // cell size for queue previews
+const PREVIEW_CS = 26;
 
 function PiecePreview({ piece }: { piece: QueuedPiece }) {
-  const { colors } = useTheme();
   const maxDr = Math.max(...piece.tiles.map(t => t.dr));
   const maxDc = Math.max(...piece.tiles.map(t => t.dc));
   const canvasW = (maxDc + 1) * PREVIEW_CS + 4;
@@ -53,36 +51,26 @@ interface Props {
 
 export default function NextQueue({ queue }: Props) {
   const { colors } = useTheme();
+  const next = queue[0];
+  if (!next) return null;
+
   return (
     <View style={styles.container}>
       <Text style={[styles.label, { color: colors.textMuted }]}>NEXT</Text>
-      <View style={styles.row}>
-        {queue.slice(0, 3).map((piece, i) => (
-          <View
-            key={i}
-            style={[
-              styles.slot,
-              { backgroundColor: colors.card, borderColor: colors.cardBorder },
-              i === 0 && styles.slotFirst,
-            ]}
-          >
-            <PiecePreview piece={piece} />
-          </View>
-        ))}
+      <View style={[styles.slot, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+        <PiecePreview piece={next} />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', gap: 6 },
-  label: { fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
-  row: { flexDirection: 'row', gap: 8 },
+  container: { alignItems: 'center', gap: 4 },
+  label: { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
   slot: {
-    width: 60, height: 54,
+    minWidth: 72, minHeight: 60,
     borderRadius: 10, borderWidth: 1,
     alignItems: 'center', justifyContent: 'center',
-    opacity: 0.75,
+    paddingHorizontal: 8, paddingVertical: 6,
   },
-  slotFirst: { opacity: 1.0 },
 });
