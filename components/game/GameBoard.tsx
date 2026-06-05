@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { useWindowDimensions } from 'react-native';
 import {
   Canvas, RoundedRect, Circle, Group, Paint,
 } from '@shopify/react-native-skia';
@@ -57,13 +56,13 @@ interface Props {
   board: Board;
   activePiece: ActivePiece | null;
   ghostAnchorRow: number | null;
+  cellSize: number;
 }
 
-export default function GameBoard({ board, activePiece, ghostAnchorRow }: Props) {
-  const { width } = useWindowDimensions();
+export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize }: Props) {
   const { colors } = useTheme();
 
-  const cs = Math.floor((width - 32) / COLS);
+  const cs = cellSize;
   const boardW = cs * COLS;
   const boardH = cs * ROWS;
 

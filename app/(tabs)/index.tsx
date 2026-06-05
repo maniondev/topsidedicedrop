@@ -1,7 +1,9 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Platform,
 } from 'react-native';
+import { useWindowDimensions } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useStats } from '@/contexts/StatsContext';
 import { useSound } from '@/contexts/SoundContext';
@@ -19,37 +21,52 @@ import AdInterstitial from '@/components/AdInterstitial';
 import AppLogo from '@/components/AppLogo';
 import { onRunComplete } from '@/lib/adCounter';
 import { Board } from '@/lib/board';
+import { COLS, ROWS } from '@/constants/game';
+
+const HEADER_H   = 44;
+const HUD_H      = 52;
+const QUEUE_H    = 80;
+const CONTROLS_H = 116;
+const BANNER_H   = 52;
+const TAB_BAR_H  = 60;
+const V_PAD      = 20;
 
 export default function PlayScreen() {
   const { colors } = useTheme();
   const { bestScore, submitRun } = useStats();
   const { play } = useSound();
   const { isPremium } = usePremium();
+  const { width, height } = useWindowDimensions();
+  const { top: safeTop, bottom: safeBottom } = useSafeAreaInsets();
+
+  // Calculate cell size so board + all controls fit on screen
+  const tabBarH = TAB_BAR_H + Math.max(safeBottom, Platform.OS === 'android' ? 28 : 8);
+  const bannerH = isPremium ? 0 : BANNER_H;
+  const usedH   = safeTop + tabBarH + HEADER_H + HUD_H + QUEUE_H + CONTROLS_H + bannerH + V_PAD;
+  const availH  = height - usedH;
+  const csH     = Math.floor(availH / ROWS);
+  const csW     = Math.floor((width - 32) / COLS);
+  const cellSize = Math.max(Math.min(csH, csW), 36); // minimum 36px
 
   const game = useGame();
   const [showInterstitial, setShowInterstitial] = useState(false);
   const [pendingNewGame, setPendingNewGame] = useState(false);
 
-  // Rewarded ad for Emergency Condense
   const { adLoaded, showAd } = useRewardedAd(useCallback(() => {
     game.startCondense();
   }, [game.startCondense]));
 
-  // Submit score and maybe show interstitial when game ends
   useEffect(() => {
     if (game.phase !== 'gameOver') return;
     play('gameover');
     submitRun(game.score);
-    if (onRunComplete() && !isPremium) setShowInterstitial(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.phase]);
 
-  // Sound effects on merge events
   useEffect(() => {
     if (game.lastMergeEvents.length === 0) return;
     const hasClear = game.lastMergeEvents.some(e => e.newValue === 'clear');
-    if (hasClear) play('clear');
-    else play('merge');
+    play(hasClear ? 'clear' : 'merge');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.lastMergeEvents]);
 
@@ -57,41 +74,61 @@ export default function PlayScreen() {
     if (adLoaded) showAd();
   }, [adLoaded, showAd]);
 
+  // New Game: show interstitial if due, otherwise reset immediately
   const handleNewGame = useCallback(() => {
-    setPendingNewGame(true);
-  }, []);
+    const showAds = onRunComplete() && !isPremium;
+    if (showAds) {
+      setPendingNewGame(true);
+      setShowInterstitial(true);
+    } else {
+      game.resetGame();
+    }
+  }, [isPremium, game.resetGame]);
 
   const handleInterstitialClose = useCallback(() => {
     setShowInterstitial(false);
-    if (pendingNewGame) { setPendingNewGame(false); game.resetGame(); }
+    if (pendingNewGame) {
+      setPendingNewGame(false);
+      game.resetGame();
+    }
   }, [pendingNewGame, game.resetGame]);
 
   const handleCondenseComplete = useCallback((board: Board, scoreGained: number) => {
     game.finishCondense(board, scoreGained);
   }, [game.finishCondense]);
 
-  const isPlaying = game.phase !== 'idle' && game.phase !== 'gameOver';
-  const controlsDisabled = game.phase === 'resolving' || game.phase === 'spawning' ||
-    game.phase === 'condensing' || game.phase === 'idle';
+  const controlsDisabled =
+    game.phase === 'resolving' ||
+    game.phase === 'spawning'  ||
+    game.phase === 'condensing'||
+    game.phase === 'idle';
+
+  const boardW = cellSize * COLS;
+  const boardH = cellSize * ROWS;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
-      <View style={styles.header}>
-        <AppLogo size={30} />
-        <Text style={[styles.titleText, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+
+      {/* Header */}
+      <View style={[styles.header, { height: HEADER_H }]}>
+        <AppLogo size={26} />
+        <Text style={[{ fontSize: 18, color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
           Topside: Merge
         </Text>
       </View>
 
-      <View style={styles.hud}>
+      {/* Score + Queue in one row */}
+      <View style={[styles.infoRow, { height: HUD_H }]}>
         <HUD score={game.score} bestScore={bestScore} />
       </View>
 
-      <View style={[styles.boardWrap, { backgroundColor: colors.surfaceRaise }]}>
+      {/* Board */}
+      <View style={[styles.boardWrap, { width: boardW, height: boardH, backgroundColor: colors.surfaceRaise }]}>
         <GameBoard
           board={game.board}
           activePiece={game.activePiece}
           ghostAnchorRow={game.ghostAnchorRow}
+          cellSize={cellSize}
         />
         <EmergencyCondenseOverlay
           visible={game.phase === 'condensing'}
@@ -100,8 +137,13 @@ export default function PlayScreen() {
         />
       </View>
 
-      <View style={styles.footer}>
+      {/* Next queue */}
+      <View style={[styles.queueRow, { height: QUEUE_H }]}>
         <NextQueue queue={game.queue} />
+      </View>
+
+      {/* Controls */}
+      <View style={[styles.controlsRow, { height: CONTROLS_H }]}>
         <Controls
           onLeft={game.moveLeft}
           onRight={game.moveRight}
@@ -112,13 +154,16 @@ export default function PlayScreen() {
         />
       </View>
 
+      {/* Start overlay */}
       {game.phase === 'idle' && (
-        <TouchableOpacity
-          style={[styles.startBtn, { backgroundColor: colors.accent }]}
-          onPress={game.startGame}
-        >
-          <Text style={[styles.startBtnText, { color: colors.accentText }]}>Tap to Play</Text>
-        </TouchableOpacity>
+        <View style={styles.startOverlay}>
+          <TouchableOpacity
+            style={[styles.startBtn, { backgroundColor: colors.accent }]}
+            onPress={game.startGame}
+          >
+            <Text style={[styles.startBtnText, { color: colors.accentText }]}>Tap to Play</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       {!isPremium && <AdBanner />}
@@ -142,36 +187,18 @@ export default function PlayScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  safe:         { flex: 1 },
+  header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  infoRow:      { alignItems: 'center', justifyContent: 'center' },
+  boardWrap:    { alignSelf: 'center', borderRadius: 4, overflow: 'hidden' },
+  queueRow:     { alignItems: 'center', justifyContent: 'center' },
+  controlsRow:  { alignItems: 'center', justifyContent: 'center' },
+  startOverlay: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
-    paddingVertical: 8,
-    gap: 8,
-  },
-  titleText: { fontSize: 20 },
-  hud: { paddingVertical: 6 },
-  boardWrap: {
-    alignSelf: 'center',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  footer: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'space-evenly',
-    paddingVertical: 8,
-    gap: 12,
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
-  startBtn: {
-    position: 'absolute',
-    alignSelf: 'center',
-    top: '50%',
-    paddingHorizontal: 40,
-    paddingVertical: 16,
-    borderRadius: 16,
-    transform: [{ translateY: -24 }],
-  },
-  startBtnText: { fontSize: 20, fontWeight: '700' },
+  startBtn:     { paddingHorizontal: 48, paddingVertical: 18, borderRadius: 16 },
+  startBtnText: { fontSize: 22, fontWeight: '700' },
 });
