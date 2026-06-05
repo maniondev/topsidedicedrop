@@ -38,8 +38,7 @@ export default function PlayScreen() {
   const { top: safeTop, bottom: safeBottom } = useSafeAreaInsets();
 
   const tabBarH  = TAB_BAR_H + Math.max(safeBottom, Platform.OS === 'android' ? 28 : 8);
-  const bannerH  = isPremium ? 0 : BANNER_H;
-  const usedH    = safeTop + tabBarH + HEADER_H + HUD_H + CONTROLS_H + bannerH + V_PAD;
+  const usedH    = safeTop + tabBarH + HEADER_H + HUD_H + CONTROLS_H + V_PAD;
   const availH   = height - usedH;
   const csH      = Math.floor(availH / ROWS);
   const csW      = Math.floor((width - 32) / COLS);
@@ -149,7 +148,7 @@ export default function PlayScreen() {
         </View>
       )}
 
-      {!isPremium && <AdBanner />}
+      {/* Banner removed — rewarded + interstitial only */}
 
       <GameOverModal
         visible={game.phase === 'gameOver'}
