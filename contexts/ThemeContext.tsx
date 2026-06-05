@@ -61,7 +61,8 @@ export function useDieColors(): { faceColor: (v: number) => string; dotColor: (v
     };
 
     const dotColor = (v: number): string => {
-      if (v === 3) return '#000000'; // yellow always black pips
+      // Per-theme darkening (e.g. yellow on light backgrounds). Themes that don't
+      // list a face here get white pips (or dark pips when lightGameColors is set).
       const face = VALUE_TO_FACE[v];
       if (face && darken.has(face)) {
         return colors.darkenFaceColorsDot?.[face] ?? '#1A1A1A';

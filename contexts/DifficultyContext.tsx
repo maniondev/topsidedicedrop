@@ -5,9 +5,9 @@ export type Difficulty = 'easy' | 'medium' | 'hard';
 
 // Gravity interval per difficulty (ms per cell drop)
 export const GRAVITY_MS: Record<Difficulty, number> = {
-  easy:   1060, // ~10% slower than medium
+  easy:   1152, // 20% slower than medium (960 × 1.20)
   medium:  960, // normal
-  hard:    670, // ~30% faster than medium
+  hard:    576, // 40% faster than medium (960 × 0.60)
 };
 
 const DIFF_KEY = 'tm_difficulty';

@@ -3,40 +3,25 @@ import {
   View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Alert } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSound } from '@/contexts/SoundContext';
 import { usePremium } from '@/contexts/PremiumContext';
-import { useDifficulty, Difficulty } from '@/contexts/DifficultyContext';
-import { useGameStatus } from '@/contexts/GameStatusContext';
-import AppLogo from '@/components/AppLogo';
 import AdBanner from '@/components/AdBanner';
 import PremiumModal from '@/components/PremiumModal';
 import { ThemeId, ThemeMeta, THEME_IDS } from '@/constants/theme';
 
 const FREE_THEME: ThemeId = 'dice';
 
-const DIFFICULTIES: { id: Difficulty; label: string; desc: string }[] = [
-  { id: 'easy',   label: 'Easy',   desc: '~10% slower' },
-  { id: 'medium', label: 'Medium', desc: 'Standard' },
-  { id: 'hard',   label: 'Hard',   desc: '~30% faster' },
-];
-
 export default function SettingsScreen() {
   const { colors, themeId, setTheme } = useTheme();
   const { soundEnabled, setSoundEnabled } = useSound();
   const { isPremium, upgrade, restorePurchases, devToggle } = usePremium();
-  const { difficulty, setDifficulty } = useDifficulty();
-  const { isGameActive, endGame } = useGameStatus();
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <AppLogo size={28} />
-        <Text style={[styles.title, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-          Settings
-        </Text>
+        <Text style={[styles.title, { color: colors.text }]}>Settings</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -58,47 +43,6 @@ export default function SettingsScreen() {
             <Text style={[styles.premiumSub, { color: colors.textSecondary }]}>Thanks for your support!</Text>
           </View>
         )}
-
-        {/* Difficulty */}
-        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Difficulty</Text>
-          <View style={styles.diffRow}>
-            {DIFFICULTIES.map(d => {
-              const active = d.id === difficulty;
-              return (
-                <TouchableOpacity
-                  key={d.id}
-                  style={[
-                    styles.diffBtn,
-                    { borderColor: active ? colors.accent : colors.border },
-                    active && { backgroundColor: colors.accentDim },
-                  ]}
-                  onPress={() => {
-                    if (d.id === difficulty) return;
-                    if (isGameActive) {
-                      Alert.alert(
-                        'End Current Run?',
-                        "Switching difficulty will end your current run. Your score won't be saved.",
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          { text: 'Switch & End Run', style: 'destructive',
-                            onPress: () => { endGame(); setDifficulty(d.id); } },
-                        ],
-                      );
-                    } else {
-                      setDifficulty(d.id);
-                    }
-                  }}
-                >
-                  <Text style={[styles.diffLabel, { color: active ? colors.accent : colors.text }]}>
-                    {d.label}
-                  </Text>
-                  <Text style={[styles.diffDesc, { color: colors.textMuted }]}>{d.desc}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
 
         {/* Theme — locked for free users */}
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
@@ -192,8 +136,8 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   safe:           { flex: 1 },
-  header:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, gap: 8 },
-  title:          { fontSize: 22 },
+  header:         { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
+  title:          { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
   content:        { padding: 20, gap: 16, paddingBottom: 40 },
   section:        { borderRadius: 14, borderWidth: 1, padding: 16, gap: 12 },
   sectionTitle:   { fontSize: 15, fontWeight: '700' },
@@ -202,10 +146,6 @@ const styles = StyleSheet.create({
   premiumTagText: { fontSize: 10, fontWeight: '700' },
   row:            { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   rowLabel:       { fontSize: 16 },
-  diffRow:        { flexDirection: 'row', gap: 8 },
-  diffBtn:        { flex: 1, borderRadius: 10, borderWidth: 2, paddingVertical: 10, alignItems: 'center', gap: 2 },
-  diffLabel:      { fontSize: 14, fontWeight: '700' },
-  diffDesc:       { fontSize: 10 },
   themeGrid:      { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   themeBtn:       { borderRadius: 10, borderWidth: 2, paddingVertical: 8, paddingHorizontal: 10, alignItems: 'center', gap: 4, minWidth: 74 },
   themeBtnLocked: { opacity: 0.7 },

@@ -119,8 +119,7 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     adBg:          '#F2EAD8',
     adBorder:      '#E0CCA8',
     statusBar:     'dark',
-    darkenFaceColors: ['yellow'],
-    darkenFaceColorsDot: { yellow: '#C8A028' },
+    // Topside theme: white pips on every die, including yellow (consistent look).
   },
   dark: {
     background:    '#090C14',

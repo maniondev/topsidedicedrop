@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useStats } from '@/contexts/StatsContext';
 import { usePremium } from '@/contexts/PremiumContext';
-import AppLogo from '@/components/AppLogo';
 import { RunRecord } from '@/lib/storage';
 
 function formatDate(ts: number): string {
@@ -34,10 +33,7 @@ export default function StatsScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <AppLogo size={28} />
-        <Text style={[styles.title, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-          Stats
-        </Text>
+        <Text style={[styles.title, { color: colors.text }]}>Leaderboard</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -138,8 +134,8 @@ export default function StatsScreen() {
 
 const styles = StyleSheet.create({
   safe:        { flex: 1 },
-  header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, gap: 8 },
-  title:       { fontSize: 22 },
+  header:      { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
+  title:       { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
   content:     { padding: 20, gap: 16, paddingBottom: 40 },
   heroCard:    { borderRadius: 16, borderWidth: 1, padding: 24, alignItems: 'center', gap: 4 },
   heroLabel:   { fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
