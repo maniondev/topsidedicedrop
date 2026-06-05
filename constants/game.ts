@@ -1,5 +1,5 @@
 export const COLS = 5;
-export const ROWS = 7;
+export const ROWS = 8;
 
 export const GRAVITY_BASE_MS = 800;
 export const LOCK_DELAY_MS = 300;

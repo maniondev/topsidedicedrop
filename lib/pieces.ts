@@ -10,31 +10,38 @@ export interface PieceShape {
   rotations: TileOffset[][];
 }
 
-// Each rotation is a list of [dr, dc] offsets from anchor (top-left of bounding box).
-// Values are generated at spawn time, not stored here.
+// All pieces have exactly 4 rotation states (90° CW each tap).
+// Symmetric pieces repeat states so 4 taps always cycles back to start.
 export const PIECES: PieceShape[] = [
   {
     id: 'P1',
     rotations: [
       [{ dr: 0, dc: 0 }],
+      [{ dr: 0, dc: 0 }],
+      [{ dr: 0, dc: 0 }],
+      [{ dr: 0, dc: 0 }],
     ],
   },
   {
-    id: 'P2',
+    id: 'P2', // domino (horizontal start)
     rotations: [
-      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }],
-      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }],
+      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }], // 0°  H
+      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }], // 90° V
+      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }], // 180° H (repeats)
+      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }], // 270° V (repeats)
     ],
   },
   {
-    id: 'P3',
+    id: 'P3', // domino (vertical start)
     rotations: [
-      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }],
-      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }],
+      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }], // 0°  V
+      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }], // 90° H
+      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }], // 180° V (repeats)
+      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }], // 270° H (repeats)
     ],
   },
   {
-    id: 'P4',
+    id: 'P4', // L-triomino — 4 unique states
     rotations: [
       [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }, { dr: 1, dc: 1 }],
       [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }, { dr: 1, dc: 0 }],
@@ -43,10 +50,12 @@ export const PIECES: PieceShape[] = [
     ],
   },
   {
-    id: 'P5',
+    id: 'P5', // 3-in-a-row
     rotations: [
-      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }, { dr: 0, dc: 2 }],
-      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }, { dr: 2, dc: 0 }],
+      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }, { dr: 0, dc: 2 }], // 0°  H
+      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }, { dr: 2, dc: 0 }], // 90° V
+      [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }, { dr: 0, dc: 2 }], // 180° H (repeats)
+      [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }, { dr: 2, dc: 0 }], // 270° V (repeats)
     ],
   },
 ];

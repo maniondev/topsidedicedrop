@@ -23,13 +23,12 @@ import { onRunComplete } from '@/lib/adCounter';
 import { Board } from '@/lib/board';
 import { COLS, ROWS } from '@/constants/game';
 
-const HEADER_H   = 44;
-const HUD_H      = 52;
-const QUEUE_H    = 80;
+const HEADER_H   = 52;
+const HUD_H      = 50;
 const CONTROLS_H = 76;
 const BANNER_H   = 52;
 const TAB_BAR_H  = 60;
-const V_PAD      = 20;
+const V_PAD      = 16;
 
 export default function PlayScreen() {
   const { colors } = useTheme();
@@ -39,18 +38,19 @@ export default function PlayScreen() {
   const { width, height } = useWindowDimensions();
   const { top: safeTop, bottom: safeBottom } = useSafeAreaInsets();
 
-  // Calculate cell size so board + all controls fit on screen
-  const tabBarH = TAB_BAR_H + Math.max(safeBottom, Platform.OS === 'android' ? 28 : 8);
-  const bannerH = isPremium ? 0 : BANNER_H;
-  const usedH   = safeTop + tabBarH + HEADER_H + HUD_H + QUEUE_H + CONTROLS_H + bannerH + V_PAD;
-  const availH  = height - usedH;
-  const csH     = Math.floor(availH / ROWS);
-  const csW     = Math.floor((width - 32) / COLS);
-  const cellSize = Math.max(Math.min(csH, csW), 36); // minimum 36px
+  const tabBarH  = TAB_BAR_H + Math.max(safeBottom, Platform.OS === 'android' ? 28 : 8);
+  const bannerH  = isPremium ? 0 : BANNER_H;
+  const usedH    = safeTop + tabBarH + HEADER_H + HUD_H + CONTROLS_H + bannerH + V_PAD;
+  const availH   = height - usedH;
+  const csH      = Math.floor(availH / ROWS);
+  const csW      = Math.floor((width - 32) / COLS);
+  const cellSize = Math.max(Math.min(csH, csW), 32);
+
+  const boardW = cellSize * COLS;
 
   const game = useGame();
   const [showInterstitial, setShowInterstitial] = useState(false);
-  const [pendingNewGame, setPendingNewGame] = useState(false);
+  const [pendingNewGame, setPendingNewGame]      = useState(false);
 
   const { adLoaded, showAd } = useRewardedAd(useCallback(() => {
     game.startCondense();
@@ -65,8 +65,7 @@ export default function PlayScreen() {
 
   useEffect(() => {
     if (game.lastMergeEvents.length === 0) return;
-    const hasClear = game.lastMergeEvents.some(e => e.newValue === 'clear');
-    play(hasClear ? 'clear' : 'merge');
+    play(game.lastMergeEvents.some(e => e.newValue === 'clear') ? 'clear' : 'merge');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.lastMergeEvents]);
 
@@ -74,10 +73,8 @@ export default function PlayScreen() {
     if (adLoaded) showAd();
   }, [adLoaded, showAd]);
 
-  // New Game: show interstitial if due, otherwise reset immediately
   const handleNewGame = useCallback(() => {
-    const showAds = onRunComplete() && !isPremium;
-    if (showAds) {
+    if (onRunComplete() && !isPremium) {
       setPendingNewGame(true);
       setShowInterstitial(true);
     } else {
@@ -87,10 +84,7 @@ export default function PlayScreen() {
 
   const handleInterstitialClose = useCallback(() => {
     setShowInterstitial(false);
-    if (pendingNewGame) {
-      setPendingNewGame(false);
-      game.resetGame();
-    }
+    if (pendingNewGame) { setPendingNewGame(false); game.resetGame(); }
   }, [pendingNewGame, game.resetGame]);
 
   const handleCondenseComplete = useCallback((board: Board, scoreGained: number) => {
@@ -98,32 +92,30 @@ export default function PlayScreen() {
   }, [game.finishCondense]);
 
   const controlsDisabled =
-    game.phase === 'resolving' ||
-    game.phase === 'spawning'  ||
-    game.phase === 'condensing'||
-    game.phase === 'idle';
-
-  const boardW = cellSize * COLS;
-  const boardH = cellSize * ROWS;
+    game.phase === 'resolving' || game.phase === 'spawning' ||
+    game.phase === 'condensing' || game.phase === 'idle';
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
 
-      {/* Header */}
+      {/* Header: logo + title on left, next piece on right */}
       <View style={[styles.header, { height: HEADER_H }]}>
-        <AppLogo size={26} />
-        <Text style={[{ fontSize: 18, color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-          Topside: Merge
-        </Text>
+        <View style={styles.headerLeft}>
+          <AppLogo size={24} />
+          <Text style={{ fontSize: 17, color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }}>
+            Topside: Merge
+          </Text>
+        </View>
+        <NextQueue queue={game.queue} />
       </View>
 
-      {/* Score + Queue in one row */}
-      <View style={[styles.infoRow, { height: HUD_H }]}>
+      {/* Score */}
+      <View style={[styles.hudRow, { height: HUD_H }]}>
         <HUD score={game.score} bestScore={bestScore} />
       </View>
 
       {/* Board */}
-      <View style={[styles.boardWrap, { width: boardW, height: boardH, backgroundColor: colors.surfaceRaise }]}>
+      <View style={[styles.boardWrap, { backgroundColor: colors.surfaceRaise, alignSelf: 'center' }]}>
         <GameBoard
           board={game.board}
           activePiece={game.activePiece}
@@ -137,13 +129,8 @@ export default function PlayScreen() {
         />
       </View>
 
-      {/* Next queue */}
-      <View style={[styles.queueRow, { height: QUEUE_H }]}>
-        <NextQueue queue={game.queue} />
-      </View>
-
-      {/* Controls */}
-      <View style={[styles.controlsRow, { height: CONTROLS_H }]}>
+      {/* Controls — same width as board so rotate sits at board center */}
+      <View style={[styles.controlsRow, { height: CONTROLS_H, width: boardW }]}>
         <Controls
           onLeft={game.moveLeft}
           onRight={game.moveRight}
@@ -178,21 +165,19 @@ export default function PlayScreen() {
         onNewGame={handleNewGame}
       />
 
-      <AdInterstitial
-        visible={showInterstitial}
-        onClose={handleInterstitialClose}
-      />
+      <AdInterstitial visible={showInterstitial} onClose={handleInterstitialClose} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe:         { flex: 1 },
-  header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  infoRow:      { alignItems: 'center', justifyContent: 'center' },
-  boardWrap:    { alignSelf: 'center', borderRadius: 4, overflow: 'hidden' },
-  queueRow:     { alignItems: 'center', justifyContent: 'center' },
-  controlsRow:  { alignItems: 'center', justifyContent: 'center' },
+  safe:         { flex: 1, alignItems: 'center' },
+  header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                  width: '100%', paddingHorizontal: 16 },
+  headerLeft:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  hudRow:       { alignItems: 'center', justifyContent: 'center', width: '100%' },
+  boardWrap:    { borderRadius: 4, overflow: 'hidden' },
+  controlsRow:  { alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   startOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',

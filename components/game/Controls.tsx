@@ -71,9 +71,15 @@ export default function Controls({ onLeft, onRight, onRotate, onSoftDrop, onHard
   const { colors } = useTheme();
   if (disabled) return <View style={styles.placeholder} />;
 
+  const DROP_SIZE = 52;
+
   return (
+    // Full-width row matching board width (set by parent)
     <View style={styles.row}>
-      {/* Centered movement group */}
+      {/* Invisible spacer = drop button width, keeps the trio truly centered */}
+      <View style={{ width: DROP_SIZE }} />
+
+      {/* [←] [↺] [→] — centered in remaining space */}
       <View style={styles.centerGroup}>
         <CtrlBtn onPress={onLeft}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
@@ -86,7 +92,7 @@ export default function Controls({ onLeft, onRight, onRotate, onSoftDrop, onHard
         </CtrlBtn>
       </View>
 
-      {/* Down button — tap for 1 cell, hold to snap */}
+      {/* Down — tap 1 cell, hold to snap */}
       <DropButton onSoftDrop={onSoftDrop} onHardDrop={onHardDrop} />
     </View>
   );
