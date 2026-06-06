@@ -1,6 +1,6 @@
 import { FaceColorName } from './theme';
 
-export const COLS = 6;
+export const COLS = 5;
 export const ROWS = 8;
 
 export const GRAVITY_BASE_MS = 960;
