@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useStats } from '@/contexts/StatsContext';
 import { useDifficulty, Difficulty, GRAVITY_MS } from '@/contexts/DifficultyContext';
@@ -23,12 +23,19 @@ export default function LobbyScreen() {
   const { isGameActive } = useGameStatus();
   const [hasSavedGame, setHasSavedGame] = useState(false);
 
-  useEffect(() => {
+  // Re-check for a saved game every time the lobby is focused (e.g. after Save & Quit)
+  useFocusEffect(useCallback(() => {
     loadSavedGame().then(s => setHasSavedGame(!!s)).catch(() => {});
+  }, []));
+
+  // Continue the saved game (game screen auto-loads it)
+  const handleContinue = useCallback(() => {
+    router.push('/game');
   }, []);
 
-  const handlePlay = useCallback(() => {
-    router.push('/game');
+  // Start fresh — pass ?fresh=1 so the game screen ignores any saved game
+  const handleNewGame = useCallback(() => {
+    router.push({ pathname: '/game', params: { fresh: '1' } });
   }, []);
 
   return (
@@ -103,23 +110,35 @@ export default function LobbyScreen() {
 
         {/* Play / Resume buttons */}
         <View style={styles.btnStack}>
-          {hasSavedGame && (
+          {hasSavedGame ? (
+            <>
+              {/* Primary — resume the saved run */}
+              <TouchableOpacity
+                style={[styles.playBtn, { backgroundColor: colors.accent }]}
+                onPress={handleContinue}
+              >
+                <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+                  Continue
+                </Text>
+              </TouchableOpacity>
+              {/* Secondary — discard and start fresh */}
+              <TouchableOpacity
+                style={[styles.newGameBtn, { borderColor: colors.border }]}
+                onPress={handleNewGame}
+              >
+                <Text style={[styles.newGameText, { color: colors.textSecondary }]}>New Game</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
             <TouchableOpacity
-              style={[styles.resumeBtn, { backgroundColor: colors.premiumBg, borderColor: colors.premiumGold }]}
-              onPress={handlePlay}
+              style={[styles.playBtn, { backgroundColor: colors.accent }]}
+              onPress={handleNewGame}
             >
-              <Text style={[styles.resumeBtnText, { color: colors.premiumGold }]}>💾  Resume Saved Game</Text>
+              <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+                Play
+              </Text>
             </TouchableOpacity>
           )}
-
-          <TouchableOpacity
-            style={[styles.playBtn, { backgroundColor: colors.accent }]}
-            onPress={handlePlay}
-          >
-            <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-              {hasSavedGame ? 'New Game' : 'Play'}
-            </Text>
-          </TouchableOpacity>
         </View>
 
       </ScrollView>
@@ -150,9 +169,9 @@ const styles = StyleSheet.create({
   diffRow:     { flexDirection: 'row', gap: 10, height: '100%' },
   diffBtn:     { flex: 1, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   diffLabel:   { fontSize: 15 },
-  btnStack:    { gap: 12, marginTop: 4 },
-  resumeBtn:   { height: ROW_H, borderRadius: 14, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  resumeBtnText: { fontSize: 17, fontWeight: '700' },
+  btnStack:    { gap: 10, marginTop: 4 },
   playBtn:     { height: ROW_H, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   playBtnText: { fontSize: 24 },
+  newGameBtn:  { height: 48, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  newGameText: { fontSize: 16, fontWeight: '600' },
 });

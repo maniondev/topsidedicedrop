@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -34,6 +34,7 @@ const BANNER_H   = 60; // matches BANNER_RESERVED_H in AdBanner
 const V_PAD      = 40; // slack so the centered game block sits a bit lower / balanced
 
 export default function GameScreen() {
+  const { fresh } = useLocalSearchParams<{ fresh?: string }>();
   const { colors } = useTheme();
   const { bestScore, submitRun } = useStats();
   const { play } = useSound();
@@ -58,8 +59,13 @@ export default function GameScreen() {
   const [pendingNewGame,    setPendingNewGame]     = useState(false);
   const [freeContinueUsed,  setFreeContinueUsed]  = useState(false);
 
-  // Check for saved game on mount and auto-load it
+  // On mount: start fresh if ?fresh=1, otherwise resume a saved game if one exists
   useEffect(() => {
+    if (fresh === '1') {
+      clearSavedGame();
+      game.startGame();
+      return;
+    }
     loadSavedGame().then(saved => {
       if (saved) {
         clearSavedGame();

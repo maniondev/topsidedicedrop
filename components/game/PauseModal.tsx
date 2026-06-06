@@ -27,7 +27,7 @@ export default function PauseModal({ visible, onResume, onContinueLater, onNewGa
             style={[styles.outlineBtn, { borderColor: colors.accent }]}
             onPress={onContinueLater}
           >
-            <Text style={[styles.outlineText, { color: colors.accent }]}>💾  Save & Quit</Text>
+            <Text style={[styles.outlineText, { color: colors.accent }]}>Save & Quit</Text>
             <Text style={[styles.subText, { color: colors.textMuted }]}>Resume next time you play</Text>
           </TouchableOpacity>
 
