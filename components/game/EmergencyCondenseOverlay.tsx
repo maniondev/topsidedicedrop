@@ -1,52 +1,33 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
-import { runEmergencyCondense } from '@/lib/condense';
-import { Board } from '@/lib/board';
 
 interface Props {
   visible: boolean;
-  board: Board;
-  onComplete: (board: Board, scoreGained: number) => void;
 }
 
-export default function EmergencyCondenseOverlay({ visible, board, onComplete }: Props) {
+/**
+ * Pure visual flourish shown during Emergency Condense. The actual board
+ * condense + resume is driven by the game screen (a single, robust effect),
+ * NOT by this component — so it survives the rewarded-ad background/foreground
+ * transition that used to strand the game in a non-playable state.
+ */
+export default function EmergencyCondenseOverlay({ visible }: Props) {
   const { colors } = useTheme();
   const opacity = useRef(new Animated.Value(0)).current;
-  const onCompleteRef = useRef(onComplete);
-  onCompleteRef.current = onComplete;
 
   useEffect(() => {
-    if (!visible) {
-      opacity.setValue(0);
-      return;
-    }
-
-    // Fade in
-    Animated.timing(opacity, { toValue: 1, duration: 250, useNativeDriver: true }).start();
-
-    // Give the UI a frame to show the overlay, then run condense (sync but brief)
-    // then fade out and report results
-    const timer = setTimeout(() => {
-      const { finalBoard, scoreGained } = runEmergencyCondense(board);
-
-      // Hold the "condensed" state for a moment so the user sees it
-      setTimeout(() => {
-        Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
-          onCompleteRef.current(finalBoard, scoreGained);
-        });
-      }, 600);
-    }, 700);
-
-    return () => clearTimeout(timer);
-  // board intentionally excluded — we only want the snapshot at the moment visible=true
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
+    Animated.timing(opacity, {
+      toValue: visible ? 1 : 0,
+      duration: visible ? 250 : 300,
+      useNativeDriver: true,
+    }).start();
+  }, [visible, opacity]);
 
   if (!visible) return null;
 
   return (
-    <Animated.View style={[styles.overlay, { opacity }]}>
+    <Animated.View style={[styles.overlay, { opacity }]} pointerEvents="none">
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.accent }]}>
         <Text style={[styles.title, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
           ⚡ Condensing…

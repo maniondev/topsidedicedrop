@@ -24,7 +24,7 @@ import AdBanner from '@/components/AdBanner';
 import AdInterstitial from '@/components/AdInterstitial';
 import { onRunComplete } from '@/lib/adCounter';
 import { saveGame, loadSavedGame, clearSavedGame } from '@/lib/storage';
-import { Board } from '@/lib/board';
+import { runEmergencyCondense } from '@/lib/condense';
 import { COLS, ROWS } from '@/constants/game';
 
 // No tab bar in this screen — more space for the board
@@ -145,9 +145,28 @@ export default function GameScreen() {
     }
   }, [pendingNewGame, game.resetGame]);
 
-  const handleCondenseComplete = useCallback((board: Board, scoreGained: number) => {
-    game.finishCondense(board, scoreGained);
-  }, [game.finishCondense]);
+  // Robust Emergency Condense: a single screen-level effect drives the board
+  // compression and resume. Guarded by a ref so it runs exactly once per
+  // 'condensing' phase, and survives the rewarded-ad background/foreground
+  // transition (the screen stays mounted, unlike fragile in-overlay timers).
+  const condenseRanRef = useRef(false);
+  useEffect(() => {
+    if (game.phase !== 'condensing') {
+      condenseRanRef.current = false;
+      return;
+    }
+    if (condenseRanRef.current) return;
+    condenseRanRef.current = true;
+
+    play('condense');
+    const snapshot = game.board;
+    const t = setTimeout(() => {
+      const { finalBoard, scoreGained } = runEmergencyCondense(snapshot);
+      game.finishCondense(finalBoard, scoreGained);
+    }, 900); // brief hold so the "Condensing…" overlay is visible
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.phase]);
 
   // Save game and return to lobby
   const handleSaveAndQuit = useCallback(async () => {
@@ -237,11 +256,7 @@ export default function GameScreen() {
               ghostAnchorRow={game.ghostAnchorRow}
               cellSize={cellSize}
             />
-            <EmergencyCondenseOverlay
-              visible={game.phase === 'condensing'}
-              board={game.board}
-              onComplete={handleCondenseComplete}
-            />
+            <EmergencyCondenseOverlay visible={game.phase === 'condensing'} />
           </View>
         </GestureDetector>
 
