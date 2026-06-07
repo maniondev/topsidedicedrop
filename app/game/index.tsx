@@ -120,9 +120,14 @@ export default function GameScreen() {
   useEffect(() => {
     if (game.lastMergeEvents.length === 0) return;
     const hasClear = game.lastMergeEvents.some(e => e.newValue === 'clear');
-    // Climbing pitch per chain pass: each deeper merge plays a little higher.
-    const rate = Math.min(1 + Math.max(0, game.chainPass - 1) * 0.09, 1.7);
-    play(hasClear ? 'clear' : 'merge', rate);
+    if (hasClear) {
+      play('clear');
+    } else {
+      // Play merge1–merge6 in sequence during chain. If chain > 6, replay merge6.
+      const MERGE_SOUNDS = ['merge1', 'merge2', 'merge3', 'merge4', 'merge5', 'merge6'] as const;
+      const mergeIdx = Math.min(Math.max(0, game.chainPass - 1), 5);
+      play(MERGE_SOUNDS[mergeIdx]);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.lastMergeEvents]);
 
