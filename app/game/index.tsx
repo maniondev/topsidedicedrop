@@ -240,7 +240,7 @@ export default function GameScreen() {
   const prevY  = useRef(0);
 
   const DEADZONE = cellSize * 0.22; // small — axis chosen quickly so sideways feels responsive
-  const H_STEP   = cellSize * 0.42; // horizontal distance per left/right move
+  const H_STEP   = cellSize * 0.30; // horizontal distance per left/right move — lower for more sensitive initial swipe
   const V_STEP   = cellSize * 0.80; // vertical distance per soft-drop (deliberate)
 
   const boardGesture = Gesture.Race(
