@@ -6,6 +6,7 @@ interface Props {
   visible: boolean;
   score: number;
   bestScore: number;
+  prevBest: number;
   // free continue: premium gets 1 free per run (no ad)
   freeContinueAvailable: boolean;
   // paid continue: rewarded ad available
@@ -16,12 +17,12 @@ interface Props {
 }
 
 export default function GameOverModal({
-  visible, score, bestScore,
+  visible, score, bestScore, prevBest,
   freeContinueAvailable, adLoaded,
   onFreeContinue, onContinue, onNewGame,
 }: Props) {
   const { colors } = useTheme();
-  const isNewBest = score >= bestScore && score > 0;
+  const isNewBest = score > prevBest && score > 0;
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onNewGame}>
@@ -37,7 +38,9 @@ export default function GameOverModal({
             {score.toLocaleString()}
           </Text>
           <Text style={[styles.bestLabel, { color: colors.textMuted }]}>
-            Best: {bestScore.toLocaleString()}
+            {isNewBest
+              ? `Previous best: ${prevBest.toLocaleString()}`
+              : `Best: ${bestScore.toLocaleString()}`}
           </Text>
 
           {freeContinueAvailable && (

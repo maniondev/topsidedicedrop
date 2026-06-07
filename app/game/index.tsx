@@ -44,6 +44,9 @@ export default function GameScreen() {
   const { top: safeTop, bottom: safeBottom } = useSafeAreaInsets();
 
   const [paused, setPaused] = useState(false);
+  // Best score captured at game-over, BEFORE this run is submitted — so the
+  // modal can show the previous best when you set a new record.
+  const [prevBest, setPrevBest] = useState(0);
 
   const bannerH  = isPremium ? 0 : BANNER_H;
   const usedH    = safeTop + safeBottom + HUD_H + CONTROLS_H + bannerH + V_PAD;
@@ -93,6 +96,7 @@ export default function GameScreen() {
   useEffect(() => {
     if (game.phase !== 'gameOver') return;
     play('gameover');
+    setPrevBest(bestScore); // capture old best before submitRun overwrites it
     const continueUsed = freeContinueUsed || game.continueAvailable === false;
     submitRun(game.score, game.runBestChain, difficulty, continueUsed);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -321,6 +325,7 @@ export default function GameScreen() {
         visible={game.phase === 'gameOver'}
         score={game.score}
         bestScore={bestScore}
+        prevBest={prevBest}
         freeContinueAvailable={freeContinueAvailable}
         adLoaded={adLoaded}
         onFreeContinue={handleFreeContinue}
