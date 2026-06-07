@@ -238,9 +238,11 @@ export default function GameScreen() {
   const accY   = useRef(0);
   const prevX  = useRef(0);
   const prevY  = useRef(0);
+  const hMovedRef = useRef(false); // track if we've made a horizontal move yet
 
   const DEADZONE = cellSize * 0.22; // small — axis chosen quickly so sideways feels responsive
-  const H_STEP   = cellSize * 0.30; // horizontal distance per left/right move — lower for more sensitive initial swipe
+  const H_STEP   = cellSize * 0.42; // horizontal distance per left/right move
+  const H_FIRST  = cellSize * 0.32; // smaller threshold for FIRST horizontal move (responsive initial swipe)
   const V_STEP   = cellSize * 0.80; // vertical distance per soft-drop (deliberate)
 
   const boardGesture = Gesture.Race(
@@ -253,6 +255,7 @@ export default function GameScreen() {
         axis.current = 'none';
         accX.current = 0; accY.current = 0;
         prevX.current = 0; prevY.current = 0;
+        hMovedRef.current = false;
       })
       .onUpdate(e => {
         const dx = e.translationX - prevX.current;
@@ -281,9 +284,12 @@ export default function GameScreen() {
         }
 
         if (axis.current === 'h') {
-          while (Math.abs(accX.current) >= H_STEP) {
+          // Use H_FIRST for first move, H_STEP for subsequent moves
+          const threshold = hMovedRef.current ? H_STEP : H_FIRST;
+          while (Math.abs(accX.current) >= threshold) {
             if (accX.current > 0) runOnJS(game.moveRight)();
             else runOnJS(game.moveLeft)();
+            hMovedRef.current = true;
             accX.current += accX.current > 0 ? -H_STEP : H_STEP;
           }
         } else {
