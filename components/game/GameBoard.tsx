@@ -207,10 +207,13 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
   const gridLines = useMemo(() => {
     const lines: React.ReactNode[] = [];
     for (let r = 0; r <= ROWS; r++) {
-      lines.push(<RoundedRect key={`hr${r}`} x={0} y={r * cs} width={boardW} height={1} r={0} color={gridColor} />);
+      // Pull the last line 1px inside so the bottom edge isn't clipped off-canvas
+      const y = r === ROWS ? boardH - 1 : r * cs;
+      lines.push(<RoundedRect key={`hr${r}`} x={0} y={y} width={boardW} height={1} r={0} color={gridColor} />);
     }
     for (let c = 0; c <= COLS; c++) {
-      lines.push(<RoundedRect key={`vc${c}`} x={c * cs} y={0} width={1} height={boardH} r={0} color={gridColor} />);
+      const x = c === COLS ? boardW - 1 : c * cs;
+      lines.push(<RoundedRect key={`vc${c}`} x={x} y={0} width={1} height={boardH} r={0} color={gridColor} />);
     }
     return lines;
   }, [cs, boardW, boardH, gridColor]);
