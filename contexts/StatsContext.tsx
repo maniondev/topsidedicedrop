@@ -1,25 +1,34 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { loadStats, recordRun, clearStats, Stats } from '@/lib/storage';
+import { loadStats, recordRun, clearStats, Stats, DiffStats } from '@/lib/storage';
 import { Difficulty } from '@/contexts/DifficultyContext';
+
+const EMPTY: Stats = {
+  byDifficulty: {
+    easy:   { bestScore: 0, totalRuns: 0, bestChain: 0 },
+    medium: { bestScore: 0, totalRuns: 0, bestChain: 0 },
+    hard:   { bestScore: 0, totalRuns: 0, bestChain: 0 },
+  },
+  recentRuns: [],
+};
 
 interface StatsCtxType {
   stats: Stats;
-  bestScore: number;
+  statsFor: (d: Difficulty) => DiffStats;
   submitRun: (score: number, bestChain: number, difficulty: Difficulty, usedContinue: boolean) => Promise<void>;
   refresh: () => Promise<void>;
   resetStats: () => Promise<void>;
 }
 
 const StatsCtx = createContext<StatsCtxType>({
-  stats: { bestScore: 0, totalRuns: 0, bestChain: 0, recentRuns: [] },
-  bestScore: 0,
+  stats: EMPTY,
+  statsFor: () => EMPTY.byDifficulty.medium,
   submitRun: async () => {},
   refresh: async () => {},
   resetStats: async () => {},
 });
 
 export function StatsProvider({ children }: { children: ReactNode }) {
-  const [stats, setStats] = useState<Stats>({ bestScore: 0, totalRuns: 0, bestChain: 0, recentRuns: [] });
+  const [stats, setStats] = useState<Stats>(EMPTY);
 
   useEffect(() => {
     loadStats().then(setStats).catch(() => {});
@@ -45,9 +54,11 @@ export function StatsProvider({ children }: { children: ReactNode }) {
     setStats(empty);
   }, []);
 
+  const statsFor = useCallback((d: Difficulty) => stats.byDifficulty[d], [stats]);
+
   const value = useMemo(
-    () => ({ stats, bestScore: stats.bestScore, submitRun, refresh, resetStats }),
-    [stats, submitRun, refresh, resetStats],
+    () => ({ stats, statsFor, submitRun, refresh, resetStats }),
+    [stats, statsFor, submitRun, refresh, resetStats],
   );
   return <StatsCtx.Provider value={value}>{children}</StatsCtx.Provider>;
 }

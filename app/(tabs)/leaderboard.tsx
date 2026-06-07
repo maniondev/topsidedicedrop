@@ -26,6 +26,19 @@ export default function StatsScreen() {
   const { stats } = useStats();
   const { isPremium, upgrade } = usePremium();
 
+  // Aggregate across all difficulties for the global leaderboard
+  const bestScore = Math.max(
+    stats.byDifficulty.easy.bestScore,
+    stats.byDifficulty.medium.bestScore,
+    stats.byDifficulty.hard.bestScore,
+  );
+  const totalRuns = stats.byDifficulty.easy.totalRuns + stats.byDifficulty.medium.totalRuns + stats.byDifficulty.hard.totalRuns;
+  const bestChain = Math.max(
+    stats.byDifficulty.easy.bestChain,
+    stats.byDifficulty.medium.bestChain,
+    stats.byDifficulty.hard.bestChain,
+  );
+
   const avgScore = stats.recentRuns.length > 0
     ? Math.round(stats.recentRuns.reduce((a, r) => a + r.score, 0) / stats.recentRuns.length)
     : 0;
@@ -42,7 +55,7 @@ export default function StatsScreen() {
         <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
           <Text style={[styles.heroLabel, { color: colors.textMuted }]}>BEST SCORE</Text>
           <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-            {stats.bestScore.toLocaleString()}
+            {bestScore > 0 ? bestScore.toLocaleString() : '—'}
           </Text>
         </View>
 
@@ -51,13 +64,13 @@ export default function StatsScreen() {
           <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>RUNS</Text>
             <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-              {stats.totalRuns}
+              {totalRuns}
             </Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST CHAIN</Text>
             <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-              {stats.bestChain > 0 ? `×${stats.bestChain}` : '—'}
+              {bestChain > 0 ? `×${bestChain}` : '—'}
             </Text>
           </View>
         </View>
@@ -124,7 +137,7 @@ export default function StatsScreen() {
           </TouchableOpacity>
         )}
 
-        {stats.totalRuns === 0 && (
+        {totalRuns === 0 && (
           <Text style={[styles.empty, { color: colors.textMuted }]}>No runs yet — play a game first!</Text>
         )}
       </ScrollView>

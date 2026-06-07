@@ -36,10 +36,11 @@ const V_PAD      = 40; // slack so the centered game block sits a bit lower / ba
 export default function GameScreen() {
   const { fresh } = useLocalSearchParams<{ fresh?: string }>();
   const { colors } = useTheme();
-  const { bestScore, submitRun } = useStats();
+  const { statsFor, submitRun } = useStats();
   const { play } = useSound();
   const { isPremium } = usePremium();
   const { gravityMs, difficulty } = useDifficulty();
+  const bestScore = statsFor(difficulty).bestScore;
   const { width, height } = useWindowDimensions();
   const { top: safeTop, bottom: safeBottom } = useSafeAreaInsets();
 

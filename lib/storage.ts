@@ -11,12 +11,22 @@ export interface RunRecord {
   usedContinue: boolean;
 }
 
-export interface Stats {
+export interface DiffStats {
   bestScore: number;
   totalRuns: number;
   bestChain: number;
-  recentRuns: RunRecord[];
 }
+
+export interface Stats {
+  byDifficulty: Record<Difficulty, DiffStats>;
+  recentRuns: RunRecord[]; // global, last 20, each tagged with its difficulty
+}
+
+const emptyDiff = (): DiffStats => ({ bestScore: 0, totalRuns: 0, bestChain: 0 });
+const emptyStats = (): Stats => ({
+  byDifficulty: { easy: emptyDiff(), medium: emptyDiff(), hard: emptyDiff() },
+  recentRuns: [],
+});
 
 const STATS_KEY      = `${PREFIX}stats`;
 // Saved games are keyed PER DIFFICULTY so an easy run can't be resumed and
@@ -55,9 +65,22 @@ export async function clearSavedGame(difficulty: Difficulty): Promise<void> {
 export async function loadStats(): Promise<Stats> {
   try {
     const raw = await AsyncStorage.getItem(STATS_KEY);
-    if (raw) return JSON.parse(raw) as Stats;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Migrate / validate: only accept the per-difficulty shape, else start fresh.
+      if (parsed && parsed.byDifficulty) {
+        return {
+          byDifficulty: {
+            easy:   { ...emptyDiff(), ...parsed.byDifficulty.easy },
+            medium: { ...emptyDiff(), ...parsed.byDifficulty.medium },
+            hard:   { ...emptyDiff(), ...parsed.byDifficulty.hard },
+          },
+          recentRuns: Array.isArray(parsed.recentRuns) ? parsed.recentRuns : [],
+        };
+      }
+    }
   } catch {}
-  return { bestScore: 0, totalRuns: 0, bestChain: 0, recentRuns: [] };
+  return emptyStats();
 }
 
 export async function saveStats(stats: Stats): Promise<void> {
@@ -67,7 +90,7 @@ export async function saveStats(stats: Stats): Promise<void> {
 }
 
 export async function clearStats(): Promise<Stats> {
-  const empty: Stats = { bestScore: 0, totalRuns: 0, bestChain: 0, recentRuns: [] };
+  const empty = emptyStats();
   await saveStats(empty);
   return empty;
 }
@@ -79,9 +102,10 @@ export async function recordRun(
   usedContinue: boolean,
 ): Promise<Stats> {
   const stats = await loadStats();
-  stats.totalRuns++;
-  if (score > stats.bestScore) stats.bestScore = score;
-  if (bestChain > stats.bestChain) stats.bestChain = bestChain;
+  const d = stats.byDifficulty[difficulty];
+  d.totalRuns++;
+  if (score > d.bestScore) d.bestScore = score;
+  if (bestChain > d.bestChain) d.bestChain = bestChain;
   stats.recentRuns = [
     { score, date: Date.now(), bestChain, difficulty, usedContinue },
     ...stats.recentRuns,

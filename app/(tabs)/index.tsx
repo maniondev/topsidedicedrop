@@ -1,12 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, SafeAreaView,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useStats } from '@/contexts/StatsContext';
 import { useDifficulty, Difficulty, GRAVITY_MS } from '@/contexts/DifficultyContext';
-import { useGameStatus } from '@/contexts/GameStatusContext';
 import AppLogo from '@/components/AppLogo';
 import HowToPlayModal from '@/components/HowToPlayModal';
 import { loadSavedGame } from '@/lib/storage';
@@ -19,11 +18,12 @@ const DIFFICULTIES: { id: Difficulty; label: string }[] = [
 
 export default function LobbyScreen() {
   const { colors } = useTheme();
-  const { stats } = useStats();
+  const { statsFor } = useStats();
   const { difficulty, setDifficulty } = useDifficulty();
-  const { isGameActive } = useGameStatus();
   const [hasSavedGame, setHasSavedGame] = useState(false);
   const [howToOpen, setHowToOpen] = useState(false);
+
+  const dstats = statsFor(difficulty);
 
   // Re-check for a saved game for the SELECTED difficulty — on focus and whenever
   // the difficulty changes. A save only counts toward the matching difficulty.
@@ -43,9 +43,9 @@ export default function LobbyScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <View style={styles.content}>
 
-        {/* Header — logo left of title, CubePuzzle style */}
+        {/* Header — logo left of title */}
         <View style={styles.titleRow}>
           <AppLogo size={62} />
           <View style={styles.titleTextBlock}>
@@ -60,34 +60,7 @@ export default function LobbyScreen() {
           </View>
         </View>
 
-        {/* Best Score hero */}
-        <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.heroLabel, { color: colors.textMuted }]}>BEST SCORE</Text>
-          <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-            {stats.bestScore > 0 ? stats.bestScore.toLocaleString() : '—'}
-          </Text>
-        </View>
-
-        {/* Stats row */}
-        <View style={styles.statsRow}>
-          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>RUNS</Text>
-            <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-              {stats.totalRuns}
-            </Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST CHAIN</Text>
-            <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-              {stats.bestChain > 0 ? `×${stats.bestChain}` : '—'}
-            </Text>
-          </View>
-        </View>
-
-        {/* Divider — below stats, above difficulty */}
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        {/* Difficulty selector */}
+        {/* Difficulty — drives the stats below */}
         <View style={styles.diffSection}>
           <View style={styles.diffRow}>
             {DIFFICULTIES.map(d => {
@@ -114,40 +87,32 @@ export default function LobbyScreen() {
           </View>
         </View>
 
-        {/* Play / Resume buttons */}
-        <View style={styles.btnStack}>
-          {hasSavedGame ? (
-            <>
-              {/* Primary — resume the saved run */}
-              <TouchableOpacity
-                style={[styles.playBtn, { backgroundColor: colors.accent }]}
-                onPress={handleContinue}
-              >
-                <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-                  Continue
-                </Text>
-              </TouchableOpacity>
-              {/* Secondary — discard and start fresh */}
-              <TouchableOpacity
-                style={[styles.newGameBtn, { borderColor: colors.border }]}
-                onPress={handleNewGame}
-              >
-                <Text style={[styles.newGameText, { color: colors.textSecondary }]}>New Game</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <TouchableOpacity
-              style={[styles.playBtnTall, { backgroundColor: colors.accent }]}
-              onPress={handleNewGame}
-            >
-              <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-                Play
-              </Text>
-            </TouchableOpacity>
-          )}
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+        {/* Best Score hero — for the selected difficulty */}
+        <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+          <Text style={[styles.heroLabel, { color: colors.textMuted }]}>BEST SCORE</Text>
+          <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+            {dstats.bestScore > 0 ? dstats.bestScore.toLocaleString() : '—'}
+          </Text>
         </View>
 
-        {/* Divider — below Continue/Play, above How to Play */}
+        {/* Stats row — for the selected difficulty */}
+        <View style={styles.statsRow}>
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>RUNS</Text>
+            <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              {dstats.totalRuns}
+            </Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST CHAIN</Text>
+            <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              {dstats.bestChain > 0 ? `×${dstats.bestChain}` : '—'}
+            </Text>
+          </View>
+        </View>
+
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
         {/* How to Play */}
@@ -155,7 +120,39 @@ export default function LobbyScreen() {
           <Text style={[styles.howToText, { color: colors.textSecondary }]}>How to Play</Text>
         </TouchableOpacity>
 
-      </ScrollView>
+        {/* Flexible spacer pushes the action buttons to the bottom */}
+        <View style={{ flex: 1 }} />
+
+        {/* Action buttons — pinned at the bottom for easy reach */}
+        {hasSavedGame ? (
+          <>
+            <TouchableOpacity
+              style={[styles.playBtn, { backgroundColor: colors.accent }]}
+              onPress={handleContinue}
+            >
+              <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+                Continue
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.newGameBtn, { borderColor: colors.border }]}
+              onPress={handleNewGame}
+            >
+              <Text style={[styles.newGameText, { color: colors.textSecondary }]}>New Game</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <TouchableOpacity
+            style={[styles.playBtn, { backgroundColor: colors.accent }]}
+            onPress={handleNewGame}
+          >
+            <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              Play
+            </Text>
+          </TouchableOpacity>
+        )}
+
+      </View>
 
       <HowToPlayModal visible={howToOpen} onClose={() => setHowToOpen(false)} />
     </SafeAreaView>
@@ -166,7 +163,7 @@ const ROW_H = 60; // shared height for stat cards, difficulty, play button
 
 const styles = StyleSheet.create({
   safe:        { flex: 1 },
-  content:     { paddingTop: 16, paddingHorizontal: 20, gap: 12, paddingBottom: 40 },
+  content:     { flex: 1, paddingTop: 16, paddingHorizontal: 20, paddingBottom: 20, gap: 12 },
   titleRow:       { flexDirection: 'row', alignItems: 'center', marginBottom: 2, marginLeft: -8 },
   titleTextBlock: { flex: 1, marginLeft: 4 },
   titleText:      { fontSize: 30 },
@@ -185,14 +182,10 @@ const styles = StyleSheet.create({
   diffRow:     { flexDirection: 'row', gap: 10, height: '100%' },
   diffBtn:     { flex: 1, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   diffLabel:   { fontSize: 15 },
-  divider:     { height: 1, alignSelf: 'stretch', marginVertical: 8 },
-  // Fixed-height section so the layout doesn't shift between Play and Continue+New Game.
-  // ROW_H (continue) + 10 gap + 48 (new game) = full section height.
-  btnStack:    { gap: 10, marginTop: 4, height: ROW_H + 10 + 48, justifyContent: 'center' },
+  divider:     { height: 1, alignSelf: 'stretch', marginVertical: 4 },
   howToBtn:    { alignItems: 'center', paddingVertical: 6 },
   howToText:   { fontSize: 15, fontWeight: '600', letterSpacing: 0.3 },
   playBtn:     { height: ROW_H, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  playBtnTall: { flex: 1, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   playBtnText: { fontSize: 24 },
   newGameBtn:  { height: 48, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   newGameText: { fontSize: 16, fontWeight: '600' },
