@@ -205,8 +205,8 @@ export default function GameScreen() {
   const prevX  = useRef(0);
   const prevY  = useRef(0);
 
-  const DEADZONE = cellSize * 0.45; // movement needed before an axis is chosen
-  const H_STEP   = cellSize * 0.55; // horizontal distance per left/right move
+  const DEADZONE = cellSize * 0.22; // small — axis chosen quickly so sideways feels responsive
+  const H_STEP   = cellSize * 0.42; // horizontal distance per left/right move
   const V_STEP   = cellSize * 0.80; // vertical distance per soft-drop (deliberate)
 
   const boardGesture = Gesture.Race(
@@ -214,7 +214,7 @@ export default function GameScreen() {
       .maxDuration(250)
       .onEnd(() => { runOnJS(rotateWithSound)(); }),
     Gesture.Pan()
-      .minDistance(6)
+      .minDistance(4)
       .onStart(() => {
         axis.current = 'none';
         accX.current = 0; accY.current = 0;
@@ -226,17 +226,27 @@ export default function GameScreen() {
         prevX.current = e.translationX;
         prevY.current = e.translationY;
 
-        // Choose the axis once the swipe clears the deadzone
+        // Choose the axis once the swipe clears the (small) deadzone. Seed the
+        // accumulator with the travel so far so the FIRST move fires promptly.
         if (axis.current === 'none') {
           if (Math.abs(e.translationX) > DEADZONE || Math.abs(e.translationY) > DEADZONE) {
-            axis.current = Math.abs(e.translationX) >= Math.abs(e.translationY) ? 'h' : 'v';
+            if (Math.abs(e.translationX) >= Math.abs(e.translationY)) {
+              axis.current = 'h';
+              accX.current = e.translationX;
+            } else {
+              axis.current = 'v';
+              accY.current = e.translationY;
+            }
           } else {
             return;
           }
+        } else if (axis.current === 'h') {
+          accX.current += dx;
+        } else {
+          accY.current += dy;
         }
 
         if (axis.current === 'h') {
-          accX.current += dx;
           while (Math.abs(accX.current) >= H_STEP) {
             if (accX.current > 0) runOnJS(game.moveRight)();
             else runOnJS(game.moveLeft)();
@@ -244,7 +254,6 @@ export default function GameScreen() {
           }
         } else {
           // Vertical lock — soft drop step by step (downward only)
-          accY.current += dy;
           while (accY.current >= V_STEP) {
             runOnJS(game.softDrop)();
             accY.current -= V_STEP;
