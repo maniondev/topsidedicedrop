@@ -137,7 +137,7 @@ export default function LobbyScreen() {
             </>
           ) : (
             <TouchableOpacity
-              style={[styles.playBtn, { backgroundColor: colors.accent }]}
+              style={[styles.playBtnTall, { backgroundColor: colors.accent }]}
               onPress={handleNewGame}
             >
               <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'PlayfairDisplay_700Bold' }]}>
@@ -186,10 +186,13 @@ const styles = StyleSheet.create({
   diffBtn:     { flex: 1, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   diffLabel:   { fontSize: 15 },
   divider:     { height: 1, alignSelf: 'stretch', marginVertical: 8 },
-  btnStack:    { gap: 10, marginTop: 4 },
+  // Fixed-height section so the layout doesn't shift between Play and Continue+New Game.
+  // ROW_H (continue) + 10 gap + 48 (new game) = full section height.
+  btnStack:    { gap: 10, marginTop: 4, height: ROW_H + 10 + 48, justifyContent: 'center' },
   howToBtn:    { alignItems: 'center', paddingVertical: 6 },
   howToText:   { fontSize: 15, fontWeight: '600', letterSpacing: 0.3 },
   playBtn:     { height: ROW_H, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  playBtnTall: { flex: 1, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   playBtnText: { fontSize: 24 },
   newGameBtn:  { height: 48, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   newGameText: { fontSize: 16, fontWeight: '600' },
