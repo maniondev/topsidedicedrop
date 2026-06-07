@@ -414,10 +414,14 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
     return () => clearTimeout(id);
   }, [state.phase, state.lockResetKey, paused]);
 
-  // Board resolution — stops when paused
+  // Board resolution — stops when paused.
+  // Cadence builds suspense: the first two merges are fast, then each subsequent
+  // chain pass waits +100ms longer (capped) — bum-bum-bum … bum … bum …  BUM.
   useEffect(() => {
     if (state.phase !== 'resolving' || paused) return;
-    const id = setTimeout(() => dispatch({ type: 'RESOLVE_STEP' }), RESOLVE_PAUSE_MS);
+    const extraSteps = Math.min(Math.max(0, state.chainPass - 1), 7);
+    const delay = RESOLVE_PAUSE_MS + extraSteps * 100;
+    const id = setTimeout(() => dispatch({ type: 'RESOLVE_STEP' }), delay);
     return () => clearTimeout(id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.phase, state.board, paused]);
