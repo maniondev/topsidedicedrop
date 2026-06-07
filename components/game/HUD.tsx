@@ -111,7 +111,7 @@ export default function HUD({ score, bestScore, nextPiece, onLogoPress }: Props)
 
 const styles = StyleSheet.create({
   row:       { flexDirection: 'row', alignItems: 'center', width: '100%', paddingHorizontal: 10 },
-  logoBtn:   { marginRight: 6 },
+  logoBtn:   { marginLeft: 8, marginRight: 6 },
   columns:   { flex: 1, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-around' },
   col:       { flex: 1, alignItems: 'center' },
   label:     { fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
