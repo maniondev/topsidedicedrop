@@ -19,7 +19,10 @@ export interface Stats {
 }
 
 const STATS_KEY      = `${PREFIX}stats`;
-const SAVED_GAME_KEY = `${PREFIX}saved_game`;
+// Saved games are keyed PER DIFFICULTY so an easy run can't be resumed and
+// credited as hard (and vice-versa). One save slot per difficulty.
+const SAVED_GAME_PREFIX = `${PREFIX}saved_game_`;
+const savedKey = (d: Difficulty) => `${SAVED_GAME_PREFIX}${d}`;
 export const THEME_KEY = `${PREFIX}theme`;
 export const SOUND_KEY = `${PREFIX}sound`;
 
@@ -34,19 +37,19 @@ export interface SavedGame {
 }
 
 export async function saveGame(game: SavedGame): Promise<void> {
-  try { await AsyncStorage.setItem(SAVED_GAME_KEY, JSON.stringify(game)); } catch {}
+  try { await AsyncStorage.setItem(savedKey(game.difficulty), JSON.stringify(game)); } catch {}
 }
 
-export async function loadSavedGame(): Promise<SavedGame | null> {
+export async function loadSavedGame(difficulty: Difficulty): Promise<SavedGame | null> {
   try {
-    const raw = await AsyncStorage.getItem(SAVED_GAME_KEY);
+    const raw = await AsyncStorage.getItem(savedKey(difficulty));
     if (raw) return JSON.parse(raw) as SavedGame;
   } catch {}
   return null;
 }
 
-export async function clearSavedGame(): Promise<void> {
-  try { await AsyncStorage.removeItem(SAVED_GAME_KEY); } catch {}
+export async function clearSavedGame(difficulty: Difficulty): Promise<void> {
+  try { await AsyncStorage.removeItem(savedKey(difficulty)); } catch {}
 }
 
 export async function loadStats(): Promise<Stats> {

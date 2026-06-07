@@ -65,13 +65,13 @@ export default function GameScreen() {
   // On mount: start fresh if ?fresh=1, otherwise resume a saved game if one exists
   useEffect(() => {
     if (fresh === '1') {
-      clearSavedGame();
+      clearSavedGame(difficulty);
       game.startGame();
       return;
     }
-    loadSavedGame().then(saved => {
+    loadSavedGame(difficulty).then(saved => {
       if (saved) {
-        clearSavedGame();
+        clearSavedGame(difficulty);
         game.loadSaved(saved.board as any, saved.score, saved.queue as any, saved.runBestChain, saved.activePiece as any);
       } else {
         game.startGame();

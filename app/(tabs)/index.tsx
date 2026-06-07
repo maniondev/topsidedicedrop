@@ -25,10 +25,11 @@ export default function LobbyScreen() {
   const [hasSavedGame, setHasSavedGame] = useState(false);
   const [howToOpen, setHowToOpen] = useState(false);
 
-  // Re-check for a saved game every time the lobby is focused (e.g. after Save & Quit)
+  // Re-check for a saved game for the SELECTED difficulty — on focus and whenever
+  // the difficulty changes. A save only counts toward the matching difficulty.
   useFocusEffect(useCallback(() => {
-    loadSavedGame().then(s => setHasSavedGame(!!s)).catch(() => {});
-  }, []));
+    loadSavedGame(difficulty).then(s => setHasSavedGame(!!s)).catch(() => {});
+  }, [difficulty]));
 
   // Continue the saved game (game screen auto-loads it)
   const handleContinue = useCallback(() => {
