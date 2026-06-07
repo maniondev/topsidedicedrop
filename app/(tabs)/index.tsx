@@ -8,6 +8,7 @@ import { useStats } from '@/contexts/StatsContext';
 import { useDifficulty, Difficulty, GRAVITY_MS } from '@/contexts/DifficultyContext';
 import { useGameStatus } from '@/contexts/GameStatusContext';
 import AppLogo from '@/components/AppLogo';
+import HowToPlayModal from '@/components/HowToPlayModal';
 import { loadSavedGame } from '@/lib/storage';
 
 const DIFFICULTIES: { id: Difficulty; label: string }[] = [
@@ -22,6 +23,7 @@ export default function LobbyScreen() {
   const { difficulty, setDifficulty } = useDifficulty();
   const { isGameActive } = useGameStatus();
   const [hasSavedGame, setHasSavedGame] = useState(false);
+  const [howToOpen, setHowToOpen] = useState(false);
 
   // Re-check for a saved game every time the lobby is focused (e.g. after Save & Quit)
   useFocusEffect(useCallback(() => {
@@ -80,6 +82,9 @@ export default function LobbyScreen() {
             </Text>
           </View>
         </View>
+
+        {/* Divider — below stats, above difficulty */}
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
         {/* Difficulty selector */}
         <View style={styles.diffSection}>
@@ -141,7 +146,17 @@ export default function LobbyScreen() {
           )}
         </View>
 
+        {/* Divider — below Continue/Play, above How to Play */}
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+        {/* How to Play */}
+        <TouchableOpacity style={styles.howToBtn} onPress={() => setHowToOpen(true)}>
+          <Text style={[styles.howToText, { color: colors.textSecondary }]}>How to Play</Text>
+        </TouchableOpacity>
+
       </ScrollView>
+
+      <HowToPlayModal visible={howToOpen} onClose={() => setHowToOpen(false)} />
     </SafeAreaView>
   );
 }
@@ -169,7 +184,10 @@ const styles = StyleSheet.create({
   diffRow:     { flexDirection: 'row', gap: 10, height: '100%' },
   diffBtn:     { flex: 1, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   diffLabel:   { fontSize: 15 },
+  divider:     { height: 1, width: '100%' },
   btnStack:    { gap: 10, marginTop: 4 },
+  howToBtn:    { alignItems: 'center', paddingVertical: 6 },
+  howToText:   { fontSize: 15, fontWeight: '600', letterSpacing: 0.3 },
   playBtn:     { height: ROW_H, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   playBtnText: { fontSize: 24 },
   newGameBtn:  { height: 48, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
