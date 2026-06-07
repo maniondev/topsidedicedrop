@@ -45,3 +45,10 @@ export const VALUE_DOT_COLORS_DEFAULT: Record<number, string> = {
 
 export const CHAIN_MULTIPLIERS = [1.0, 1.0, 1.25, 1.5, 2.0];
 export const SIX_CLEAR_BASE    = 20;
+
+// Delay before the next chain resolution pass. First two merges are fast, then
+// each subsequent pass waits +100ms (capped) for slot-machine build-up.
+// Single source of truth: used by the game loop AND the glow-pulse timing.
+export function chainResolveDelay(chainPass: number): number {
+  return RESOLVE_PAUSE_MS + Math.min(Math.max(0, chainPass - 1), 7) * 100;
+}

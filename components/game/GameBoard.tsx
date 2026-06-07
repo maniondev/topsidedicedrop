@@ -3,8 +3,11 @@ import { Canvas, RoundedRect, Circle, Group, BlurMask } from '@shopify/react-nat
 import { useSharedValue, useDerivedValue, withTiming, withSequence, Easing } from 'react-native-reanimated';
 import { Board, CellValue } from '@/lib/board';
 import { ActivePiece } from '@/hooks/useGame';
-import { COLS, ROWS } from '@/constants/game';
+import { COLS, ROWS, chainResolveDelay } from '@/constants/game';
 import { useTheme, useDieColors } from '@/contexts/ThemeContext';
+
+// Toggle the white merge flash on/off to compare looks.
+const MERGE_FLASH = false;
 
 const DOT_POSITIONS: Record<number, Array<[number, number]>> = {
   1: [[0.50, 0.50]],
@@ -71,10 +74,12 @@ function PopTile({ x, y, cs, value, faceColor, dotColor }: {
     <Group origin={{ x: cx, y: cy }} transform={transform}>
       <RoundedRect x={x + pad} y={y + pad} width={cs - pad * 2} height={cs - pad * 2} r={8} color={faceColor} />
       <Dots x={x} y={y} cs={cs} value={value} color={dotColor} />
-      <RoundedRect
-        x={x + pad} y={y + pad} width={cs - pad * 2} height={cs - pad * 2} r={8}
-        color="#ffffff" opacity={flashOpacity}
-      />
+      {MERGE_FLASH && (
+        <RoundedRect
+          x={x + pad} y={y + pad} width={cs - pad * 2} height={cs - pad * 2} r={8}
+          color="#ffffff" opacity={flashOpacity}
+        />
+      )}
     </Group>
   );
 }
@@ -120,14 +125,19 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
 
     if (freshMerged.length > 0) {
       setPopCells(new Set(freshMerged));
-      // Glow pulse: dim on the first merge, brighter each subsequent chain pass,
-      // then fully fades — a quick flash rather than a sustained glow.
+      // Glow pulse: dim on the first merge, brighter each subsequent chain pass.
+      // Its duration matches the gap until the next merge — so early fast merges
+      // give tight quick pulses and later slow merges give longer lingering glows,
+      // breathing in sync with the slot-machine cadence.
       const pass = chainPassRef.current;
       const peak = Math.min(0.22 + Math.max(0, pass - 1) * 0.26, 1);
+      const gap  = chainResolveDelay(pass);
+      const rise = Math.min(90, gap * 0.3);
+      const fade = Math.max(140, gap - rise);
       glow.value = 0;
       glow.value = withSequence(
-        withTiming(peak, { duration: 90, easing: Easing.out(Easing.quad) }),
-        withTiming(0, { duration: 320, easing: Easing.in(Easing.quad) }),
+        withTiming(peak, { duration: rise, easing: Easing.out(Easing.quad) }),
+        withTiming(0, { duration: fade, easing: Easing.in(Easing.quad) }),
       );
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps

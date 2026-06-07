@@ -6,8 +6,8 @@ import { applyGravity } from '@/lib/gravity';
 import { scoreMerge, scoreClear } from '@/lib/scoring';
 import { RNG, weightedValue } from '@/lib/rng';
 import {
-  COLS, ROWS, LOCK_DELAY_MS, RESOLVE_PAUSE_MS, SPAWN_DELAY_MS,
-  QUEUE_SIZE, GRAVITY_BASE_MS, ENABLED_PIECE_IDS,
+  COLS, ROWS, LOCK_DELAY_MS, SPAWN_DELAY_MS,
+  QUEUE_SIZE, GRAVITY_BASE_MS, ENABLED_PIECE_IDS, chainResolveDelay,
 } from '@/constants/game';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -419,8 +419,7 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
   // chain pass waits +100ms longer (capped) — bum-bum-bum … bum … bum …  BUM.
   useEffect(() => {
     if (state.phase !== 'resolving' || paused) return;
-    const extraSteps = Math.min(Math.max(0, state.chainPass - 1), 7);
-    const delay = RESOLVE_PAUSE_MS + extraSteps * 100;
+    const delay = chainResolveDelay(state.chainPass);
     const id = setTimeout(() => dispatch({ type: 'RESOLVE_STEP' }), delay);
     return () => clearTimeout(id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
