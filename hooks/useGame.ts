@@ -195,15 +195,23 @@ function reducer(state: GameState, action: Action): GameState {
         continueAvailable: true,
         continueUsed: false,
       };
-      // Restore the exact in-flight piece (no free reroll). If there wasn't one
-      // saved, fall back to spawning the next piece.
+      // Restore the exact in-flight piece (same shape/rotation/values — no free
+      // reroll), but move it back to the TOP so resuming never drops you straight
+      // into a hit. Try the saved column first, then small offsets if blocked.
       if (action.activePiece) {
-        const p = action.activePiece;
-        return {
-          ...base,
-          activePiece: p,
-          phase: inContact(action.board, p) ? 'locking' : 'falling',
-        };
+        const saved = action.activePiece;
+        let placed: ActivePiece | null = null;
+        for (const offset of [0, -1, 1, -2, 2]) {
+          const candidate: ActivePiece = { ...saved, anchorRow: 0, anchorCol: saved.anchorCol + offset };
+          if (isLegal(action.board, candidate)) { placed = candidate; break; }
+        }
+        if (placed) {
+          return {
+            ...base,
+            activePiece: placed,
+            phase: inContact(action.board, placed) ? 'locking' : 'falling',
+          };
+        }
       }
       return { ...base, phase: 'spawning' };
     }
