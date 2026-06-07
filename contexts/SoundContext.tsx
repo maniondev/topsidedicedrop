@@ -29,7 +29,7 @@ const POOL_SIZE: Record<SoundName, number> = {
 };
 
 const VOLUME: Record<SoundName, number> = {
-  drop: 0.18, lock: 0.60, merge1: 0.80, merge2: 0.80, merge3: 0.80, merge4: 0.80, merge5: 0.80, merge6: 0.80,
+  drop: 0.06, lock: 0.60, merge1: 0.80, merge2: 0.80, merge3: 0.80, merge4: 0.80, merge5: 0.80, merge6: 0.80,
   clear: 0.70, chain: 0.55, gameover: 0.35, condense: 0.35,
 };
 
