@@ -64,7 +64,8 @@ function DropButton({ onSoftDrop, onHardDrop }: { onSoftDrop: () => void; onHard
 
 export default function Controls({ onLeft, onRight, onRotate, onSoftDrop, onHardDrop, onPause, disabled }: Props) {
   const { colors } = useTheme();
-  if (disabled) return <View style={styles.placeholder} />;
+  // Always render the buttons (even while the board resolves/spawns) so they never
+  // flicker out — the game reducer safely ignores moves outside the falling phase.
 
   return (
     <View style={styles.row}>

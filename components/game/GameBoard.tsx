@@ -1,6 +1,6 @@
 import React, { useMemo, useEffect, useRef, useState } from 'react';
 import { Canvas, RoundedRect, Circle, Group, BlurMask } from '@shopify/react-native-skia';
-import { useSharedValue, useDerivedValue, withTiming, Easing } from 'react-native-reanimated';
+import { useSharedValue, useDerivedValue, withTiming, withSequence, Easing } from 'react-native-reanimated';
 import { Board, CellValue } from '@/lib/board';
 import { ActivePiece } from '@/hooks/useGame';
 import { COLS, ROWS } from '@/constants/game';
@@ -41,21 +41,26 @@ function StaticTile({ x, y, cs, value, faceColor, dotColor, opacity = 1 }: {
   );
 }
 
-// A merged tile that pops (scale up + back) and flashes white. All driven by the
-// shared `pop` value on the UI thread — no JS-thread work per frame.
-function PopTile({ x, y, cs, value, faceColor, dotColor, pop }: {
+// A merged tile that pops (scale up + back) and flashes white. Self-contained:
+// it owns its animation and runs it ONCE on mount. Because each merged tile has
+// a unique id (the React key), old tiles never re-fire when a new merge happens.
+function PopTile({ x, y, cs, value, faceColor, dotColor }: {
   x: number; y: number; cs: number; value: CellValue; faceColor: string; dotColor: string;
-  pop: ReturnType<typeof useSharedValue<number>>;
 }) {
   const pad = 2;
   const cx = x + cs / 2;
   const cy = y + cs / 2;
+  const pop = useSharedValue(0);
+
+  useEffect(() => {
+    pop.value = withTiming(1, { duration: 240, easing: Easing.out(Easing.cubic) });
+  // run once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const transform = useDerivedValue(() => {
     'worklet';
-    const p = pop.value;
-    const scale = 1 + 0.38 * Math.sin(Math.PI * p); // up then back to 1
-    return [{ scale }];
+    return [{ scale: 1 + 0.38 * Math.sin(Math.PI * pop.value) }];
   });
   const flashOpacity = useDerivedValue(() => {
     'worklet';
@@ -66,7 +71,6 @@ function PopTile({ x, y, cs, value, faceColor, dotColor, pop }: {
     <Group origin={{ x: cx, y: cy }} transform={transform}>
       <RoundedRect x={x + pad} y={y + pad} width={cs - pad * 2} height={cs - pad * 2} r={8} color={faceColor} />
       <Dots x={x} y={y} cs={cs} value={value} color={dotColor} />
-      {/* white flash on top */}
       <RoundedRect
         x={x + pad} y={y + pad} width={cs - pad * 2} height={cs - pad * 2} r={8}
         color="#ffffff" opacity={flashOpacity}
@@ -90,8 +94,12 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
   const boardW = cs * COLS;
   const boardH = cs * ROWS;
 
-  // ── Merge pop ──────────────────────────────────────────────────────────────
-  const pop = useSharedValue(0);
+  // Latest chainPass in a ref so the board-diff effect reads the current value.
+  const chainPassRef = useRef(chainPass);
+  chainPassRef.current = chainPass;
+
+  // ── Merge detection → pop tiles + glow pulse ────────────────────────────────
+  const glow = useSharedValue(0);
   const seenIds = useRef<Set<string>>(new Set());
   const [popCells, setPopCells] = useState<Set<string>>(new Set());
 
@@ -103,36 +111,35 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
         const cell = board[r][c];
         if (!cell) continue;
         current.add(cell.id);
-        // 'm'-prefixed ids are freshly-merged tiles (see lib/merge.ts)
         if (cell.id[0] === 'm' && !seenIds.current.has(cell.id)) {
           freshMerged.push(`${r},${c}`);
         }
       }
     }
     seenIds.current = current;
+
     if (freshMerged.length > 0) {
       setPopCells(new Set(freshMerged));
-      pop.value = 0;
-      pop.value = withTiming(1, { duration: 240, easing: Easing.out(Easing.cubic) });
+      // Glow pulse: dim on the first merge, brighter each subsequent chain pass,
+      // then fully fades — a quick flash rather than a sustained glow.
+      const pass = chainPassRef.current;
+      const peak = Math.min(0.22 + Math.max(0, pass - 1) * 0.26, 1);
+      glow.value = 0;
+      glow.value = withSequence(
+        withTiming(peak, { duration: 90, easing: Easing.out(Easing.quad) }),
+        withTiming(0, { duration: 320, easing: Easing.in(Easing.quad) }),
+      );
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [board]);
 
-  // ── Chain glow ─────────────────────────────────────────────────────────────
-  const glow = useSharedValue(0);
-  useEffect(() => {
-    // Pass 1 = first merge (no chain). Pass 2+ = chain reactions → glow brighter.
-    const intensity = chainPass >= 2 ? Math.min((chainPass - 1) / 3, 1) : 0;
-    glow.value = withTiming(intensity, { duration: 160 });
-  }, [chainPass, glow]);
-
   const glowOpacity = useDerivedValue(() => {
     'worklet';
-    return glow.value * 0.9;
+    return glow.value;
   });
   const glowStroke = useDerivedValue(() => {
     'worklet';
-    return 2 + glow.value * 6;
+    return 2 + glow.value * 7;
   });
 
   // ── Static layers ──────────────────────────────────────────────────────────
@@ -170,13 +177,14 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
       const [r, c] = key.split(',').map(Number);
       const cell = board[r]?.[c];
       if (!cell) return;
+      // key by tile id → unique per merge, so each new merge remounts & re-animates
       out.push(
         <PopTile key={cell.id} x={c * cs} y={r * cs} cs={cs} value={cell.value}
-          faceColor={faceColor(cell.value)} dotColor={dotColor(cell.value)} pop={pop} />
+          faceColor={faceColor(cell.value)} dotColor={dotColor(cell.value)} />
       );
     });
     return out;
-  }, [popCells, board, cs, faceColor, dotColor, pop]);
+  }, [popCells, board, cs, faceColor, dotColor]);
 
   const ghostTiles = useMemo(() => {
     if (!activePiece || ghostAnchorRow === null || ghostAnchorRow === activePiece.anchorRow) return null;
@@ -213,7 +221,7 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
       {activeTiles}
       {popTiles}
 
-      {/* Chain glow — soft inner border that brightens with each chain pass */}
+      {/* Chain glow — pulses on each merge, brighter per chain pass */}
       <RoundedRect
         x={2} y={2} width={boardW - 4} height={boardH - 4} r={6}
         style="stroke" strokeWidth={glowStroke} color={colors.accent} opacity={glowOpacity}
