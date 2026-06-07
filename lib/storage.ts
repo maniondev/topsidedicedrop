@@ -27,6 +27,7 @@ export interface SavedGame {
   board: Array<Array<{ value: number; id: string } | null>>;
   score: number;
   queue: unknown[]; // QueuedPiece[] serialized
+  activePiece: unknown; // ActivePiece | null — the in-flight piece, so resume isn't a free reroll
   runBestChain: number;
   difficulty: Difficulty;
   savedAt: number;
@@ -60,6 +61,12 @@ export async function saveStats(stats: Stats): Promise<void> {
   try {
     await AsyncStorage.setItem(STATS_KEY, JSON.stringify(stats));
   } catch {}
+}
+
+export async function clearStats(): Promise<Stats> {
+  const empty: Stats = { bestScore: 0, totalRuns: 0, bestChain: 0, recentRuns: [] };
+  await saveStats(empty);
+  return empty;
 }
 
 export async function recordRun(

@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, useState, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Platform, BackHandler,
+  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Platform, BackHandler, AppState,
 } from 'react-native';
 import { useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -72,12 +72,26 @@ export default function GameScreen() {
     loadSavedGame().then(saved => {
       if (saved) {
         clearSavedGame();
-        game.loadSaved(saved.board as any, saved.score, saved.queue as any, saved.runBestChain);
+        game.loadSaved(saved.board as any, saved.score, saved.queue as any, saved.runBestChain, saved.activePiece as any);
       } else {
         game.startGame();
       }
     }).catch(() => { game.startGame(); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-pause when the app backgrounds (lock screen, app switch, incoming call)
+  // — but only during active play, so it never interferes with the rewarded-ad
+  // flow (which backgrounds the app while phase is gameOver/condensing).
+  const phaseRef = useRef(game.phase);
+  phaseRef.current = game.phase;
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s !== 'active' && (phaseRef.current === 'falling' || phaseRef.current === 'locking')) {
+        setPaused(true);
+      }
+    });
+    return () => sub.remove();
   }, []);
 
   // Hardware back — pause instead of navigate
@@ -182,6 +196,7 @@ export default function GameScreen() {
       board: exported.board as any,
       score: exported.score,
       queue: exported.queue as any,
+      activePiece: exported.activePiece as any,
       runBestChain: exported.runBestChain,
       difficulty,
       savedAt: Date.now(),

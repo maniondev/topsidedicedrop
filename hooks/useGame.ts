@@ -58,7 +58,7 @@ interface GameState {
 
 type Action =
   | { type: 'START'; initialQueue: QueuedPiece[] }
-  | { type: 'LOAD_SAVED'; board: Board; score: number; queue: QueuedPiece[]; runBestChain: number }
+  | { type: 'LOAD_SAVED'; board: Board; score: number; queue: QueuedPiece[]; runBestChain: number; activePiece: ActivePiece | null }
   | { type: 'TICK' }
   | { type: 'MOVE'; dir: 'left' | 'right' }
   | { type: 'ROTATE' }
@@ -186,16 +186,26 @@ function reducer(state: GameState, action: Action): GameState {
     }
 
     case 'LOAD_SAVED': {
-      return {
+      const base = {
         ...initialState(),
         board: action.board,
         score: action.score,
         queue: action.queue,
         runBestChain: action.runBestChain,
-        phase: 'spawning',
         continueAvailable: true,
         continueUsed: false,
       };
+      // Restore the exact in-flight piece (no free reroll). If there wasn't one
+      // saved, fall back to spawning the next piece.
+      if (action.activePiece) {
+        const p = action.activePiece;
+        return {
+          ...base,
+          activePiece: p,
+          phase: inContact(action.board, p) ? 'locking' : 'falling',
+        };
+      }
+      return { ...base, phase: 'spawning' };
     }
 
     case 'TICK': {
@@ -464,17 +474,19 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
 
   const ghost = state.activePiece ? ghostRow(state.board, state.activePiece) : null;
 
-  /** Serialise current state for "Continue Later" */
+  /** Serialise current state for "Continue Later" (includes the in-flight piece) */
   const exportState = useCallback(() => ({
     board: state.board,
     score: state.score,
     queue: state.queue,
     runBestChain: state.runBestChain,
-  }), [state.board, state.score, state.queue, state.runBestChain]);
+    activePiece: state.activePiece,
+  }), [state.board, state.score, state.queue, state.runBestChain, state.activePiece]);
 
-  /** Restore from a saved game (board + score + queue) */
+  /** Restore from a saved game (board + score + queue + the exact active piece) */
   const loadSaved = useCallback((
     board: Board, score: number, queue: QueuedPiece[], runBestChain: number,
+    activePiece: ActivePiece | null,
   ) => {
     rngRef.current = new RNG(Date.now());
     bagRef.current = [];
@@ -483,7 +495,7 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
     while (filledQueue.length < QUEUE_SIZE + 1) {
       filledQueue.push(nextPiece(score));
     }
-    dispatch({ type: 'LOAD_SAVED', board, score, queue: filledQueue, runBestChain });
+    dispatch({ type: 'LOAD_SAVED', board, score, queue: filledQueue, runBestChain, activePiece });
   }, [nextPiece]);
 
   return {

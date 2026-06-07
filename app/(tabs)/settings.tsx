@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, SafeAreaView,
+  View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, SafeAreaView, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSound } from '@/contexts/SoundContext';
 import { usePremium } from '@/contexts/PremiumContext';
+import { useStats } from '@/contexts/StatsContext';
 import PremiumModal from '@/components/PremiumModal';
 import { ThemeId, ThemeMeta, THEME_IDS } from '@/constants/theme';
 
@@ -15,7 +16,19 @@ export default function SettingsScreen() {
   const { colors, themeId, setTheme } = useTheme();
   const { soundEnabled, setSoundEnabled } = useSound();
   const { isPremium, upgrade, restorePurchases, devToggle } = usePremium();
+  const { resetStats } = useStats();
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
+
+  const confirmReset = () => {
+    Alert.alert(
+      'Reset Stats?',
+      'This permanently erases your best score, run history, and all stats. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Reset', style: 'destructive', onPress: () => { resetStats(); } },
+      ],
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
@@ -112,6 +125,14 @@ export default function SettingsScreen() {
             <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>Restore Purchase</Text>
           </TouchableOpacity>
         )}
+
+        {/* Reset stats */}
+        <TouchableOpacity
+          style={[styles.section, styles.restoreBtn, { backgroundColor: colors.card, borderColor: colors.danger }]}
+          onPress={confirmReset}
+        >
+          <Text style={[styles.rowLabel, { color: colors.danger, fontWeight: '600' }]}>Reset Stats</Text>
+        </TouchableOpacity>
 
         {/* DEV ONLY: premium toggle */}
         {__DEV__ && (

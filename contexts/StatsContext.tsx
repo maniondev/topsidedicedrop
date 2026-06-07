@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { loadStats, recordRun, Stats } from '@/lib/storage';
+import { loadStats, recordRun, clearStats, Stats } from '@/lib/storage';
 import { Difficulty } from '@/contexts/DifficultyContext';
 
 interface StatsCtxType {
@@ -7,6 +7,7 @@ interface StatsCtxType {
   bestScore: number;
   submitRun: (score: number, bestChain: number, difficulty: Difficulty, usedContinue: boolean) => Promise<void>;
   refresh: () => Promise<void>;
+  resetStats: () => Promise<void>;
 }
 
 const StatsCtx = createContext<StatsCtxType>({
@@ -14,6 +15,7 @@ const StatsCtx = createContext<StatsCtxType>({
   bestScore: 0,
   submitRun: async () => {},
   refresh: async () => {},
+  resetStats: async () => {},
 });
 
 export function StatsProvider({ children }: { children: ReactNode }) {
@@ -38,9 +40,14 @@ export function StatsProvider({ children }: { children: ReactNode }) {
     setStats(s);
   }, []);
 
+  const resetStats = useCallback(async () => {
+    const empty = await clearStats();
+    setStats(empty);
+  }, []);
+
   const value = useMemo(
-    () => ({ stats, bestScore: stats.bestScore, submitRun, refresh }),
-    [stats, submitRun, refresh],
+    () => ({ stats, bestScore: stats.bestScore, submitRun, refresh, resetStats }),
+    [stats, submitRun, refresh, resetStats],
   );
   return <StatsCtx.Provider value={value}>{children}</StatsCtx.Provider>;
 }
