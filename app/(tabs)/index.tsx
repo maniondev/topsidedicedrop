@@ -88,33 +88,35 @@ export default function LobbyScreen() {
         </View>
 
         {/* Action buttons — right after difficulty */}
-        {hasSavedGame ? (
-          <>
+        <View style={hasSavedGame ? styles.btnRow : styles.btnSingle}>
+          {hasSavedGame ? (
+            <>
+              <TouchableOpacity
+                style={[styles.playBtn, styles.btnHalf, { backgroundColor: colors.accent }]}
+                onPress={handleContinue}
+              >
+                <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+                  Continue
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.newGameBtn, styles.btnHalf, { borderColor: colors.border }]}
+                onPress={handleNewGame}
+              >
+                <Text style={[styles.newGameText, { color: colors.textSecondary }]}>New Game</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
             <TouchableOpacity
               style={[styles.playBtn, { backgroundColor: colors.accent }]}
-              onPress={handleContinue}
-            >
-              <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-                Continue
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.newGameBtn, { borderColor: colors.border }]}
               onPress={handleNewGame}
             >
-              <Text style={[styles.newGameText, { color: colors.textSecondary }]}>New Game</Text>
+              <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+                Play
+              </Text>
             </TouchableOpacity>
-          </>
-        ) : (
-          <TouchableOpacity
-            style={[styles.playBtn, { backgroundColor: colors.accent }]}
-            onPress={handleNewGame}
-          >
-            <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-              Play
-            </Text>
-          </TouchableOpacity>
-        )}
+          )}
+        </View>
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
@@ -183,6 +185,9 @@ const styles = StyleSheet.create({
   diffBtn:     { flex: 1, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   diffLabel:   { fontSize: 15 },
   divider:     { height: 1, alignSelf: 'stretch', marginVertical: 4 },
+  btnRow:      { flexDirection: 'row', gap: 10 },
+  btnSingle:   { gap: 0 },
+  btnHalf:     { flex: 1 },
   playBtn:     { height: ROW_H, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   playBtnText: { fontSize: 24 },
   newGameBtn:  { height: 48, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
