@@ -25,7 +25,10 @@ export default function SettingsScreen() {
       'This permanently erases your best score, run history, and all stats. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Reset', style: 'destructive', onPress: () => { resetStats(); } },
+        { text: 'Reset', style: 'destructive', onPress: async () => {
+          await resetStats();
+          Alert.alert('Stats Reset', 'Your stats have been cleared.');
+        } },
       ],
     );
   };
