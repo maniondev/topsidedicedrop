@@ -115,11 +115,6 @@ export default function LobbyScreen() {
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-        {/* How to Play */}
-        <TouchableOpacity style={styles.howToBtn} onPress={() => setHowToOpen(true)}>
-          <Text style={[styles.howToText, { color: colors.textSecondary }]}>How to Play</Text>
-        </TouchableOpacity>
-
         {/* Flexible spacer pushes the action buttons to the bottom */}
         <View style={{ flex: 1 }} />
 
@@ -152,6 +147,14 @@ export default function LobbyScreen() {
           </TouchableOpacity>
         )}
 
+        {/* How to Play button */}
+        <TouchableOpacity
+          style={[styles.newGameBtn, { borderColor: colors.border }]}
+          onPress={() => setHowToOpen(true)}
+        >
+          <Text style={[styles.newGameText, { color: colors.textSecondary }]}>How to Play</Text>
+        </TouchableOpacity>
+
       </View>
 
       <HowToPlayModal visible={howToOpen} onClose={() => setHowToOpen(false)} />
@@ -183,8 +186,6 @@ const styles = StyleSheet.create({
   diffBtn:     { flex: 1, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   diffLabel:   { fontSize: 15 },
   divider:     { height: 1, alignSelf: 'stretch', marginVertical: 4 },
-  howToBtn:    { alignItems: 'center', paddingVertical: 6 },
-  howToText:   { fontSize: 15, fontWeight: '600', letterSpacing: 0.3 },
   playBtn:     { height: ROW_H, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   playBtnText: { fontSize: 24 },
   newGameBtn:  { height: 48, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
