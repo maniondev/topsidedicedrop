@@ -18,7 +18,7 @@ export function runEmergencyCondense(board: Board): { finalBoard: Board; scoreGa
       }
     }
 
-    const { newBoard, events, changed } = resolveMerges(current, allTriggers);
+    const { newBoard, events, changed } = resolveMerges(current, allTriggers, 'c');
 
     if (!changed) {
       const { newBoard: gravBoard, moved } = applyGravity(current);
@@ -58,7 +58,7 @@ export function runEmergencyCondense(board: Board): { finalBoard: Board; scoreGa
         if (current[r][c]) allTriggers.add(`${r},${c}`);
       }
     }
-    const { newBoard: merged, events } = resolveMerges(current, allTriggers);
+    const { newBoard: merged, events } = resolveMerges(current, allTriggers, 'c');
     if (events.length > 0) {
       for (const evt of events) {
         if (evt.newValue === 'clear') scoreGained += scoreClear(1);

@@ -57,6 +57,9 @@ function chooseDest(
 export function resolveMerges(
   board: Board,
   triggers: Set<string>,
+  // 'm' = normal merge (board pops+animates it). Emergency Condense passes 'c'
+  // so its many bulk merges don't trigger a mass of pop animations on resume.
+  idPrefix: 'm' | 'c' = 'm',
 ): { newBoard: Board; events: MergeEvent[]; changed: boolean } {
   const groups = findMergeGroups(board);
   if (groups.length === 0) return { newBoard: board, events: [], changed: false };
@@ -80,8 +83,7 @@ export function resolveMerges(
       nb[dr][dc] = null;
     } else {
       const nv = (value + 1) as CellValue;
-      // 'm' prefix marks a freshly-merged tile so the board can pop+flash it.
-      nb[dr][dc] = { value: nv, id: `m${idBase++}` };
+      nb[dr][dc] = { value: nv, id: `${idPrefix}${idBase++}` };
       events.push({ dest, newValue: nv, group });
     }
   }

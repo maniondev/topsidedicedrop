@@ -8,15 +8,34 @@ export function useRewardedAd(onRewarded: () => void) {
   const callbackRef = useRef(onRewarded);
   callbackRef.current = onRewarded;
 
+  // Track whether the reward was earned during the current ad presentation.
+  const earnedRef = useRef(false);
+
   useEffect(() => {
-    const unsubLoaded  = ad.addAdEventListener(RewardedAdEventType.LOADED, () => setAdLoaded(true));
-    const unsubEarned  = ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => callbackRef.current());
-    const unsubClosed  = ad.addAdEventListener(AdEventType.CLOSED, () => {
+    const unsubLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => setAdLoaded(true));
+
+    // Just FLAG the reward here — do NOT run game logic yet. EARNED_REWARD fires
+    // while the ad is still on screen (app backgrounded); starting the condense
+    // now schedules timers/animations against a suspended UI thread and freezes.
+    const unsubEarned = ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
+      earnedRef.current = true;
+    });
+
+    // Fire the reward callback ONLY after the ad is fully dismissed and the app
+    // is back in the foreground — so the resulting animations/timers run cleanly.
+    const unsubClosed = ad.addAdEventListener(AdEventType.CLOSED, () => {
       restoreGameAudioSession();
       setAdLoaded(false);
       ad.load();
+      if (earnedRef.current) {
+        earnedRef.current = false;
+        // Defer one tick so the native ad activity is fully torn down first.
+        setTimeout(() => callbackRef.current(), 0);
+      }
     });
-    const unsubError   = ad.addAdEventListener(AdEventType.ERROR, () => {
+
+    const unsubError = ad.addAdEventListener(AdEventType.ERROR, () => {
+      earnedRef.current = false;
       setAdLoaded(false);
       ad.load();
     });
@@ -27,7 +46,11 @@ export function useRewardedAd(onRewarded: () => void) {
   }, []);
 
   const showAd = useCallback(() => {
-    if (ad.loaded) ad.show().catch(() => { ad.load(); });
+    if (ad.loaded) {
+      ad.show().catch(() => { ad.load(); });
+      return true;
+    }
+    return false; // caller can fall back when no ad is ready
   }, []);
 
   return { adLoaded, showAd };

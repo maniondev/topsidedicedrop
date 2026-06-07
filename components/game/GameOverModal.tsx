@@ -50,13 +50,17 @@ export default function GameOverModal({
             </TouchableOpacity>
           )}
 
-          {adLoaded && (
+          {/* Ad continue — always shown (when no free continue); disabled until an ad is ready */}
+          {!freeContinueAvailable && (
             <TouchableOpacity
-              style={[styles.continueBtn, { backgroundColor: colors.accent }]}
+              style={[styles.continueBtn, { backgroundColor: colors.accent, opacity: adLoaded ? 1 : 0.5 }]}
               onPress={onContinue}
+              disabled={!adLoaded}
             >
               <Text style={[styles.continueBtnText, { color: colors.accentText }]}>▶ Continue</Text>
-              <Text style={[styles.continueSub, { color: colors.accentText }]}>Watch a short ad</Text>
+              <Text style={[styles.continueSub, { color: colors.accentText }]}>
+                {adLoaded ? 'Watch a short ad' : 'Loading ad…'}
+              </Text>
             </TouchableOpacity>
           )}
 
