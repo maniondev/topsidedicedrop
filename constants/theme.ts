@@ -43,6 +43,7 @@ export type ThemeColors = {
   premiumBg:     string;
   border:        string;
   separator:     string;
+  gridLine?:     string; // game-board grid lines (falls back to separator)
   inputBg:       string;
   danger:        string;
   success:       string;
@@ -107,6 +108,7 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     premiumBg:     '#FEF0E6',
     border:        '#D8C8A0',
     separator:     '#F2EAD8',
+    gridLine:      '#E4D6B6',
     inputBg:       '#F5F0E4',
     danger:        '#C8302C',
     success:       '#F08A2C',
@@ -140,6 +142,7 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     premiumBg:     '#1F1A0A',
     border:        '#1E2A40',
     separator:     '#141C2C',
+    gridLine:      '#2A3553',
     inputBg:       '#111A28',
     danger:        '#E45757',
     success:       '#27AE60',
@@ -168,6 +171,7 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     premiumBg:     '#FFFBE8',
     border:        '#C0D4EC',
     separator:     '#EEF4FB',
+    gridLine:      '#D5DEEC',
     inputBg:       '#EEF4FB',
     danger:        '#CC3333',
     success:       '#1E8840',
@@ -197,6 +201,7 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     premiumBg:     '#FFF8E8',
     border:        '#C4AADC',
     separator:     '#E4D8F5',
+    gridLine:      '#D3C2EC',
     inputBg:       '#EDE4F8',
     danger:        '#CC4455',
     success:       '#3A9060',
@@ -244,6 +249,7 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     premiumBg:     '#001A1A',
     border:        '#36228A',
     separator:     '#08080E',
+    gridLine:      '#20305F',
     inputBg:       '#040410',
     danger:        '#FF1744',
     success:       '#FFE600',
@@ -274,6 +280,7 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     premiumBg:     '#FFFAEE',
     border:        '#C8C8C8',
     separator:     '#F0F0F0',
+    gridLine:      '#D8D8D8',
     inputBg:       '#F4F4F4',
     danger:        '#CC2222',
     success:       '#226622',

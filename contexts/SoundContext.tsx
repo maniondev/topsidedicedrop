@@ -29,7 +29,9 @@ const VOLUME: Record<SoundName, number> = {
 interface SoundCtxType {
   soundEnabled: boolean;
   setSoundEnabled: (v: boolean) => void;
-  play: (name: SoundName) => void;
+  // rate > 1 raises pitch (and slightly speeds the clip) — used to make chained
+  // merges climb in pitch. 1 = normal.
+  play: (name: SoundName, rate?: number) => void;
 }
 
 const SoundCtx = createContext<SoundCtxType>({
@@ -93,17 +95,22 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(SOUND_KEY, v ? '1' : '0').catch(() => {});
   }, []);
 
-  const play = useCallback((name: SoundName) => {
+  const play = useCallback((name: SoundName, rate: number = 1) => {
     if (!enabledRef.current) return;
     const pool = poolsRef.current[name];
     if (!pool || pool.length === 0) return;
     const next = ((idxRef.current[name] ?? 0) + 1) % pool.length;
     idxRef.current[name] = next;
     const snd = pool[next];
-    try { snd.play(() => { try { snd.setCurrentTime(0); } catch {} }); } catch {}
+    try {
+      // setSpeed raises pitch (and slightly shortens the clip) when rate > 1.
+      if (rate !== 1) { try { snd.setSpeed(rate); } catch {} }
+      else { try { snd.setSpeed(1); } catch {} }
+      snd.play(() => { try { snd.setCurrentTime(0); } catch {} });
+    } catch {}
   }, []);
 
-  const value = useMemo(() => ({ soundEnabled, setSoundEnabled, play }), [soundEnabled, setSoundEnabled, play]);
+  const value = useMemo(() => ({ soundEnabled, setSoundEnabled, play }), [soundEnabled, play]);
   return <SoundCtx.Provider value={value}>{children}</SoundCtx.Provider>;
 }
 

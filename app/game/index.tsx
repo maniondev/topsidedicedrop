@@ -100,7 +100,10 @@ export default function GameScreen() {
 
   useEffect(() => {
     if (game.lastMergeEvents.length === 0) return;
-    play(game.lastMergeEvents.some(e => e.newValue === 'clear') ? 'clear' : 'merge');
+    const hasClear = game.lastMergeEvents.some(e => e.newValue === 'clear');
+    // Climbing pitch per chain pass: each deeper merge plays a little higher.
+    const rate = Math.min(1 + Math.max(0, game.chainPass - 1) * 0.09, 1.7);
+    play(hasClear ? 'clear' : 'merge', rate);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.lastMergeEvents]);
 
@@ -282,6 +285,7 @@ export default function GameScreen() {
               ghostAnchorRow={game.ghostAnchorRow}
               cellSize={cellSize}
               chainPass={game.chainPass}
+              mergeEvents={game.lastMergeEvents}
             />
             <EmergencyCondenseOverlay visible={game.phase === 'condensing'} />
           </View>

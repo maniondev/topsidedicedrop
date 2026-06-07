@@ -1,8 +1,9 @@
-import React, { useMemo, useEffect, useRef, useState } from 'react';
+import React, { useMemo, useEffect, useRef, useState, useCallback } from 'react';
 import { Canvas, RoundedRect, Circle, Group, BlurMask } from '@shopify/react-native-skia';
 import { useSharedValue, useDerivedValue, withTiming, withSequence, Easing } from 'react-native-reanimated';
 import { Board, CellValue } from '@/lib/board';
 import { ActivePiece } from '@/hooks/useGame';
+import { MergeEvent } from '@/lib/merge';
 import { COLS, ROWS, chainResolveDelay } from '@/constants/game';
 import { useTheme, useDieColors } from '@/contexts/ThemeContext';
 
@@ -84,20 +85,70 @@ function PopTile({ x, y, cs, value, faceColor, dotColor }: {
   );
 }
 
+// Celebratory burst for a 6+6 clear: an expanding glowing ring + a bright flash
+// pop at the cleared cell. Self-animating; removes itself when done.
+function Burst({ x, y, cs, color, onDone }: {
+  x: number; y: number; cs: number; color: string; onDone: () => void;
+}) {
+  const p = useSharedValue(0);
+  const cx = x + cs / 2;
+  const cy = y + cs / 2;
+
+  useEffect(() => {
+    p.value = withTiming(1, { duration: 520, easing: Easing.out(Easing.cubic) });
+    const t = setTimeout(onDone, 560);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const ringR = useDerivedValue(() => { 'worklet'; return cs * (0.25 + 1.05 * p.value); });
+  const ringOpacity = useDerivedValue(() => { 'worklet'; return 0.85 * (1 - p.value); });
+  const ringWidth = useDerivedValue(() => { 'worklet'; return 2 + 5 * (1 - p.value); });
+  const flashR = useDerivedValue(() => { 'worklet'; return cs * 0.55 * Math.sin(Math.PI * Math.min(p.value * 1.6, 1)); });
+  const flashOpacity = useDerivedValue(() => { 'worklet'; return 0.8 * (1 - Math.min(p.value * 1.4, 1)); });
+
+  return (
+    <Group>
+      <Circle cx={cx} cy={cy} r={flashR} color={color} opacity={flashOpacity}>
+        <BlurMask blur={6} style="solid" />
+      </Circle>
+      <Circle cx={cx} cy={cy} r={ringR} style="stroke" strokeWidth={ringWidth} color={color} opacity={ringOpacity}>
+        <BlurMask blur={4} style="solid" />
+      </Circle>
+    </Group>
+  );
+}
+
 interface Props {
   board: Board;
   activePiece: ActivePiece | null;
   ghostAnchorRow: number | null;
   cellSize: number;
   chainPass: number;
+  mergeEvents: MergeEvent[];
 }
 
-export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize, chainPass }: Props) {
+export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize, chainPass, mergeEvents }: Props) {
   const { colors } = useTheme();
   const { faceColor, dotColor } = useDieColors();
   const cs = cellSize;
   const boardW = cs * COLS;
   const boardH = cs * ROWS;
+  const gridColor = colors.gridLine ?? colors.separator;
+
+  // ── 6-clear bursts ───────────────────────────────────────────────────────
+  const [bursts, setBursts] = useState<Array<{ id: string; r: number; c: number }>>([]);
+  const burstSeq = useRef(0);
+  useEffect(() => {
+    const clears = mergeEvents.filter(e => e.newValue === 'clear');
+    if (clears.length === 0) return;
+    const added = clears.map(e => ({ id: `b${burstSeq.current++}`, r: e.dest[0], c: e.dest[1] }));
+    setBursts(prev => [...prev, ...added]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mergeEvents]);
+  const removeBurst = useCallback((id: string) => {
+    setBursts(prev => prev.filter(b => b.id !== id));
+  }, []);
 
   // Latest chainPass in a ref so the board-diff effect reads the current value.
   const chainPassRef = useRef(chainPass);
@@ -156,13 +207,13 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
   const gridLines = useMemo(() => {
     const lines: React.ReactNode[] = [];
     for (let r = 0; r <= ROWS; r++) {
-      lines.push(<RoundedRect key={`hr${r}`} x={0} y={r * cs} width={boardW} height={1} r={0} color={colors.separator} />);
+      lines.push(<RoundedRect key={`hr${r}`} x={0} y={r * cs} width={boardW} height={1} r={0} color={gridColor} />);
     }
     for (let c = 0; c <= COLS; c++) {
-      lines.push(<RoundedRect key={`vc${c}`} x={c * cs} y={0} width={1} height={boardH} r={0} color={colors.separator} />);
+      lines.push(<RoundedRect key={`vc${c}`} x={c * cs} y={0} width={1} height={boardH} r={0} color={gridColor} />);
     }
     return lines;
-  }, [cs, boardW, boardH, colors.separator]);
+  }, [cs, boardW, boardH, gridColor]);
 
   const boardTiles = useMemo(() => {
     const tiles: React.ReactNode[] = [];
@@ -230,6 +281,18 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
       {ghostTiles}
       {activeTiles}
       {popTiles}
+
+      {/* 6-clear celebratory bursts */}
+      {bursts.map(b => (
+        <Burst
+          key={b.id}
+          x={b.c * cs}
+          y={b.r * cs}
+          cs={cs}
+          color={colors.premiumGold}
+          onDone={() => removeBurst(b.id)}
+        />
+      ))}
 
       {/* Chain glow — pulses on each merge, brighter per chain pass */}
       <RoundedRect
