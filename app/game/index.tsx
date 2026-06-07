@@ -192,39 +192,65 @@ export default function GameScreen() {
     game.phase === 'resolving' || game.phase === 'spawning' ||
     game.phase === 'condensing' || game.phase === 'idle';
 
-  // Swipe gestures
+  // ── Swipe gestures with axis locking ───────────────────────────────────────
+  // Each pan commits to one axis (horizontal OR vertical) based on its dominant
+  // direction once it clears a deadzone — so a sideways swipe can never trigger
+  // an accidental soft-drop, and a downward swipe won't nudge left/right.
+  const axis   = useRef<'none' | 'h' | 'v'>('none');
   const accX   = useRef(0);
   const accY   = useRef(0);
   const prevX  = useRef(0);
   const prevY  = useRef(0);
-  const thresh = cellSize * 0.65;
+
+  const DEADZONE = cellSize * 0.45; // movement needed before an axis is chosen
+  const H_STEP   = cellSize * 0.55; // horizontal distance per left/right move
+  const V_STEP   = cellSize * 0.80; // vertical distance per soft-drop (deliberate)
 
   const boardGesture = Gesture.Race(
     Gesture.Tap()
       .maxDuration(250)
       .onEnd(() => { runOnJS(rotateWithSound)(); }),
     Gesture.Pan()
-      .minDistance(8)
-      .onStart(() => { accX.current = 0; accY.current = 0; prevX.current = 0; prevY.current = 0; })
+      .minDistance(6)
+      .onStart(() => {
+        axis.current = 'none';
+        accX.current = 0; accY.current = 0;
+        prevX.current = 0; prevY.current = 0;
+      })
       .onUpdate(e => {
         const dx = e.translationX - prevX.current;
         const dy = e.translationY - prevY.current;
         prevX.current = e.translationX;
         prevY.current = e.translationY;
-        accX.current += dx;
-        accY.current += dy;
-        if (Math.abs(accX.current) >= thresh) {
-          if (accX.current > 0) runOnJS(game.moveRight)();
-          else runOnJS(game.moveLeft)();
-          accX.current = 0;
+
+        // Choose the axis once the swipe clears the deadzone
+        if (axis.current === 'none') {
+          if (Math.abs(e.translationX) > DEADZONE || Math.abs(e.translationY) > DEADZONE) {
+            axis.current = Math.abs(e.translationX) >= Math.abs(e.translationY) ? 'h' : 'v';
+          } else {
+            return;
+          }
         }
-        if (accY.current >= thresh) {
-          runOnJS(game.softDrop)();
-          accY.current = 0;
+
+        if (axis.current === 'h') {
+          accX.current += dx;
+          while (Math.abs(accX.current) >= H_STEP) {
+            if (accX.current > 0) runOnJS(game.moveRight)();
+            else runOnJS(game.moveLeft)();
+            accX.current += accX.current > 0 ? -H_STEP : H_STEP;
+          }
+        } else {
+          // Vertical lock — soft drop step by step (downward only)
+          accY.current += dy;
+          while (accY.current >= V_STEP) {
+            runOnJS(game.softDrop)();
+            accY.current -= V_STEP;
+          }
         }
       })
       .onEnd(e => {
-        if (e.velocityY > 1200 && Math.abs(e.translationX) < 60) {
+        // A quick downward flick (vertical-locked) hard-drops — easy "send it down"
+        if (axis.current === 'v' && e.velocityY > 900 && e.translationY > cellSize) {
           runOnJS(hardDropWithSound)();
         }
       }),
