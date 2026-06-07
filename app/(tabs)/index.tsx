@@ -87,8 +87,6 @@ export default function LobbyScreen() {
           </View>
         </View>
 
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
         {/* Action buttons — right after difficulty */}
         {hasSavedGame ? (
           <>
@@ -117,6 +115,8 @@ export default function LobbyScreen() {
             </Text>
           </TouchableOpacity>
         )}
+
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
         {/* Best Score hero — for the selected difficulty */}
         <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
