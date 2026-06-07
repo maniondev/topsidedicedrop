@@ -134,8 +134,9 @@ export default function GameScreen() {
   // Lock sound on any piece lock (natural gravity or hard drop)
   const prevPhaseRef = useRef(game.phase);
   useEffect(() => {
-    if (prevPhaseRef.current !== 'falling' || game.phase !== 'locking') return;
-    play('lock');
+    if (prevPhaseRef.current === 'falling' && game.phase === 'locking') {
+      play('lock');
+    }
     prevPhaseRef.current = game.phase;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.phase]);
