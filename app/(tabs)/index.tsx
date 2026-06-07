@@ -89,36 +89,7 @@ export default function LobbyScreen() {
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-        {/* Best Score hero — for the selected difficulty */}
-        <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.heroLabel, { color: colors.textMuted }]}>BEST SCORE</Text>
-          <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-            {dstats.bestScore > 0 ? dstats.bestScore.toLocaleString() : '—'}
-          </Text>
-        </View>
-
-        {/* Stats row — for the selected difficulty */}
-        <View style={styles.statsRow}>
-          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>RUNS</Text>
-            <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-              {dstats.totalRuns}
-            </Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST CHAIN</Text>
-            <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-              {dstats.bestChain > 0 ? `×${dstats.bestChain}` : '—'}
-            </Text>
-          </View>
-        </View>
-
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        {/* Flexible spacer pushes the action buttons to the bottom */}
-        <View style={{ flex: 1 }} />
-
-        {/* Action buttons — pinned at the bottom for easy reach */}
+        {/* Action buttons — right after difficulty */}
         {hasSavedGame ? (
           <>
             <TouchableOpacity
@@ -146,6 +117,32 @@ export default function LobbyScreen() {
             </Text>
           </TouchableOpacity>
         )}
+
+        {/* Best Score hero — for the selected difficulty */}
+        <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+          <Text style={[styles.heroLabel, { color: colors.textMuted }]}>BEST SCORE</Text>
+          <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+            {dstats.bestScore > 0 ? dstats.bestScore.toLocaleString() : '—'}
+          </Text>
+        </View>
+
+        {/* Stats row — for the selected difficulty */}
+        <View style={styles.statsRow}>
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>RUNS</Text>
+            <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              {dstats.totalRuns}
+            </Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST CHAIN</Text>
+            <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              {dstats.bestChain > 0 ? `×${dstats.bestChain}` : '—'}
+            </Text>
+          </View>
+        </View>
+
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
         {/* How to Play button */}
         <TouchableOpacity
