@@ -131,17 +131,25 @@ export default function GameScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.lastMergeEvents]);
 
+  // Lock sound on any piece lock (natural gravity or hard drop)
+  const prevPhaseRef = useRef(game.phase);
+  useEffect(() => {
+    if (prevPhaseRef.current !== 'falling' || game.phase !== 'locking') return;
+    play('lock');
+    prevPhaseRef.current = game.phase;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.phase]);
+
   // Rotate with a subtle click. Discrete action — safe for the pooled audio engine.
   const rotateWithSound = useCallback(() => {
     play('drop');
     game.rotate();
   }, [play, game.rotate]);
 
-  // Hard drop with a satisfying "thunk" (hint.m4a). Discrete — one per piece at most.
+  // Hard drop. Lock sound now plays on any lock (natural or hard drop).
   const hardDropWithSound = useCallback(() => {
-    play('lock');
     game.hardDrop();
-  }, [play, game.hardDrop]);
+  }, [game.hardDrop]);
 
   const handleFreeContinue = useCallback(() => {
     setFreeContinueUsed(true);
