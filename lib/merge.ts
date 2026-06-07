@@ -80,7 +80,8 @@ export function resolveMerges(
       nb[dr][dc] = null;
     } else {
       const nv = (value + 1) as CellValue;
-      nb[dr][dc] = { value: nv, id: `t${idBase++}` };
+      // 'm' prefix marks a freshly-merged tile so the board can pop+flash it.
+      nb[dr][dc] = { value: nv, id: `m${idBase++}` };
       events.push({ dest, newValue: nv, group });
     }
   }

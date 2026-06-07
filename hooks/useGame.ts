@@ -492,6 +492,7 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
     phase: state.phase,
     continueAvailable: state.continueAvailable && !state.continueUsed,
     runBestChain: state.runBestChain,
+    chainPass: state.chainPass,
     lastMergeEvents: state.lastMergeEvents,
     startGame,
     resetGame,

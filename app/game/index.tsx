@@ -281,6 +281,7 @@ export default function GameScreen() {
               activePiece={game.activePiece}
               ghostAnchorRow={game.ghostAnchorRow}
               cellSize={cellSize}
+              chainPass={game.chainPass}
             />
             <EmergencyCondenseOverlay visible={game.phase === 'condensing'} />
           </View>
