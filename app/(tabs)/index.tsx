@@ -190,6 +190,6 @@ const styles = StyleSheet.create({
   btnHalf:     { flex: 1 },
   playBtn:     { height: ROW_H, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   playBtnText: { fontSize: 24 },
-  newGameBtn:  { height: 48, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  newGameBtn:  { height: ROW_H, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   newGameText: { fontSize: 16, fontWeight: '600' },
 });
