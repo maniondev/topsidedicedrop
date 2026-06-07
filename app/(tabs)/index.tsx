@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   diffRow:     { flexDirection: 'row', gap: 10, height: '100%' },
   diffBtn:     { flex: 1, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   diffLabel:   { fontSize: 15 },
-  divider:     { height: 1, marginHorizontal: 16, alignSelf: 'stretch' },
+  divider:     { height: 1, alignSelf: 'stretch', marginVertical: 8 },
   btnStack:    { gap: 10, marginTop: 4 },
   howToBtn:    { alignItems: 'center', paddingVertical: 6 },
   howToText:   { fontSize: 15, fontWeight: '600', letterSpacing: 0.3 },
