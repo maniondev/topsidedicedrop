@@ -53,6 +53,15 @@ interface Props {
   onLogoPress?: () => void;
 }
 
+// Shrink the value font as the number grows so it never crowds the column.
+function valueFontSize(n: number): number {
+  const len = Math.round(n).toLocaleString().length; // includes commas
+  if (len <= 5) return 28; // up to 9,999
+  if (len === 6) return 24; // 10,000–99,999
+  if (len === 7) return 21; // 100,000–999,999
+  return 18;                // 1,000,000+
+}
+
 export default function HUD({ score, bestScore, nextPiece, onLogoPress }: Props) {
   const { colors } = useTheme();
   const { faceColor, dotColor } = useDieColors();
@@ -76,7 +85,7 @@ export default function HUD({ score, bestScore, nextPiece, onLogoPress }: Props)
         <View style={styles.col}>
           <Text style={[styles.label, { color: colors.textMuted }]}>SCORE</Text>
           <View style={styles.valueArea}>
-            <Text style={[styles.value, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+            <Text style={[styles.value, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold', fontSize: valueFontSize(score) }]}>
               {score.toLocaleString()}
             </Text>
           </View>
@@ -87,7 +96,7 @@ export default function HUD({ score, bestScore, nextPiece, onLogoPress }: Props)
         <View style={styles.col}>
           <Text style={[styles.label, { color: colors.textMuted }]}>BEST</Text>
           <View style={styles.valueArea}>
-            <Text style={[styles.value, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+            <Text style={[styles.value, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold', fontSize: valueFontSize(bestScore) }]}>
               {bestScore.toLocaleString()}
             </Text>
           </View>
@@ -111,7 +120,7 @@ export default function HUD({ score, bestScore, nextPiece, onLogoPress }: Props)
 
 const styles = StyleSheet.create({
   row:       { flexDirection: 'row', alignItems: 'center', width: '100%', paddingHorizontal: 10 },
-  logoBtn:   { marginLeft: 8, marginRight: 6 },
+  logoBtn:   { marginLeft: 14, marginRight: -4 },
   columns:   { flex: 1, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-around' },
   col:       { flex: 1, alignItems: 'center' },
   label:     { fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
