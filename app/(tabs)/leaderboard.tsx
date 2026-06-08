@@ -213,7 +213,7 @@ export default function LeaderboardScreen() {
             ))
           ) : (
             <Text style={[styles.empty, { color: colors.textMuted }]}>
-              No runs yet — play a game first!
+              No runs yet.
             </Text>
           )}
         </View>
