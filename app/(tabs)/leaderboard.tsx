@@ -3,6 +3,57 @@ import { View, Text, ScrollView, StyleSheet, SafeAreaView, TouchableOpacity } fr
 import { useTheme } from '@/contexts/ThemeContext';
 import { useStats } from '@/contexts/StatsContext';
 import { Difficulty } from '@/contexts/DifficultyContext';
+import { RunRecord } from '@/lib/storage';
+
+function formatDate(ts: number): string {
+  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function formatScore(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return n.toLocaleString();
+}
+
+const DIFF_COLOR: Record<Difficulty, string> = {
+  easy: '#27AE60',
+  medium: '#F5A623',
+  hard: '#E45757',
+};
+
+function DiffBadge({ diff }: { diff: Difficulty }) {
+  return (
+    <Text style={[styles.badge, { color: DIFF_COLOR[diff], borderColor: DIFF_COLOR[diff] }]}>
+      {diff.charAt(0).toUpperCase()}
+    </Text>
+  );
+}
+
+function RunRow({ rank, run, isYou = true }: { rank: number; run: RunRecord; isYou?: boolean }) {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.runRow, { borderBottomColor: colors.border }]}>
+      <Text style={[styles.runRank, { color: rank <= 3 ? colors.accent : colors.textMuted }]}>
+        {rank <= 3 ? ['🥇','🥈','🥉'][rank - 1] : `#${rank}`}
+      </Text>
+      <View style={styles.runInfo}>
+        <Text style={[styles.runName, { color: colors.text }]} numberOfLines={1}>
+          {isYou ? 'You' : '—'}
+        </Text>
+        <Text style={[styles.runDate, { color: colors.textMuted }]}>{formatDate(run.date)}</Text>
+      </View>
+      <View style={styles.runRight}>
+        {run.bestChain > 1 && (
+          <Text style={[styles.runChain, { color: colors.textMuted }]}>×{run.bestChain}</Text>
+        )}
+        <DiffBadge diff={run.difficulty} />
+        <Text style={[styles.runScore, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+          {formatScore(run.score)}
+        </Text>
+      </View>
+    </View>
+  );
+}
 
 export default function LeaderboardScreen() {
   const { colors } = useTheme();
@@ -11,84 +62,48 @@ export default function LeaderboardScreen() {
   const [filterDifficulty, setFilterDifficulty] = useState<Difficulty | 'all'>('all');
   const [filterType, setFilterType] = useState<'overall' | 'unassisted'>('overall');
 
-  // Get stats for the selected filter
-  const getFilteredStats = () => {
-    const isUnassisted = filterType === 'unassisted';
-    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const isUnassisted = filterType === 'unassisted';
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
-    // Filter recentRuns by difficulty + type
-    const runs = stats.recentRuns.filter(r => {
-      const diffMatch = filterDifficulty === 'all' || r.difficulty === filterDifficulty;
-      const typeMatch = !isUnassisted || !r.usedContinue;
-      return diffMatch && typeMatch;
-    });
+  // Filtered runs for ranked list + derived stats
+  const filteredRuns = stats.recentRuns.filter(r => {
+    const diffMatch = filterDifficulty === 'all' || r.difficulty === filterDifficulty;
+    const typeMatch = !isUnassisted || !r.usedContinue;
+    return diffMatch && typeMatch;
+  });
 
-    // Best run: for unassisted, use bestUnassisted from stored stats (which is more
-    // accurate since recentRuns is capped at 20). For overall, use bestScore.
-    let bestRun = 0;
-    if (filterDifficulty === 'all') {
-      const diffs: Difficulty[] = ['easy', 'medium', 'hard'];
-      bestRun = Math.max(...diffs.map(d =>
-        isUnassisted ? stats.byDifficulty[d].bestUnassisted : stats.byDifficulty[d].bestScore
-      ));
-    } else {
-      const d = stats.byDifficulty[filterDifficulty];
-      bestRun = isUnassisted ? d.bestUnassisted : d.bestScore;
-    }
+  // Best Run & Average — respect both filters
+  const diffs: Difficulty[] = ['easy', 'medium', 'hard'];
+  const bestRun = filterDifficulty === 'all'
+    ? Math.max(0, ...diffs.map(d => isUnassisted ? stats.byDifficulty[d].bestUnassisted : stats.byDifficulty[d].bestScore))
+    : isUnassisted ? stats.byDifficulty[filterDifficulty].bestUnassisted : stats.byDifficulty[filterDifficulty].bestScore;
 
-    // Lifetime score: for unassisted we derive from recentRuns (capped 20) as best
-    // we can — stored lifetimeScore is overall-only
-    let lifetimeScore = 0;
-    if (!isUnassisted) {
-      if (filterDifficulty === 'all') {
-        const diffs: Difficulty[] = ['easy', 'medium', 'hard'];
-        lifetimeScore = diffs.reduce((sum, d) => sum + stats.byDifficulty[d].lifetimeScore, 0);
-      } else {
-        lifetimeScore = stats.byDifficulty[filterDifficulty].lifetimeScore;
-      }
-    } else {
-      // Approximate from recentRuns (last 20 — best we can do without a separate store)
-      lifetimeScore = runs.reduce((sum, r) => sum + r.score, 0);
-    }
+  const averageScore = filteredRuns.length > 0
+    ? Math.round(filteredRuns.reduce((a, r) => a + r.score, 0) / filteredRuns.length)
+    : 0;
 
-    // Total runs: for unassisted derive from recentRuns (approximate)
-    let totalRuns = 0;
-    if (!isUnassisted) {
-      if (filterDifficulty === 'all') {
-        const diffs: Difficulty[] = ['easy', 'medium', 'hard'];
-        totalRuns = diffs.reduce((sum, d) => sum + stats.byDifficulty[d].totalRuns, 0);
-      } else {
-        totalRuns = stats.byDifficulty[filterDifficulty].totalRuns;
-      }
-    } else {
-      totalRuns = runs.length; // from recentRuns, approximate
-    }
+  const bestThisWeek = Math.max(0, ...filteredRuns.filter(r => r.date >= weekAgo).map(r => r.score));
 
-    // Best chain: for unassisted derive from filtered runs
-    let bestChain = 0;
-    if (!isUnassisted) {
-      if (filterDifficulty === 'all') {
-        const diffs: Difficulty[] = ['easy', 'medium', 'hard'];
-        bestChain = Math.max(...diffs.map(d => stats.byDifficulty[d].bestChain));
-      } else {
-        bestChain = stats.byDifficulty[filterDifficulty].bestChain;
-      }
-    } else {
-      bestChain = runs.length > 0 ? Math.max(...runs.map(r => r.bestChain)) : 0;
-    }
+  // Always-overall stats (lifetime, total runs, best chain — unaffected by type filter)
+  const overallRuns = stats.recentRuns.filter(r =>
+    filterDifficulty === 'all' || r.difficulty === filterDifficulty
+  );
+  const lifetimeScore = filterDifficulty === 'all'
+    ? diffs.reduce((sum, d) => sum + stats.byDifficulty[d].lifetimeScore, 0)
+    : stats.byDifficulty[filterDifficulty].lifetimeScore;
+  const totalRuns = filterDifficulty === 'all'
+    ? diffs.reduce((sum, d) => sum + stats.byDifficulty[d].totalRuns, 0)
+    : stats.byDifficulty[filterDifficulty].totalRuns;
+  const bestChain = filterDifficulty === 'all'
+    ? Math.max(0, ...diffs.map(d => stats.byDifficulty[d].bestChain))
+    : stats.byDifficulty[filterDifficulty].bestChain;
 
-    const averageScore = runs.length > 0 ? Math.round(runs.reduce((a, r) => a + r.score, 0) / runs.length) : 0;
-    const thisWeekRuns = runs.filter(r => r.date >= weekAgo);
-    const bestThisWeek = thisWeekRuns.length > 0 ? Math.max(...thisWeekRuns.map(r => r.score)) : 0;
+  // Sorted runs for the ranked list
+  const rankedRuns = [...filteredRuns].sort((a, b) => b.score - a.score);
 
-    return { bestRun, lifetimeScore, totalRuns, bestChain, averageScore, bestThisWeek };
-  };
-
-  const filtered = getFilteredStats();
-
-  const FilterButton = ({ label, value, current, onPress }: any) => (
+  const FilterBtn = ({ label, value, current, onPress }: { label: string; value: string; current: string; onPress: (v: any) => void }) => (
     <TouchableOpacity
-      style={[styles.filterBtn, { backgroundColor: current === value ? colors.accent : colors.card, borderColor: colors.border }]}
+      style={[styles.filterBtn, { backgroundColor: current === value ? colors.accent : colors.card, borderColor: current === value ? colors.accent : colors.border }]}
       onPress={() => onPress(value)}
     >
       <Text style={[styles.filterBtnText, { color: current === value ? colors.accentText : colors.textSecondary, fontWeight: current === value ? '700' : '400' }]}>
@@ -100,81 +115,96 @@ export default function LeaderboardScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Leaderboard</Text>
+        <Text style={[styles.title, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>Leaderboard</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-        {/* Difficulty Filter */}
-        <View style={styles.filterGroup}>
-          <Text style={[styles.filterLabel, { color: colors.textMuted }]}>DIFFICULTY</Text>
+        {/* Filters */}
+        <View style={styles.filters}>
           <View style={styles.filterRow}>
-            <FilterButton label="All" value="all" current={filterDifficulty} onPress={setFilterDifficulty} />
-            <FilterButton label="Easy" value="easy" current={filterDifficulty} onPress={setFilterDifficulty} />
-            <FilterButton label="Medium" value="medium" current={filterDifficulty} onPress={setFilterDifficulty} />
-            <FilterButton label="Hard" value="hard" current={filterDifficulty} onPress={setFilterDifficulty} />
+            <FilterBtn label="All" value="all" current={filterDifficulty} onPress={setFilterDifficulty} />
+            <FilterBtn label="Easy" value="easy" current={filterDifficulty} onPress={setFilterDifficulty} />
+            <FilterBtn label="Medium" value="medium" current={filterDifficulty} onPress={setFilterDifficulty} />
+            <FilterBtn label="Hard" value="hard" current={filterDifficulty} onPress={setFilterDifficulty} />
           </View>
-        </View>
-
-        {/* Type Filter */}
-        <View style={styles.filterGroup}>
-          <Text style={[styles.filterLabel, { color: colors.textMuted }]}>TYPE</Text>
           <View style={styles.filterRow}>
-            <FilterButton label="Overall" value="overall" current={filterType} onPress={setFilterType} />
-            <FilterButton label="Unassisted" value="unassisted" current={filterType} onPress={setFilterType} />
+            <FilterBtn label="Overall" value="overall" current={filterType} onPress={setFilterType} />
+            <FilterBtn label="Unassisted" value="unassisted" current={filterType} onPress={setFilterType} />
           </View>
         </View>
 
-        {/* Hero stat: Best Run */}
-        <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.heroLabel, { color: colors.textMuted }]}>BEST RUN</Text>
-          <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-            {filtered.bestRun > 0 ? filtered.bestRun.toLocaleString() : '—'}
-          </Text>
-        </View>
-
-        {/* Stats grid */}
-        <View style={styles.statsGrid}>
-          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>AVERAGE</Text>
-            <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-              {filtered.averageScore > 0 ? filtered.averageScore.toLocaleString() : '—'}
-            </Text>
-          </View>
-
-          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>LIFETIME</Text>
-            <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-              {filtered.lifetimeScore > 0 ? filtered.lifetimeScore.toLocaleString() : '—'}
-            </Text>
-          </View>
-
-          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST CHAIN</Text>
-            <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-              {filtered.bestChain > 0 ? `×${filtered.bestChain}` : '—'}
-            </Text>
-          </View>
-
-          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>TOTAL RUNS</Text>
-            <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-              {filtered.totalRuns}
-            </Text>
+        {/* Personal stats — Best Run, Average, Best This Week (type-filtered) */}
+        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>YOUR STATS</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST RUN</Text>
+              <Text style={[styles.statValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+                {bestRun > 0 ? bestRun.toLocaleString() : '—'}
+              </Text>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+            <View style={styles.statItem}>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>AVERAGE</Text>
+              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+                {averageScore > 0 ? averageScore.toLocaleString() : '—'}
+              </Text>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+            <View style={styles.statItem}>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>THIS WEEK</Text>
+              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+                {bestThisWeek > 0 ? bestThisWeek.toLocaleString() : '—'}
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* Best This Week */}
-        <View style={[styles.statCardWide, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST THIS WEEK</Text>
-          <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-            {filtered.bestThisWeek > 0 ? filtered.bestThisWeek.toLocaleString() : '—'}
-          </Text>
+        {/* Always-overall stats */}
+        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ALL TIME</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>LIFETIME</Text>
+              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+                {lifetimeScore > 0 ? formatScore(lifetimeScore) : '—'}
+              </Text>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+            <View style={styles.statItem}>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>RUNS</Text>
+              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+                {totalRuns}
+              </Text>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+            <View style={styles.statItem}>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST CHAIN</Text>
+              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+                {bestChain > 0 ? `×${bestChain}` : '—'}
+              </Text>
+            </View>
+          </View>
         </View>
 
-        {filtered.totalRuns === 0 && (
-          <Text style={[styles.empty, { color: colors.textMuted }]}>No runs yet — play a game first!</Text>
-        )}
+        {/* Ranked runs — placeholder for future global leaderboard */}
+        <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>YOUR RUNS</Text>
+            {/* TODO: Toggle between "My Runs" and "Global" once Supabase is wired */}
+            <Text style={[styles.comingSoon, { color: colors.textMuted }]}>Global rankings coming soon</Text>
+          </View>
+          {rankedRuns.length > 0 ? (
+            rankedRuns.map((run, i) => (
+              <RunRow key={`${run.date}-${run.score}`} rank={i + 1} run={run} />
+            ))
+          ) : (
+            <Text style={[styles.empty, { color: colors.textMuted }]}>
+              No runs yet — play a game first!
+            </Text>
+          )}
+        </View>
 
       </ScrollView>
     </SafeAreaView>
@@ -183,25 +213,34 @@ export default function LeaderboardScreen() {
 
 const styles = StyleSheet.create({
   safe:           { flex: 1 },
-  header:         { paddingVertical: 16, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#00000010' },
-  title:          { fontSize: 32, fontFamily: 'PlayfairDisplay_700Bold' },
-  content:        { paddingVertical: 16, paddingHorizontal: 20, gap: 16 },
+  header:         { paddingVertical: 16, paddingHorizontal: 20 },
+  title:          { fontSize: 32 },
+  content:        { paddingHorizontal: 16, paddingBottom: 32, gap: 12 },
 
-  filterGroup:    { gap: 8 },
-  filterLabel:    { fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
+  filters:        { gap: 8 },
   filterRow:      { flexDirection: 'row', gap: 8 },
-  filterBtn:      { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, alignItems: 'center' },
-  filterBtnText:  { fontSize: 13, fontWeight: '600' },
+  filterBtn:      { flex: 1, paddingVertical: 9, borderRadius: 10, borderWidth: 1.5, alignItems: 'center' },
+  filterBtnText:  { fontSize: 13 },
 
-  heroCard:       { borderRadius: 16, borderWidth: 1, paddingVertical: 20, alignItems: 'center', gap: 2 },
-  heroLabel:      { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
-  heroValue:      { fontSize: 44, lineHeight: 50 },
+  section:        { borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
+  sectionHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 },
+  sectionTitle:   { fontSize: 10, fontWeight: '700', letterSpacing: 1.5, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 },
+  comingSoon:     { fontSize: 11, fontStyle: 'italic' },
 
-  statsGrid:      { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  statCard:       { flex: 1, minWidth: '48%', borderRadius: 14, borderWidth: 1, paddingVertical: 14, alignItems: 'center', gap: 2 },
-  statCardWide:   { borderRadius: 14, borderWidth: 1, paddingVertical: 16, alignItems: 'center', gap: 4 },
-  statLabel:      { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
-  statValue:      { fontSize: 22 },
+  statsRow:       { flexDirection: 'row', paddingHorizontal: 8, paddingBottom: 16, paddingTop: 4 },
+  statItem:       { flex: 1, alignItems: 'center', gap: 4 },
+  statDivider:    { width: 1, marginVertical: 4 },
+  statLabel:      { fontSize: 9, fontWeight: '700', letterSpacing: 1.2 },
+  statValue:      { fontSize: 18 },
 
-  empty:          { textAlign: 'center', marginTop: 20, fontSize: 14, fontStyle: 'italic' },
+  runRow:         { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, gap: 12 },
+  runRank:        { fontSize: 14, fontWeight: '700', width: 32, textAlign: 'center' },
+  runInfo:        { flex: 1 },
+  runName:        { fontSize: 15, fontWeight: '600' },
+  runDate:        { fontSize: 12, marginTop: 1 },
+  runRight:       { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  runChain:       { fontSize: 12 },
+  runScore:       { fontSize: 17 },
+  badge:          { fontSize: 10, fontWeight: '700', borderWidth: 1, borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1 },
+  empty:          { textAlign: 'center', padding: 24, fontSize: 14, fontStyle: 'italic' },
 });
