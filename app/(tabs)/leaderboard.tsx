@@ -196,7 +196,7 @@ export default function LeaderboardScreen() {
         {/* Ranked runs — placeholder for future global leaderboard */}
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>YOUR LAST 50 RUNS</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>YOUR LAST 100 RUNS</Text>
             <View style={styles.sortToggle}>
               <TouchableOpacity onPress={() => setSortBy('score')}>
                 <Text style={[styles.sortBtn, { color: sortBy === 'score' ? colors.accent : colors.textMuted, fontWeight: sortBy === 'score' ? '700' : '400' }]}>Score</Text>
