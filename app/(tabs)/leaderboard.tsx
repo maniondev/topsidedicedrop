@@ -120,7 +120,7 @@ export default function LeaderboardScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Stats</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Your Stats</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -191,9 +191,10 @@ export default function LeaderboardScreen() {
           </View>
         </View>
 
+        <Text style={[styles.comingSoon, { color: colors.textMuted }]}>🌐 Global leaderboards coming soon</Text>
+
         {/* Ranked runs — placeholder for future global leaderboard */}
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.comingSoon, { color: colors.textMuted }]}>🌐 Global leaderboards coming soon</Text>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>YOUR LAST 50 RUNS</Text>
             <View style={styles.sortToggle}>
