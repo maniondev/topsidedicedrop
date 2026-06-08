@@ -6,7 +6,7 @@ import { Difficulty } from '@/contexts/DifficultyContext';
 import { RunRecord } from '@/lib/storage';
 
 function formatDate(ts: number): string {
-  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function formatScore(n: number): string {
