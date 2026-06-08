@@ -74,14 +74,26 @@ export async function loadStats(): Promise<Stats> {
       const parsed = JSON.parse(raw);
       // Migrate / validate: only accept the per-difficulty shape, else start fresh.
       if (parsed && parsed.byDifficulty) {
-        return {
-          byDifficulty: {
-            easy:   { ...emptyDiff(), ...parsed.byDifficulty.easy },
-            medium: { ...emptyDiff(), ...parsed.byDifficulty.medium },
-            hard:   { ...emptyDiff(), ...parsed.byDifficulty.hard },
-          },
-          recentRuns: Array.isArray(parsed.recentRuns) ? parsed.recentRuns : [],
+        const recentRuns: RunRecord[] = Array.isArray(parsed.recentRuns) ? parsed.recentRuns : [];
+        const byDiff = {
+          easy:   { ...emptyDiff(), ...parsed.byDifficulty.easy },
+          medium: { ...emptyDiff(), ...parsed.byDifficulty.medium },
+          hard:   { ...emptyDiff(), ...parsed.byDifficulty.hard },
         };
+        // One-time migration: if lifetimeScore is missing/0 but recentRuns has data,
+        // seed it from whatever history we have (last 20 runs — best we can do).
+        const needsMigration = (['easy', 'medium', 'hard'] as Difficulty[]).some(
+          d => byDiff[d].lifetimeScore === 0 && byDiff[d].totalRuns > 0
+        );
+        if (needsMigration) {
+          for (const run of recentRuns) {
+            byDiff[run.difficulty].lifetimeScore += run.score;
+          }
+          // Persist the migrated values so we don't redo this every load
+          const migrated = { byDifficulty: byDiff, recentRuns };
+          AsyncStorage.setItem(STATS_KEY, JSON.stringify(migrated)).catch(() => {});
+        }
+        return { byDifficulty: byDiff, recentRuns };
       }
     }
   } catch {}
