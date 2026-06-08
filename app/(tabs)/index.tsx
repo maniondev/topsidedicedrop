@@ -120,12 +120,20 @@ export default function LobbyScreen() {
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-        {/* Best Score hero — for the selected difficulty */}
-        <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.heroLabel, { color: colors.textMuted }]}>BEST SCORE</Text>
-          <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-            {dstats.bestScore > 0 ? dstats.bestScore.toLocaleString() : '—'}
-          </Text>
+        {/* Best Overall and Best Unassisted — for the selected difficulty */}
+        <View style={styles.bestScoresRow}>
+          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.heroLabel, { color: colors.textMuted }]}>BEST OVERALL</Text>
+            <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              {dstats.bestScore > 0 ? dstats.bestScore.toLocaleString() : '—'}
+            </Text>
+          </View>
+          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.heroLabel, { color: colors.textMuted }]}>UNASSISTED</Text>
+            <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              {dstats.bestUnassisted > 0 ? dstats.bestUnassisted.toLocaleString() : '—'}
+            </Text>
+          </View>
         </View>
 
         {/* Stats row — for the selected difficulty */}
@@ -176,6 +184,8 @@ const styles = StyleSheet.create({
   heroCard:    { borderRadius: 16, borderWidth: 1, paddingVertical: 16, alignItems: 'center', gap: 2 },
   heroLabel:   { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
   heroValue:   { fontSize: 44, lineHeight: 50 },
+  bestScoresRow: { flexDirection: 'row', gap: 12 },
+  bestScoreCard: { flex: 1, borderRadius: 16, borderWidth: 1, paddingVertical: 14, alignItems: 'center', gap: 2 },
   statsRow:    { flexDirection: 'row', gap: 12 },
   statCard:    { flex: 1, height: ROW_H, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center', gap: 2 },
   statLabel:   { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },

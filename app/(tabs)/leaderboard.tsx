@@ -32,6 +32,11 @@ export default function StatsScreen() {
     stats.byDifficulty.medium.bestScore,
     stats.byDifficulty.hard.bestScore,
   );
+  const bestUnassisted = Math.max(
+    stats.byDifficulty.easy.bestUnassisted,
+    stats.byDifficulty.medium.bestUnassisted,
+    stats.byDifficulty.hard.bestUnassisted,
+  );
   const totalRuns = stats.byDifficulty.easy.totalRuns + stats.byDifficulty.medium.totalRuns + stats.byDifficulty.hard.totalRuns;
   const bestChain = Math.max(
     stats.byDifficulty.easy.bestChain,
@@ -51,11 +56,19 @@ export default function StatsScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
 
-        {/* Best score — always free */}
+        {/* Best score overall */}
         <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.heroLabel, { color: colors.textMuted }]}>BEST SCORE</Text>
+          <Text style={[styles.heroLabel, { color: colors.textMuted }]}>BEST OVERALL</Text>
           <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
             {bestScore > 0 ? bestScore.toLocaleString() : '—'}
+          </Text>
+        </View>
+
+        {/* Best unassisted */}
+        <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+          <Text style={[styles.heroLabel, { color: colors.textMuted }]}>BEST UNASSISTED</Text>
+          <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+            {bestUnassisted > 0 ? bestUnassisted.toLocaleString() : '—'}
           </Text>
         </View>
 

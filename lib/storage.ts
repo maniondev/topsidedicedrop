@@ -12,7 +12,8 @@ export interface RunRecord {
 }
 
 export interface DiffStats {
-  bestScore: number;
+  bestScore: number;        // best overall (with or without continues)
+  bestUnassisted: number;   // best without using continues
   totalRuns: number;
   bestChain: number;
 }
@@ -22,11 +23,14 @@ export interface Stats {
   recentRuns: RunRecord[]; // global, last 20, each tagged with its difficulty
 }
 
-const emptyDiff = (): DiffStats => ({ bestScore: 0, totalRuns: 0, bestChain: 0 });
-const emptyStats = (): Stats => ({
-  byDifficulty: { easy: emptyDiff(), medium: emptyDiff(), hard: emptyDiff() },
-  recentRuns: [],
-});
+const emptyDiff = (): DiffStats => ({ bestScore: 0, bestUnassisted: 0, totalRuns: 0, bestChain: 0 });
+const emptyStats = (): Stats => {
+  const empty = emptyDiff();
+  return {
+    byDifficulty: { easy: { ...empty }, medium: { ...empty }, hard: { ...empty } },
+    recentRuns: [],
+  };
+};
 
 const STATS_KEY      = `${PREFIX}stats`;
 // Saved games are keyed PER DIFFICULTY so an easy run can't be resumed and
@@ -105,6 +109,8 @@ export async function recordRun(
   const d = stats.byDifficulty[difficulty];
   d.totalRuns++;
   if (score > d.bestScore) d.bestScore = score;
+  // Only update bestUnassisted if no continues were used
+  if (!usedContinue && score > d.bestUnassisted) d.bestUnassisted = score;
   if (bestChain > d.bestChain) d.bestChain = bestChain;
   stats.recentRuns = [
     { score, date: Date.now(), bestChain, difficulty, usedContinue },
