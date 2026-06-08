@@ -78,8 +78,9 @@ export default function LeaderboardScreen() {
     ? Math.max(0, ...diffs.map(d => isUnassisted ? stats.byDifficulty[d].bestUnassisted : stats.byDifficulty[d].bestScore))
     : isUnassisted ? stats.byDifficulty[filterDifficulty].bestUnassisted : stats.byDifficulty[filterDifficulty].bestScore;
 
-  const averageScore = filteredRuns.length > 0
-    ? Math.round(filteredRuns.reduce((a, r) => a + r.score, 0) / filteredRuns.length)
+  // averageScore uses overall runs (not type-filtered) — same as Total Runs / Lifetime
+  const averageScore = overallRuns.length > 0
+    ? Math.round(overallRuns.reduce((a, r) => a + r.score, 0) / overallRuns.length)
     : 0;
 
   const bestThisWeek = Math.max(0, ...filteredRuns.filter(r => r.date >= weekAgo).map(r => r.score));
@@ -134,9 +135,8 @@ export default function LeaderboardScreen() {
           </View>
         </View>
 
-        {/* Personal stats — Best Run, Average, Best This Week (type-filtered) */}
+        {/* Row 1: Best Run | This Week | Best Chain — type-filtered */}
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>YOUR STATS</Text>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST RUN</Text>
@@ -146,25 +146,31 @@ export default function LeaderboardScreen() {
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>AVERAGE</Text>
-              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-                {averageScore > 0 ? averageScore.toLocaleString() : '—'}
-              </Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.statItem}>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>THIS WEEK</Text>
               <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
                 {bestThisWeek > 0 ? bestThisWeek.toLocaleString() : '—'}
               </Text>
             </View>
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+            <View style={styles.statItem}>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST CHAIN</Text>
+              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+                {bestChain > 0 ? `×${bestChain}` : '—'}
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* Always-overall stats */}
+        {/* Row 2: Total Runs | Lifetime Score | Average — always overall, not type-filtered */}
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ALL TIME</Text>
           <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>TOTAL RUNS</Text>
+              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+                {totalRuns}
+              </Text>
+            </View>
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>LIFETIME</Text>
               <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
@@ -173,16 +179,9 @@ export default function LeaderboardScreen() {
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>RUNS</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>AVERAGE</Text>
               <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-                {totalRuns}
-              </Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST CHAIN</Text>
-              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-                {bestChain > 0 ? `×${bestChain}` : '—'}
+                {averageScore > 0 ? averageScore.toLocaleString() : '—'}
               </Text>
             </View>
           </View>
@@ -227,7 +226,7 @@ const styles = StyleSheet.create({
   sectionTitle:   { fontSize: 10, fontWeight: '700', letterSpacing: 1.5, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 },
   comingSoon:     { fontSize: 11, fontStyle: 'italic' },
 
-  statsRow:       { flexDirection: 'row', paddingHorizontal: 8, paddingBottom: 16, paddingTop: 4 },
+  statsRow:       { flexDirection: 'row', paddingHorizontal: 8, paddingVertical: 16 },
   statItem:       { flex: 1, alignItems: 'center', gap: 4 },
   statDivider:    { width: 1, marginVertical: 4 },
   statLabel:      { fontSize: 9, fontWeight: '700', letterSpacing: 1.2 },
