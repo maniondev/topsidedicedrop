@@ -48,7 +48,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="leaderboard"
         options={{
-          title: 'Leaderboard',
+          title: 'Stats',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="trophy-outline" size={size} color={color} />
           ),

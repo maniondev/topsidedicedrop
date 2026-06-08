@@ -120,7 +120,7 @@ export default function LeaderboardScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Leaderboard / Stats</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Stats</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -193,6 +193,7 @@ export default function LeaderboardScreen() {
 
         {/* Ranked runs — placeholder for future global leaderboard */}
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+          <Text style={[styles.comingSoon, { color: colors.textMuted }]}>🌐 Global leaderboards coming soon</Text>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>YOUR LAST 50 RUNS</Text>
             <View style={styles.sortToggle}>
@@ -235,6 +236,7 @@ const styles = StyleSheet.create({
   section:        { borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
   sectionHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 },
   sectionTitle:   { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
+  comingSoon:     { fontSize: 12, fontStyle: 'italic', textAlign: 'center', paddingVertical: 10, paddingHorizontal: 16 },
   sortToggle:     { flexDirection: 'row', alignItems: 'center', gap: 6 },
   sortBtn:        { fontSize: 13 },
   sortSep:        { fontSize: 13 },
