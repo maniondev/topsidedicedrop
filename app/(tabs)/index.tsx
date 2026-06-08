@@ -129,7 +129,7 @@ export default function LobbyScreen() {
             </Text>
           </View>
           <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.heroLabel, { color: colors.textMuted }]}>UNASSISTED</Text>
+            <Text style={[styles.heroLabel, { color: colors.textMuted }]}>BEST UNASSISTED</Text>
             <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
               {dstats.bestUnassisted > 0 ? dstats.bestUnassisted.toLocaleString() : '—'}
             </Text>
