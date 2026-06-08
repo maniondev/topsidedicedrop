@@ -72,23 +72,24 @@ export default function LeaderboardScreen() {
     return diffMatch && typeMatch;
   });
 
-  // Best Run & Average — respect both filters
   const diffs: Difficulty[] = ['easy', 'medium', 'hard'];
+
+  // Always-overall stats — unaffected by type filter
+  const overallRuns = stats.recentRuns.filter(r =>
+    filterDifficulty === 'all' || r.difficulty === filterDifficulty
+  );
+
+  // Type-filtered stats
   const bestRun = filterDifficulty === 'all'
     ? Math.max(0, ...diffs.map(d => isUnassisted ? stats.byDifficulty[d].bestUnassisted : stats.byDifficulty[d].bestScore))
     : isUnassisted ? stats.byDifficulty[filterDifficulty].bestUnassisted : stats.byDifficulty[filterDifficulty].bestScore;
 
-  // averageScore uses overall runs (not type-filtered) — same as Total Runs / Lifetime
+  const bestThisWeek = Math.max(0, ...filteredRuns.filter(r => r.date >= weekAgo).map(r => r.score));
+
+  // averageScore uses overall runs (not type-filtered)
   const averageScore = overallRuns.length > 0
     ? Math.round(overallRuns.reduce((a, r) => a + r.score, 0) / overallRuns.length)
     : 0;
-
-  const bestThisWeek = Math.max(0, ...filteredRuns.filter(r => r.date >= weekAgo).map(r => r.score));
-
-  // Always-overall stats (lifetime, total runs, best chain — unaffected by type filter)
-  const overallRuns = stats.recentRuns.filter(r =>
-    filterDifficulty === 'all' || r.difficulty === filterDifficulty
-  );
   const lifetimeScore = filterDifficulty === 'all'
     ? diffs.reduce((sum, d) => sum + stats.byDifficulty[d].lifetimeScore, 0)
     : stats.byDifficulty[filterDifficulty].lifetimeScore;
