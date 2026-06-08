@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import React, { useState, useRef, useCallback } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useStats } from '@/contexts/StatsContext';
 import { Difficulty } from '@/contexts/DifficultyContext';
@@ -43,13 +45,18 @@ function RunRow({ rank, run, isYou = true }: { rank: number; run: RunRecord; isY
         <Text style={[styles.runDate, { color: colors.textMuted }]}>{formatDate(run.date)}</Text>
       </View>
       <View style={styles.runRight}>
-        {run.bestChain > 1 && (
-          <Text style={[styles.runChain, { color: colors.textMuted }]}>×{run.bestChain}</Text>
+        <View style={styles.runTopRow}>
+          {run.bestChain > 1 && (
+            <Text style={[styles.runChain, { color: colors.textMuted }]}>×{run.bestChain}</Text>
+          )}
+          <DiffBadge diff={run.difficulty} />
+          <Text style={[styles.runScore, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
+            {formatScore(run.score)}
+          </Text>
+        </View>
+        {!run.usedContinue && (
+          <Text style={[styles.unassistedLabel, { color: colors.accent }]}>unassisted</Text>
         )}
-        <DiffBadge diff={run.difficulty} />
-        <Text style={[styles.runScore, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-          {formatScore(run.score)}
-        </Text>
       </View>
     </View>
   );
@@ -58,6 +65,12 @@ function RunRow({ rank, run, isYou = true }: { rank: number; run: RunRecord; isY
 export default function LeaderboardScreen() {
   const { colors } = useTheme();
   const { stats } = useStats();
+  const { top } = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView>(null);
+
+  useFocusEffect(useCallback(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, []));
 
   const [filterDifficulty, setFilterDifficulty] = useState<Difficulty | 'all'>('all');
   const [filterType, setFilterType] = useState<'overall' | 'unassisted'>('overall');
@@ -118,12 +131,12 @@ export default function LeaderboardScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
+    <View style={[styles.safe, { backgroundColor: colors.background, paddingTop: top }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>Your Stats</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
         {/* Filters */}
         <View style={styles.filters}>
@@ -144,21 +157,21 @@ export default function LeaderboardScreen() {
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST RUN</Text>
-              <Text style={[styles.statValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              <Text style={[styles.statValue, { color: colors.accent, fontFamily: 'Rubik_700Bold' }]}>
                 {bestRun > 0 ? bestRun.toLocaleString() : '—'}
               </Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>THIS WEEK</Text>
-              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
                 {bestThisWeek > 0 ? bestThisWeek.toLocaleString() : '—'}
               </Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST CHAIN</Text>
-              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
                 {bestChain > 0 ? `×${bestChain}` : '—'}
               </Text>
             </View>
@@ -170,21 +183,21 @@ export default function LeaderboardScreen() {
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>TOTAL RUNS</Text>
-              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
                 {totalRuns}
               </Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>LIFETIME</Text>
-              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
                 {lifetimeScore > 0 ? formatScore(lifetimeScore) : '—'}
               </Text>
             </View>
             <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             <View style={styles.statItem}>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>AVERAGE</Text>
-              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              <Text style={[styles.statValue, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
                 {averageScore > 0 ? averageScore.toLocaleString() : '—'}
               </Text>
             </View>
@@ -219,7 +232,7 @@ export default function LeaderboardScreen() {
         </View>
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -248,14 +261,16 @@ const styles = StyleSheet.create({
   statLabel:      { fontSize: 11, fontWeight: '700', letterSpacing: 1.0 },
   statValue:      { fontSize: 18 },
 
-  runRow:         { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, gap: 12 },
-  runRank:        { fontSize: 14, fontWeight: '700', width: 32, textAlign: 'center' },
-  runInfo:        { flex: 1 },
-  runName:        { fontSize: 15, fontWeight: '600' },
-  runDate:        { fontSize: 12, marginTop: 1 },
-  runRight:       { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  runChain:       { fontSize: 12 },
-  runScore:       { fontSize: 17 },
+  runRow:          { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, gap: 12 },
+  runRank:         { fontSize: 14, fontWeight: '700', width: 32, textAlign: 'center' },
+  runInfo:         { flex: 1 },
+  runName:         { fontSize: 15, fontWeight: '600' },
+  runDate:         { fontSize: 12, marginTop: 1 },
+  runRight:        { alignItems: 'flex-end', gap: 2 },
+  runTopRow:       { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  runChain:        { fontSize: 12 },
+  runScore:        { fontSize: 17 },
+  unassistedLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
   badge:          { fontSize: 10, fontWeight: '700', borderWidth: 1, borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1 },
   empty:          { textAlign: 'center', padding: 24, fontSize: 14, fontStyle: 'italic' },
 });

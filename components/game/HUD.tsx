@@ -85,7 +85,7 @@ export default function HUD({ score, bestScore, nextPiece, onLogoPress }: Props)
         <View style={styles.col}>
           <Text style={[styles.label, { color: colors.textMuted }]}>SCORE</Text>
           <View style={styles.valueArea}>
-            <Text style={[styles.value, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold', fontSize: valueFontSize(score) }]}>
+            <Text style={[styles.value, { color: colors.text, fontFamily: 'Rubik_700Bold', fontSize: valueFontSize(score) }]}>
               {score.toLocaleString()}
             </Text>
           </View>
@@ -96,7 +96,7 @@ export default function HUD({ score, bestScore, nextPiece, onLogoPress }: Props)
         <View style={styles.col}>
           <Text style={[styles.label, { color: colors.textMuted }]}>BEST</Text>
           <View style={styles.valueArea}>
-            <Text style={[styles.value, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold', fontSize: valueFontSize(bestScore) }]}>
+            <Text style={[styles.value, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: valueFontSize(bestScore) }]}>
               {bestScore.toLocaleString()}
             </Text>
           </View>

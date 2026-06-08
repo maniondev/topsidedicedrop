@@ -34,7 +34,7 @@ export default function GameOverModal({
           {isNewBest && (
             <Text style={[styles.newBest, { color: colors.accent }]}>New Best!</Text>
           )}
-          <Text style={[styles.score, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+          <Text style={[styles.score, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
             {score.toLocaleString()}
           </Text>
           <Text style={[styles.bestLabel, { color: colors.textMuted }]}>
@@ -45,11 +45,11 @@ export default function GameOverModal({
 
           {freeContinueAvailable && (
             <TouchableOpacity
-              style={[styles.continueBtn, { backgroundColor: colors.premiumGold }]}
+              style={[styles.continueBtn, { backgroundColor: colors.accent }]}
               onPress={onFreeContinue}
             >
-              <Text style={[styles.continueBtnText, { color: '#fff' }]}>⭐ Free Continue</Text>
-              <Text style={[styles.continueSub, { color: '#fff' }]}>Premium perk — 1 per run</Text>
+              <Text style={[styles.continueBtnText, { color: colors.accentText }]}>Free Continue</Text>
+              <Text style={[styles.continueSub, { color: colors.accentText }]}>Premium perk — 1 per run</Text>
             </TouchableOpacity>
           )}
 

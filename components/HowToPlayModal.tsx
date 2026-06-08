@@ -11,7 +11,7 @@ const RULES: { title: string; body: string }[] = [
   { title: 'Drop the dice', body: 'Shaped dice pieces fall from the top. Swipe left/right to move, tap to rotate, and swipe down to drop faster.' },
   { title: 'Merge matching values', body: 'Two touching dice of the same value merge into one die of the next value: 1+1→2, 2+2→3, all the way up.' },
   { title: 'Build chains', body: 'A merge can trigger more merges as dice settle. The longer the chain, the bigger the score multiplier.' },
-  { title: 'Clear the sixes', body: 'Merge two 6s to clear them off the board for a big bonus — your main way to free up space.' },
+  { title: 'Clear the sixes', body: 'Merge two 6s to clear them off the board for a big bonus. The best way to free up space.' },
   { title: 'Survive', body: 'Unsupported stacks fall. The run ends when a new piece can no longer fit. Beat your best score!' },
 ];
 

@@ -219,10 +219,19 @@ export default function GameScreen() {
     router.back();
   }, [game.exportState, difficulty]);
 
-  // Quit without saving
-  const handleQuit = useCallback(() => {
+  // Quit without saving — log score to stats, then leave
+  const handleQuitAndLog = useCallback(async () => {
+    const continueUsed = freeContinueUsed || game.continueAvailable === false;
+    await submitRun(game.score, game.runBestChain, difficulty, continueUsed);
+    await clearSavedGame(difficulty);
     router.back();
-  }, []);
+  }, [game.score, game.runBestChain, difficulty, freeContinueUsed, game.continueAvailable, submitRun]);
+
+  // Quit without saving — discard score entirely, no stats recorded
+  const handleQuitDiscard = useCallback(async () => {
+    await clearSavedGame(difficulty);
+    router.back();
+  }, [difficulty]);
 
   const controlsDisabled =
     paused ||
@@ -373,7 +382,8 @@ export default function GameScreen() {
         visible={paused}
         onResume={() => setPaused(false)}
         onContinueLater={handleSaveAndQuit}
-        onNewGame={handleQuit}
+        onQuitAndLog={handleQuitAndLog}
+        onQuitDiscard={handleQuitDiscard}
       />
 
       <AdInterstitial visible={showInterstitial} onClose={handleInterstitialClose} />

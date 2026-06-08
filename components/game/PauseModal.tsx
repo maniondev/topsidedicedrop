@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -6,13 +6,60 @@ interface Props {
   visible: boolean;
   onResume: () => void;
   onContinueLater: () => void; // saves state and quits to lobby
-  onNewGame: () => void;       // quits to lobby without saving
+  onQuitAndLog: () => void;    // submits score to stats, then quits
+  onQuitDiscard: () => void;   // quits without saving or logging score
 }
 
-export default function PauseModal({ visible, onResume, onContinueLater, onNewGame }: Props) {
+export default function PauseModal({ visible, onResume, onContinueLater, onQuitAndLog, onQuitDiscard }: Props) {
   const { colors } = useTheme();
+  const [confirming, setConfirming] = useState(false);
+
+  // Reset confirmation step whenever modal closes
+  const handleRequestClose = () => {
+    setConfirming(false);
+    onResume();
+  };
+
+  if (confirming) {
+    return (
+      <Modal visible={visible} transparent animationType="fade" onRequestClose={handleRequestClose}>
+        <View style={styles.overlay}>
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.title, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              Quit Without Saving?
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+              Your progress won't be saved. Log your score to the leaderboard or discard it.
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.btn, { backgroundColor: colors.accent }]}
+              onPress={() => { setConfirming(false); onQuitAndLog(); }}
+            >
+              <Text style={[styles.btnText, { color: colors.accentText }]}>Log Score</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.outlineBtn, { borderColor: colors.accent }]}
+              onPress={() => { setConfirming(false); onQuitDiscard(); }}
+            >
+              <Text style={[styles.outlineText, { color: colors.accent }]}>Discard Score</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.outlineBtn, { borderColor: colors.border }]}
+              onPress={() => setConfirming(false)}
+            >
+              <Text style={[styles.outlineText, { color: colors.textSecondary }]}>← Back</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onResume}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleRequestClose}>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
           <Text style={[styles.title, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
@@ -30,7 +77,10 @@ export default function PauseModal({ visible, onResume, onContinueLater, onNewGa
             <Text style={[styles.outlineText, { color: colors.accent }]}>Save & Quit</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.outlineBtn, { borderColor: colors.border }]} onPress={onNewGame}>
+          <TouchableOpacity
+            style={[styles.outlineBtn, { borderColor: colors.border }]}
+            onPress={() => setConfirming(true)}
+          >
             <Text style={[styles.outlineText, { color: colors.textSecondary }]}>✕  Quit Without Saving</Text>
           </TouchableOpacity>
         </View>
@@ -43,6 +93,7 @@ const styles = StyleSheet.create({
   overlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center', padding: 40 },
   card:       { width: '100%', borderRadius: 20, borderWidth: 1, padding: 28, alignItems: 'center', gap: 12 },
   title:      { fontSize: 28, marginBottom: 4 },
+  subtitle:   { fontSize: 13, textAlign: 'center', lineHeight: 18, marginBottom: 4 },
   btn:        { width: '100%', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   btnText:    { fontSize: 17, fontWeight: '700' },
   outlineBtn: { width: '100%', paddingVertical: 12, borderRadius: 12, alignItems: 'center', borderWidth: 1.5, gap: 3 },
