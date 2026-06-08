@@ -16,6 +16,7 @@ export interface DiffStats {
   bestUnassisted: number;   // best without using continues
   totalRuns: number;
   bestChain: number;
+  lifetimeScore: number;    // aggregate of all scores for this difficulty
 }
 
 export interface Stats {
@@ -23,7 +24,7 @@ export interface Stats {
   recentRuns: RunRecord[]; // global, last 20, each tagged with its difficulty
 }
 
-const emptyDiff = (): DiffStats => ({ bestScore: 0, bestUnassisted: 0, totalRuns: 0, bestChain: 0 });
+const emptyDiff = (): DiffStats => ({ bestScore: 0, bestUnassisted: 0, totalRuns: 0, bestChain: 0, lifetimeScore: 0 });
 const emptyStats = (): Stats => {
   const empty = emptyDiff();
   return {
@@ -108,6 +109,7 @@ export async function recordRun(
   const stats = await loadStats();
   const d = stats.byDifficulty[difficulty];
   d.totalRuns++;
+  d.lifetimeScore += score;
   if (score > d.bestScore) d.bestScore = score;
   // Only update bestUnassisted if no continues were used
   if (!usedContinue && score > d.bestUnassisted) d.bestUnassisted = score;

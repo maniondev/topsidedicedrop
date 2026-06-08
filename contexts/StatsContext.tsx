@@ -4,9 +4,9 @@ import { Difficulty } from '@/contexts/DifficultyContext';
 
 const EMPTY: Stats = {
   byDifficulty: {
-    easy:   { bestScore: 0, bestUnassisted: 0, totalRuns: 0, bestChain: 0 },
-    medium: { bestScore: 0, bestUnassisted: 0, totalRuns: 0, bestChain: 0 },
-    hard:   { bestScore: 0, bestUnassisted: 0, totalRuns: 0, bestChain: 0 },
+    easy:   { bestScore: 0, bestUnassisted: 0, totalRuns: 0, bestChain: 0, lifetimeScore: 0 },
+    medium: { bestScore: 0, bestUnassisted: 0, totalRuns: 0, bestChain: 0, lifetimeScore: 0 },
+    hard:   { bestScore: 0, bestUnassisted: 0, totalRuns: 0, bestChain: 0, lifetimeScore: 0 },
   },
   recentRuns: [],
 };

@@ -139,15 +139,15 @@ export default function LobbyScreen() {
         {/* Stats row — for the selected difficulty */}
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>RUNS</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>TOTAL RUNS</Text>
             <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
               {dstats.totalRuns}
             </Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST CHAIN</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>LIFETIME SCORE</Text>
             <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-              {dstats.bestChain > 0 ? `×${dstats.bestChain}` : '—'}
+              {dstats.lifetimeScore > 0 ? dstats.lifetimeScore.toLocaleString() : '—'}
             </Text>
           </View>
         </View>
