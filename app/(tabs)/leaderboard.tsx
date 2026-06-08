@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   statsRow:       { flexDirection: 'row', paddingHorizontal: 8, paddingVertical: 16 },
   statItem:       { flex: 1, alignItems: 'center', gap: 4 },
   statDivider:    { width: 1, marginVertical: 4 },
-  statLabel:      { fontSize: 9, fontWeight: '700', letterSpacing: 1.2 },
+  statLabel:      { fontSize: 11, fontWeight: '700', letterSpacing: 1.0 },
   statValue:      { fontSize: 18 },
 
   runRow:         { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, gap: 12 },
