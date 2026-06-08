@@ -1,52 +1,82 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useStats } from '@/contexts/StatsContext';
-import { usePremium } from '@/contexts/PremiumContext';
-import { RunRecord } from '@/lib/storage';
+import { Difficulty } from '@/contexts/DifficultyContext';
 
-function formatDate(ts: number): string {
-  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
-function DiffBadge({ diff }: { diff: RunRecord['difficulty'] }) {
-  const { colors } = useTheme();
-  if (!diff) return null;
-  const color = diff === 'easy' ? '#27AE60' : diff === 'hard' ? '#E45757' : colors.textMuted;
-  return (
-    <Text style={[styles.badge, { color, borderColor: color }]}>
-      {diff.charAt(0).toUpperCase() + diff.slice(1)}
-    </Text>
-  );
-}
-
-export default function StatsScreen() {
+export default function LeaderboardScreen() {
   const { colors } = useTheme();
   const { stats } = useStats();
-  const { isPremium, upgrade } = usePremium();
 
-  // Aggregate across all difficulties for the global leaderboard
-  const bestScore = Math.max(
-    stats.byDifficulty.easy.bestScore,
-    stats.byDifficulty.medium.bestScore,
-    stats.byDifficulty.hard.bestScore,
-  );
-  const bestUnassisted = Math.max(
-    stats.byDifficulty.easy.bestUnassisted,
-    stats.byDifficulty.medium.bestUnassisted,
-    stats.byDifficulty.hard.bestUnassisted,
-  );
-  const totalRuns = stats.byDifficulty.easy.totalRuns + stats.byDifficulty.medium.totalRuns + stats.byDifficulty.hard.totalRuns;
-  const bestChain = Math.max(
-    stats.byDifficulty.easy.bestChain,
-    stats.byDifficulty.medium.bestChain,
-    stats.byDifficulty.hard.bestChain,
-  );
+  const [filterDifficulty, setFilterDifficulty] = useState<Difficulty | 'all'>('all');
+  const [filterType, setFilterType] = useState<'overall' | 'unassisted'>('overall');
 
-  const avgScore = stats.recentRuns.length > 0
-    ? Math.round(stats.recentRuns.reduce((a, r) => a + r.score, 0) / stats.recentRuns.length)
-    : 0;
+  // Get stats for the selected filter
+  const getFilteredStats = () => {
+    if (filterDifficulty === 'all') {
+      // Aggregate across all difficulties
+      const difficulties: Difficulty[] = ['easy', 'medium', 'hard'];
+      const bestScore = Math.max(...difficulties.map(d => stats.byDifficulty[d].bestScore));
+      const bestUnassisted = Math.max(...difficulties.map(d => stats.byDifficulty[d].bestUnassisted));
+      const totalRuns = difficulties.reduce((sum, d) => sum + stats.byDifficulty[d].totalRuns, 0);
+      const lifetimeScore = difficulties.reduce((sum, d) => sum + stats.byDifficulty[d].lifetimeScore, 0);
+      const bestChain = Math.max(...difficulties.map(d => stats.byDifficulty[d].bestChain));
+
+      // For unassisted, only count runs without continues
+      const unassistedRuns = stats.recentRuns.filter(r => !r.usedContinue);
+      const unassistedBest = unassistedRuns.length > 0 ? Math.max(...unassistedRuns.map(r => r.score)) : 0;
+
+      return {
+        bestRun: filterType === 'overall' ? bestScore : bestUnassisted,
+        lifetimeScore,
+        totalRuns,
+        bestChain,
+        averageScore: stats.recentRuns.length > 0 ? Math.round(stats.recentRuns.reduce((a, r) => a + r.score, 0) / stats.recentRuns.length) : 0,
+        bestThisWeek: (() => {
+          const now = Date.now();
+          const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+          const thisWeek = stats.recentRuns.filter(r => r.date >= weekAgo && (filterType === 'overall' ? true : !r.usedContinue));
+          return thisWeek.length > 0 ? Math.max(...thisWeek.map(r => r.score)) : 0;
+        })(),
+      };
+    } else {
+      // Single difficulty
+      const d = stats.byDifficulty[filterDifficulty];
+      const bestRun = filterType === 'overall' ? d.bestScore : d.bestUnassisted;
+
+      // Average for this difficulty
+      const diffRuns = stats.recentRuns.filter(r => r.difficulty === filterDifficulty && (filterType === 'overall' ? true : !r.usedContinue));
+      const averageScore = diffRuns.length > 0 ? Math.round(diffRuns.reduce((a, r) => a + r.score, 0) / diffRuns.length) : 0;
+
+      // Best this week for this difficulty
+      const now = Date.now();
+      const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+      const thisWeek = diffRuns.filter(r => r.date >= weekAgo);
+      const bestThisWeek = thisWeek.length > 0 ? Math.max(...thisWeek.map(r => r.score)) : 0;
+
+      return {
+        bestRun,
+        lifetimeScore: d.lifetimeScore,
+        totalRuns: d.totalRuns,
+        bestChain: d.bestChain,
+        averageScore,
+        bestThisWeek,
+      };
+    }
+  };
+
+  const filtered = getFilteredStats();
+
+  const FilterButton = ({ label, value, current, onPress }: any) => (
+    <TouchableOpacity
+      style={[styles.filterBtn, { backgroundColor: current === value ? colors.accent : colors.card, borderColor: colors.border }]}
+      onPress={() => onPress(value)}
+    >
+      <Text style={[styles.filterBtnText, { color: current === value ? colors.accentText : colors.textSecondary, fontWeight: current === value ? '700' : '400' }]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
@@ -54,134 +84,105 @@ export default function StatsScreen() {
         <Text style={[styles.title, { color: colors.text }]}>Leaderboard</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-        {/* Best score overall */}
+        {/* Difficulty Filter */}
+        <View style={styles.filterGroup}>
+          <Text style={[styles.filterLabel, { color: colors.textMuted }]}>DIFFICULTY</Text>
+          <View style={styles.filterRow}>
+            <FilterButton label="All" value="all" current={filterDifficulty} onPress={setFilterDifficulty} />
+            <FilterButton label="Easy" value="easy" current={filterDifficulty} onPress={setFilterDifficulty} />
+            <FilterButton label="Medium" value="medium" current={filterDifficulty} onPress={setFilterDifficulty} />
+            <FilterButton label="Hard" value="hard" current={filterDifficulty} onPress={setFilterDifficulty} />
+          </View>
+        </View>
+
+        {/* Type Filter */}
+        <View style={styles.filterGroup}>
+          <Text style={[styles.filterLabel, { color: colors.textMuted }]}>TYPE</Text>
+          <View style={styles.filterRow}>
+            <FilterButton label="Overall" value="overall" current={filterType} onPress={setFilterType} />
+            <FilterButton label="Unassisted" value="unassisted" current={filterType} onPress={setFilterType} />
+          </View>
+        </View>
+
+        {/* Hero stat: Best Run */}
         <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.heroLabel, { color: colors.textMuted }]}>BEST OVERALL</Text>
+          <Text style={[styles.heroLabel, { color: colors.textMuted }]}>BEST RUN</Text>
           <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-            {bestScore > 0 ? bestScore.toLocaleString() : '—'}
+            {filtered.bestRun > 0 ? filtered.bestRun.toLocaleString() : '—'}
           </Text>
         </View>
 
-        {/* Best unassisted */}
-        <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.heroLabel, { color: colors.textMuted }]}>BEST UNASSISTED</Text>
-          <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-            {bestUnassisted > 0 ? bestUnassisted.toLocaleString() : '—'}
-          </Text>
-        </View>
-
-        {/* Free stats row */}
-        <View style={styles.row}>
+        {/* Stats grid */}
+        <View style={styles.statsGrid}>
           <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]}>RUNS</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>AVERAGE</Text>
             <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-              {totalRuns}
+              {filtered.averageScore > 0 ? filtered.averageScore.toLocaleString() : '—'}
             </Text>
           </View>
+
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>LIFETIME</Text>
+            <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              {filtered.lifetimeScore > 0 ? filtered.lifetimeScore.toLocaleString() : '—'}
+            </Text>
+          </View>
+
           <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST CHAIN</Text>
             <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-              {bestChain > 0 ? `×${bestChain}` : '—'}
+              {filtered.bestChain > 0 ? `×${filtered.bestChain}` : '—'}
+            </Text>
+          </View>
+
+          <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>TOTAL RUNS</Text>
+            <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              {filtered.totalRuns}
             </Text>
           </View>
         </View>
 
-        {/* Premium stats */}
-        {isPremium ? (
-          <>
-            <View style={styles.row}>
-              <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>AVG SCORE</Text>
-                <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-                  {avgScore > 0 ? avgScore.toLocaleString() : '—'}
-                </Text>
-              </View>
-              <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-                <Text style={[styles.statLabel, { color: colors.textMuted }]}>CLEAN RUNS</Text>
-                <Text style={[styles.statValue, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-                  {stats.recentRuns.filter(r => !r.usedContinue).length}
-                  <Text style={[styles.statSub, { color: colors.textMuted }]}> /20</Text>
-                </Text>
-              </View>
-            </View>
+        {/* Best This Week */}
+        <View style={[styles.statCardWide, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST THIS WEEK</Text>
+          <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+            {filtered.bestThisWeek > 0 ? filtered.bestThisWeek.toLocaleString() : '—'}
+          </Text>
+        </View>
 
-            {/* Last 20 runs */}
-            {stats.recentRuns.length > 0 && (
-              <View style={[styles.runsCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-                <Text style={[styles.runsTitle, { color: colors.textSecondary }]}>Last 20 Runs</Text>
-                {stats.recentRuns.map((run, i) => (
-                  <View
-                    key={i}
-                    style={[styles.runRow, i > 0 && { borderTopWidth: 1, borderTopColor: colors.separator }]}
-                  >
-                    <View style={styles.runLeft}>
-                      <Text style={[styles.runDate, { color: colors.textMuted }]}>{formatDate(run.date)}</Text>
-                      <DiffBadge diff={run.difficulty} />
-                      {run.usedContinue && (
-                        <Ionicons name="refresh" size={11} color={colors.textMuted} />
-                      )}
-                    </View>
-                    <View style={styles.runRight}>
-                      {run.bestChain > 1 && (
-                        <Text style={[styles.runChain, { color: colors.accent }]}>×{run.bestChain}</Text>
-                      )}
-                      <Text style={[styles.runScore, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-                        {run.score.toLocaleString()}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
-          </>
-        ) : (
-          /* Premium upsell */
-          <TouchableOpacity
-            style={[styles.premiumNudge, { backgroundColor: colors.premiumBg, borderColor: colors.premiumGold }]}
-            onPress={upgrade}
-          >
-            <Ionicons name="star" size={16} color={colors.premiumGold} />
-            <Text style={[styles.premiumNudgeTitle, { color: colors.premiumGold }]}>Unlock Premium Stats</Text>
-            <Text style={[styles.premiumNudgeSub, { color: colors.textSecondary }]}>
-              Avg score · Clean runs · Last 20 run history
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {totalRuns === 0 && (
+        {filtered.totalRuns === 0 && (
           <Text style={[styles.empty, { color: colors.textMuted }]}>No runs yet — play a game first!</Text>
         )}
+
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe:        { flex: 1 },
-  header:      { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
-  title:       { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
-  content:     { padding: 20, gap: 16, paddingBottom: 40 },
-  heroCard:    { borderRadius: 16, borderWidth: 1, padding: 24, alignItems: 'center', gap: 4 },
-  heroLabel:   { fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
-  heroValue:   { fontSize: 52 },
-  row:         { flexDirection: 'row', gap: 12 },
-  statCard:    { flex: 1, borderRadius: 14, borderWidth: 1, padding: 18, alignItems: 'center', gap: 4 },
-  statLabel:   { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
-  statValue:   { fontSize: 28 },
-  statSub:     { fontSize: 14 },
-  runsCard:    { borderRadius: 14, borderWidth: 1, overflow: 'hidden' },
-  runsTitle:   { fontSize: 13, fontWeight: '600', paddingHorizontal: 16, paddingVertical: 12 },
-  runRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10 },
-  runLeft:     { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  runRight:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  runDate:     { fontSize: 13 },
-  runScore:    { fontSize: 16 },
-  runChain:    { fontSize: 12, fontWeight: '700' },
-  badge:       { fontSize: 10, fontWeight: '700', borderWidth: 1, borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1 },
-  premiumNudge:{ borderRadius: 14, borderWidth: 2, padding: 20, alignItems: 'center', gap: 6 },
-  premiumNudgeTitle: { fontSize: 16, fontWeight: '700' },
-  premiumNudgeSub:   { fontSize: 13, textAlign: 'center' },
-  empty:       { textAlign: 'center', fontSize: 15, marginTop: 40 },
+  safe:           { flex: 1 },
+  header:         { paddingVertical: 16, paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: '#00000010' },
+  title:          { fontSize: 32, fontFamily: 'PlayfairDisplay_700Bold' },
+  content:        { paddingVertical: 16, paddingHorizontal: 20, gap: 16 },
+
+  filterGroup:    { gap: 8 },
+  filterLabel:    { fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
+  filterRow:      { flexDirection: 'row', gap: 8 },
+  filterBtn:      { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, alignItems: 'center' },
+  filterBtnText:  { fontSize: 13, fontWeight: '600' },
+
+  heroCard:       { borderRadius: 16, borderWidth: 1, paddingVertical: 20, alignItems: 'center', gap: 2 },
+  heroLabel:      { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
+  heroValue:      { fontSize: 44, lineHeight: 50 },
+
+  statsGrid:      { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  statCard:       { flex: 1, minWidth: '48%', borderRadius: 14, borderWidth: 1, paddingVertical: 14, alignItems: 'center', gap: 2 },
+  statCardWide:   { borderRadius: 14, borderWidth: 1, paddingVertical: 16, alignItems: 'center', gap: 4 },
+  statLabel:      { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
+  statValue:      { fontSize: 22 },
+
+  empty:          { textAlign: 'center', marginTop: 20, fontSize: 14, fontStyle: 'italic' },
 });
