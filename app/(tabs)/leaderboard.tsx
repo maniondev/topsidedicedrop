@@ -13,56 +13,75 @@ export default function LeaderboardScreen() {
 
   // Get stats for the selected filter
   const getFilteredStats = () => {
+    const isUnassisted = filterType === 'unassisted';
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+
+    // Filter recentRuns by difficulty + type
+    const runs = stats.recentRuns.filter(r => {
+      const diffMatch = filterDifficulty === 'all' || r.difficulty === filterDifficulty;
+      const typeMatch = !isUnassisted || !r.usedContinue;
+      return diffMatch && typeMatch;
+    });
+
+    // Best run: for unassisted, use bestUnassisted from stored stats (which is more
+    // accurate since recentRuns is capped at 20). For overall, use bestScore.
+    let bestRun = 0;
     if (filterDifficulty === 'all') {
-      // Aggregate across all difficulties
-      const difficulties: Difficulty[] = ['easy', 'medium', 'hard'];
-      const bestScore = Math.max(...difficulties.map(d => stats.byDifficulty[d].bestScore));
-      const bestUnassisted = Math.max(...difficulties.map(d => stats.byDifficulty[d].bestUnassisted));
-      const totalRuns = difficulties.reduce((sum, d) => sum + stats.byDifficulty[d].totalRuns, 0);
-      const lifetimeScore = difficulties.reduce((sum, d) => sum + stats.byDifficulty[d].lifetimeScore, 0);
-      const bestChain = Math.max(...difficulties.map(d => stats.byDifficulty[d].bestChain));
-
-      // For unassisted, only count runs without continues
-      const unassistedRuns = stats.recentRuns.filter(r => !r.usedContinue);
-      const unassistedBest = unassistedRuns.length > 0 ? Math.max(...unassistedRuns.map(r => r.score)) : 0;
-
-      return {
-        bestRun: filterType === 'overall' ? bestScore : bestUnassisted,
-        lifetimeScore,
-        totalRuns,
-        bestChain,
-        averageScore: stats.recentRuns.length > 0 ? Math.round(stats.recentRuns.reduce((a, r) => a + r.score, 0) / stats.recentRuns.length) : 0,
-        bestThisWeek: (() => {
-          const now = Date.now();
-          const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
-          const thisWeek = stats.recentRuns.filter(r => r.date >= weekAgo && (filterType === 'overall' ? true : !r.usedContinue));
-          return thisWeek.length > 0 ? Math.max(...thisWeek.map(r => r.score)) : 0;
-        })(),
-      };
+      const diffs: Difficulty[] = ['easy', 'medium', 'hard'];
+      bestRun = Math.max(...diffs.map(d =>
+        isUnassisted ? stats.byDifficulty[d].bestUnassisted : stats.byDifficulty[d].bestScore
+      ));
     } else {
-      // Single difficulty
       const d = stats.byDifficulty[filterDifficulty];
-      const bestRun = filterType === 'overall' ? d.bestScore : d.bestUnassisted;
-
-      // Average for this difficulty
-      const diffRuns = stats.recentRuns.filter(r => r.difficulty === filterDifficulty && (filterType === 'overall' ? true : !r.usedContinue));
-      const averageScore = diffRuns.length > 0 ? Math.round(diffRuns.reduce((a, r) => a + r.score, 0) / diffRuns.length) : 0;
-
-      // Best this week for this difficulty
-      const now = Date.now();
-      const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
-      const thisWeek = diffRuns.filter(r => r.date >= weekAgo);
-      const bestThisWeek = thisWeek.length > 0 ? Math.max(...thisWeek.map(r => r.score)) : 0;
-
-      return {
-        bestRun,
-        lifetimeScore: d.lifetimeScore,
-        totalRuns: d.totalRuns,
-        bestChain: d.bestChain,
-        averageScore,
-        bestThisWeek,
-      };
+      bestRun = isUnassisted ? d.bestUnassisted : d.bestScore;
     }
+
+    // Lifetime score: for unassisted we derive from recentRuns (capped 20) as best
+    // we can — stored lifetimeScore is overall-only
+    let lifetimeScore = 0;
+    if (!isUnassisted) {
+      if (filterDifficulty === 'all') {
+        const diffs: Difficulty[] = ['easy', 'medium', 'hard'];
+        lifetimeScore = diffs.reduce((sum, d) => sum + stats.byDifficulty[d].lifetimeScore, 0);
+      } else {
+        lifetimeScore = stats.byDifficulty[filterDifficulty].lifetimeScore;
+      }
+    } else {
+      // Approximate from recentRuns (last 20 — best we can do without a separate store)
+      lifetimeScore = runs.reduce((sum, r) => sum + r.score, 0);
+    }
+
+    // Total runs: for unassisted derive from recentRuns (approximate)
+    let totalRuns = 0;
+    if (!isUnassisted) {
+      if (filterDifficulty === 'all') {
+        const diffs: Difficulty[] = ['easy', 'medium', 'hard'];
+        totalRuns = diffs.reduce((sum, d) => sum + stats.byDifficulty[d].totalRuns, 0);
+      } else {
+        totalRuns = stats.byDifficulty[filterDifficulty].totalRuns;
+      }
+    } else {
+      totalRuns = runs.length; // from recentRuns, approximate
+    }
+
+    // Best chain: for unassisted derive from filtered runs
+    let bestChain = 0;
+    if (!isUnassisted) {
+      if (filterDifficulty === 'all') {
+        const diffs: Difficulty[] = ['easy', 'medium', 'hard'];
+        bestChain = Math.max(...diffs.map(d => stats.byDifficulty[d].bestChain));
+      } else {
+        bestChain = stats.byDifficulty[filterDifficulty].bestChain;
+      }
+    } else {
+      bestChain = runs.length > 0 ? Math.max(...runs.map(r => r.bestChain)) : 0;
+    }
+
+    const averageScore = runs.length > 0 ? Math.round(runs.reduce((a, r) => a + r.score, 0) / runs.length) : 0;
+    const thisWeekRuns = runs.filter(r => r.date >= weekAgo);
+    const bestThisWeek = thisWeekRuns.length > 0 ? Math.max(...thisWeekRuns.map(r => r.score)) : 0;
+
+    return { bestRun, lifetimeScore, totalRuns, bestChain, averageScore, bestThisWeek };
   };
 
   const filtered = getFilteredStats();
