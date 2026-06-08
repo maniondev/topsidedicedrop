@@ -61,6 +61,7 @@ export default function LeaderboardScreen() {
 
   const [filterDifficulty, setFilterDifficulty] = useState<Difficulty | 'all'>('all');
   const [filterType, setFilterType] = useState<'overall' | 'unassisted'>('overall');
+  const [sortBy, setSortBy] = useState<'score' | 'recent'>('score');
 
   const isUnassisted = filterType === 'unassisted';
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
@@ -101,7 +102,9 @@ export default function LeaderboardScreen() {
     : stats.byDifficulty[filterDifficulty].bestChain;
 
   // Sorted runs for the ranked list
-  const rankedRuns = [...filteredRuns].sort((a, b) => b.score - a.score);
+  const rankedRuns = [...filteredRuns].sort((a, b) =>
+    sortBy === 'score' ? b.score - a.score : b.date - a.date
+  );
 
   const FilterBtn = ({ label, value, current, onPress }: { label: string; value: string; current: string; onPress: (v: any) => void }) => (
     <TouchableOpacity
@@ -191,9 +194,16 @@ export default function LeaderboardScreen() {
         {/* Ranked runs — placeholder for future global leaderboard */}
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>YOUR RUNS</Text>
-            {/* TODO: Toggle between "My Runs" and "Global" once Supabase is wired */}
-            <Text style={[styles.comingSoon, { color: colors.textMuted }]}>Global rankings coming soon</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>YOUR LAST 50 RUNS</Text>
+            <View style={styles.sortToggle}>
+              <TouchableOpacity onPress={() => setSortBy('score')}>
+                <Text style={[styles.sortBtn, { color: sortBy === 'score' ? colors.accent : colors.textMuted, fontWeight: sortBy === 'score' ? '700' : '400' }]}>Score</Text>
+              </TouchableOpacity>
+              <Text style={[styles.sortSep, { color: colors.border }]}>|</Text>
+              <TouchableOpacity onPress={() => setSortBy('recent')}>
+                <Text style={[styles.sortBtn, { color: sortBy === 'recent' ? colors.accent : colors.textMuted, fontWeight: sortBy === 'recent' ? '700' : '400' }]}>Recent</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           {rankedRuns.length > 0 ? (
             rankedRuns.map((run, i) => (
@@ -224,8 +234,10 @@ const styles = StyleSheet.create({
 
   section:        { borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
   sectionHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 },
-  sectionTitle:   { fontSize: 10, fontWeight: '700', letterSpacing: 1.5, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 },
-  comingSoon:     { fontSize: 11, fontStyle: 'italic' },
+  sectionTitle:   { fontSize: 10, fontWeight: '700', letterSpacing: 1.5 },
+  sortToggle:     { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  sortBtn:        { fontSize: 13 },
+  sortSep:        { fontSize: 13 },
 
   statsRow:       { flexDirection: 'row', paddingHorizontal: 8, paddingVertical: 16 },
   statItem:       { flex: 1, alignItems: 'center', gap: 4 },

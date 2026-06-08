@@ -129,7 +129,7 @@ export async function recordRun(
   stats.recentRuns = [
     { score, date: Date.now(), bestChain, difficulty, usedContinue },
     ...stats.recentRuns,
-  ].slice(0, 20);
+  ].slice(0, 50);
   await saveStats(stats);
   return stats;
 }
