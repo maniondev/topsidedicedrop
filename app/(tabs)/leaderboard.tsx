@@ -120,7 +120,7 @@ export default function LeaderboardScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>Leaderboard</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Leaderboard / Stats</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -224,7 +224,7 @@ export default function LeaderboardScreen() {
 const styles = StyleSheet.create({
   safe:           { flex: 1 },
   header:         { paddingVertical: 16, paddingHorizontal: 20 },
-  title:          { fontSize: 32 },
+  title:          { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
   content:        { paddingHorizontal: 16, paddingBottom: 32, gap: 12 },
 
   filters:        { gap: 8 },
