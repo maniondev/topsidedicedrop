@@ -21,11 +21,12 @@ import GameOverModal from '@/components/game/GameOverModal';
 import PauseModal from '@/components/game/PauseModal';
 import EmergencyCondenseOverlay from '@/components/game/EmergencyCondenseOverlay';
 import AdBanner from '@/components/AdBanner';
-import AdInterstitial from '@/components/AdInterstitial';
 import { onRunComplete } from '@/lib/adCounter';
 import { saveGame, loadSavedGame, clearSavedGame } from '@/lib/storage';
 import { runEmergencyCondense } from '@/lib/condense';
 import { COLS, ROWS } from '@/constants/game';
+import { supabase } from '@/lib/supabase';
+import { getPlayerIdentity } from '@/lib/playerIdentity';
 
 // No tab bar in this screen — more space for the board
 const HUD_H      = 96;
@@ -36,8 +37,8 @@ const V_PAD      = 40; // slack so the centered game block sits a bit lower / ba
 export default function GameScreen() {
   const { fresh } = useLocalSearchParams<{ fresh?: string }>();
   const { colors } = useTheme();
-  const { statsFor, submitRun } = useStats();
-  const { play } = useSound();
+  const { statsFor, submitRun, submitPreContinueRun } = useStats();
+  const { play, soundPack } = useSound();
   const { isPremium } = usePremium();
   const { gravityMs, difficulty } = useDifficulty();
   const bestScore = statsFor(difficulty).bestScore;
@@ -59,8 +60,8 @@ export default function GameScreen() {
 
   const game = useGame(gravityMs, paused);
 
-  const [showInterstitial,  setShowInterstitial]  = useState(false);
-  const [pendingNewGame,    setPendingNewGame]     = useState(false);
+
+
   const [freeContinueUsed,  setFreeContinueUsed]  = useState(false);
 
   // On mount: start fresh if ?fresh=1, otherwise resume a saved game if one exists
@@ -114,6 +115,21 @@ export default function GameScreen() {
     setPrevBest(bestScore); // capture old best before submitRun overwrites it
     const continueUsed = freeContinueUsed || game.continueAvailable === false;
     submitRun(game.score, game.runBestChain, difficulty, continueUsed);
+    // Submit to global leaderboard (fire and forget)
+    if (game.score > 0) {
+      getPlayerIdentity().then(({ playerId, displayName }) => {
+        supabase.rpc('submit_score', {
+          p_player_id:     playerId,
+          p_display_name:  displayName,
+          p_score:         game.score,
+          p_best_chain:    game.runBestChain,
+          p_difficulty:    difficulty,
+          p_used_continue: continueUsed,
+        }).then(({ error }) => {
+          if (error) console.warn('Leaderboard submit failed:', error.message);
+        });
+      }).catch(() => {});
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.phase]);
 
@@ -127,6 +143,11 @@ export default function GameScreen() {
       const MERGE_SOUNDS = ['merge1', 'merge2', 'merge3', 'merge4', 'merge5', 'merge6'] as const;
       const mergeIdx = Math.min(Math.max(0, game.chainPass - 1), 5);
       play(MERGE_SOUNDS[mergeIdx]);
+      if (soundPack === 'fight') {
+        const punch = Math.random() < 0.5 ? 'drop' : 'lock';
+        const delay = Math.floor(Math.random() * 80);
+        setTimeout(() => play(punch), delay);
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.lastMergeEvents]);
@@ -153,9 +174,12 @@ export default function GameScreen() {
   }, [game.hardDrop]);
 
   const handleFreeContinue = useCallback(() => {
+    // Log pre-continue score as an unassisted run (history + bestUnassisted only,
+    // no totalRuns / lifetimeScore — the final run covers those).
+    submitPreContinueRun(game.score, game.runBestChain, difficulty);
     setFreeContinueUsed(true);
     game.startCondense();
-  }, [game.startCondense]);
+  }, [game.score, game.runBestChain, difficulty, submitPreContinueRun, game.startCondense]);
 
   const handleContinue = useCallback(() => {
     if (adLoaded) showAd();
@@ -163,23 +187,10 @@ export default function GameScreen() {
 
   const handleNewGame = useCallback(() => {
     setPaused(false);
-    if (onRunComplete() && !isPremium) {
-      setPendingNewGame(true);
-      setShowInterstitial(true);
-    } else {
-      setFreeContinueUsed(false);
-      game.resetGame();
-    }
-  }, [isPremium, game.resetGame]);
-
-  const handleInterstitialClose = useCallback(() => {
-    setShowInterstitial(false);
-    if (pendingNewGame) {
-      setPendingNewGame(false);
-      setFreeContinueUsed(false);
-      game.resetGame();
-    }
-  }, [pendingNewGame, game.resetGame]);
+    onRunComplete();
+    setFreeContinueUsed(false);
+    game.resetGame();
+  }, [game.resetGame]);
 
   // Robust Emergency Condense: a single screen-level effect drives the board
   // compression and resume. Guarded by a ref so it runs exactly once per
@@ -384,9 +395,9 @@ export default function GameScreen() {
         onContinueLater={handleSaveAndQuit}
         onQuitAndLog={handleQuitAndLog}
         onQuitDiscard={handleQuitDiscard}
+        hasProgress={game.score > 0 || game.board.some(row => row.some(cell => cell !== null))}
       />
 
-      <AdInterstitial visible={showInterstitial} onClose={handleInterstitialClose} />
     </SafeAreaView>
   );
 }

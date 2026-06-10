@@ -21,7 +21,7 @@ export default function HowToPlayModal({ visible, onClose }: Props) {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.title, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+          <Text style={[styles.title, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
             How to Play
           </Text>
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

@@ -8,9 +8,10 @@ interface Props {
   onContinueLater: () => void; // saves state and quits to lobby
   onQuitAndLog: () => void;    // submits score to stats, then quits
   onQuitDiscard: () => void;   // quits without saving or logging score
+  hasProgress?: boolean;       // false = no dice locked yet; skip log/discard dialog
 }
 
-export default function PauseModal({ visible, onResume, onContinueLater, onQuitAndLog, onQuitDiscard }: Props) {
+export default function PauseModal({ visible, onResume, onContinueLater, onQuitAndLog, onQuitDiscard, hasProgress = true }: Props) {
   const { colors } = useTheme();
   const [confirming, setConfirming] = useState(false);
 
@@ -25,7 +26,7 @@ export default function PauseModal({ visible, onResume, onContinueLater, onQuitA
       <Modal visible={visible} transparent animationType="fade" onRequestClose={handleRequestClose}>
         <View style={styles.overlay}>
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.title, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+            <Text style={[styles.title, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
               Quit Without Saving?
             </Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -62,7 +63,7 @@ export default function PauseModal({ visible, onResume, onContinueLater, onQuitA
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleRequestClose}>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.title, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+          <Text style={[styles.title, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
             Paused
           </Text>
 
@@ -79,7 +80,7 @@ export default function PauseModal({ visible, onResume, onContinueLater, onQuitA
 
           <TouchableOpacity
             style={[styles.outlineBtn, { borderColor: colors.border }]}
-            onPress={() => setConfirming(true)}
+            onPress={() => hasProgress ? setConfirming(true) : onQuitDiscard()}
           >
             <Text style={[styles.outlineText, { color: colors.textSecondary }]}>✕  Quit Without Saving</Text>
           </TouchableOpacity>

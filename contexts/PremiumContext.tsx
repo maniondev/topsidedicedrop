@@ -2,10 +2,9 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Platform, Alert } from 'react-native';
 import Purchases, { LOG_LEVEL, CustomerInfo } from 'react-native-purchases';
 
-// TODO: Create a new RevenueCat project for com.topside.merge and replace these keys
-const RC_IOS_KEY     = 'appl_MuDtWbWFehGtuTCrlFmmNFpgcdI';
-const RC_ANDROID_KEY = 'goog_avnhBAwWoKwVzOsyyhTbkeVMkGz';
-const ENTITLEMENT_ID = 'Topside Merge Premium';
+const RC_IOS_KEY     = 'appl_bEfjghrErvdIBhSvAvrEMXEAInP';
+const RC_ANDROID_KEY = 'goog_eyVRQLwacLpBhQjOGF0VqesoYMT';
+const ENTITLEMENT_ID = 'Topside: Dice Drop Premium';
 
 interface PremiumCtxType {
   isPremium: boolean;

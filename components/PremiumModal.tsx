@@ -17,8 +17,8 @@ export default function PremiumModal({ visible, onClose }: Props) {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.title, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
-            Topside: Merge Premium
+          <Text style={[styles.title, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
+            Topside: Dice Drop Premium
           </Text>
           <View style={styles.perks}>
             {['Remove banner ads', 'Unlimited undos', 'Reroll next piece'].map(p => (

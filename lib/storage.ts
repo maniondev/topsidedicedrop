@@ -112,6 +112,26 @@ export async function clearStats(): Promise<Stats> {
   return empty;
 }
 
+// Records the score at the moment of Free Continue — unassisted, history-only.
+// Does NOT count as a run (totalRuns) or add to lifetimeScore — the final
+// continued run covers those. Only updates bestUnassisted/bestChain if beaten.
+export async function recordPreContinueRun(
+  score: number,
+  bestChain: number,
+  difficulty: Difficulty,
+): Promise<Stats> {
+  const stats = await loadStats();
+  const d = stats.byDifficulty[difficulty];
+  if (score > d.bestUnassisted) d.bestUnassisted = score;
+  if (bestChain > d.bestChain) d.bestChain = bestChain;
+  stats.recentRuns = [
+    { score, date: Date.now(), bestChain, difficulty, usedContinue: false },
+    ...stats.recentRuns,
+  ].slice(0, 100);
+  await saveStats(stats);
+  return stats;
+}
+
 export async function recordRun(
   score: number,
   bestChain: number,

@@ -28,7 +28,7 @@ export default function GameOverModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onNewGame}>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.title, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+          <Text style={[styles.title, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
             Game Over
           </Text>
           {isNewBest && (

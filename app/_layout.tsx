@@ -17,6 +17,7 @@ import { SoundProvider } from '@/contexts/SoundContext';
 import { StatsProvider } from '@/contexts/StatsContext';
 import { DifficultyProvider } from '@/contexts/DifficultyContext';
 import { GameStatusProvider } from '@/contexts/GameStatusContext';
+import { AnimationProvider } from '@/contexts/AnimationContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -64,7 +65,9 @@ export default function RootLayout() {
             <DifficultyProvider>
               <GameStatusProvider>
                 <SoundProvider>
-                  <AppShell />
+                  <AnimationProvider>
+                    <AppShell />
+                  </AnimationProvider>
                 </SoundProvider>
               </GameStatusProvider>
             </DifficultyProvider>

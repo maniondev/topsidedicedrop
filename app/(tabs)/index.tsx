@@ -8,8 +8,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useStats } from '@/contexts/StatsContext';
 import { useDifficulty, Difficulty, GRAVITY_MS } from '@/contexts/DifficultyContext';
+import { usePremium } from '@/contexts/PremiumContext';
 import AppLogo from '@/components/AppLogo';
 import HowToPlayModal from '@/components/HowToPlayModal';
+import PremiumModal from '@/components/PremiumModal';
 import { loadSavedGame } from '@/lib/storage';
 
 const DIFFICULTIES: { id: Difficulty; label: string }[] = [
@@ -22,10 +24,12 @@ export default function LobbyScreen() {
   const { colors } = useTheme();
   const { statsFor } = useStats();
   const { difficulty, setDifficulty } = useDifficulty();
+  const { isPremium, upgrade } = usePremium();
   const { top } = useSafeAreaInsets();
   const [hasSavedGame, setHasSavedGame] = useState(false);
   const [howToOpen, setHowToOpen] = useState(false);
   const [newGameConfirmOpen, setNewGameConfirmOpen] = useState(false);
+  const [premiumModalVisible, setPremiumModalVisible] = useState(false);
 
   const dstats = statsFor(difficulty);
 
@@ -109,7 +113,7 @@ export default function LobbyScreen() {
                 style={[styles.playBtn, styles.btnHalf, { backgroundColor: colors.accent }]}
                 onPress={handleContinue}
               >
-                <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+                <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'Rubik_700Bold' }]}>
                   Continue
                 </Text>
               </TouchableOpacity>
@@ -125,7 +129,7 @@ export default function LobbyScreen() {
               style={[styles.playBtn, { backgroundColor: colors.accent }]}
               onPress={handleNewGame}
             >
-              <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+              <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'Rubik_700Bold' }]}>
                 Play
               </Text>
             </TouchableOpacity>
@@ -155,7 +159,7 @@ export default function LobbyScreen() {
           <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
             <Text style={[styles.statLabel, { color: colors.textMuted }]}>TOTAL RUNS</Text>
             <Text style={[styles.statValue, { color: colors.text, fontFamily: 'Rubik_700Bold' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
-              {dstats.totalRuns}
+              {dstats.totalRuns > 0 ? dstats.totalRuns : '—'}
             </Text>
           </View>
           <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
@@ -177,15 +181,30 @@ export default function LobbyScreen() {
           <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
         </TouchableOpacity>
 
+        {/* Premium upgrade banner — free users only */}
+        {!isPremium && (
+          <TouchableOpacity
+            style={[styles.unlockBanner, { backgroundColor: colors.premiumGold }]}
+            onPress={() => setPremiumModalVisible(true)}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="star" size={14} color={colors.accentText} />
+            <Text style={[styles.unlockBannerText, { color: colors.accentText }]}>
+              Unlock Sound Packs, Themes, and More
+            </Text>
+          </TouchableOpacity>
+        )}
+
       </View>
 
       <HowToPlayModal visible={howToOpen} onClose={() => setHowToOpen(false)} />
+      <PremiumModal visible={premiumModalVisible} onClose={() => setPremiumModalVisible(false)} />
 
       {/* New Game confirmation — warns that saved run will be discarded */}
       <Modal visible={newGameConfirmOpen} transparent animationType="fade" onRequestClose={() => setNewGameConfirmOpen(false)}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.modalTitle, { color: colors.text, fontFamily: 'PlayfairDisplay_700Bold' }]}>
+            <Text style={[styles.modalTitle, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
               Start New Game?
             </Text>
             <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
@@ -262,4 +281,6 @@ const styles = StyleSheet.create({
   newGameText: { fontSize: 16, fontWeight: '600' },
   howToPlayBtn:  { height: ROW_H, borderRadius: 14, borderWidth: 1, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   howToPlayText: { fontSize: 15, fontWeight: '500' },
+  unlockBanner:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 16, marginTop: 8 },
+  unlockBannerText: { fontSize: 13, fontWeight: '700' },
 });

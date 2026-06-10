@@ -44,14 +44,13 @@ function chooseDest(
   group: Array<[number, number]>,
   triggers: Set<string>,
 ): [number, number] {
-  // Prefer trigger tile in group
-  for (const [r, c] of group) {
-    if (triggers.has(`${r},${c}`)) return [r, c];
-  }
-  // Fallback: lowest row then rightmost col (Emergency Condense)
-  return group.reduce((best, cur) =>
-    cur[0] > best[0] || (cur[0] === best[0] && cur[1] > best[1]) ? cur : best,
-  );
+  // Always resolve at the lowest row in the group (gravity-consistent).
+  // Among tiles in that row, prefer the trigger tile, then rightmost.
+  const maxRow = Math.max(...group.map(([r]) => r));
+  const bottom = group.filter(([r]) => r === maxRow);
+  const triggered = bottom.find(([r, c]) => triggers.has(`${r},${c}`));
+  if (triggered) return triggered;
+  return bottom.reduce((best, cur) => cur[1] > best[1] ? cur : best);
 }
 
 export function resolveMerges(
@@ -64,17 +63,24 @@ export function resolveMerges(
   const groups = findMergeGroups(board);
   if (groups.length === 0) return { newBoard: board, events: [], changed: false };
 
+  // Only resolve the lowest-value groups this pass. This ensures that when a
+  // piece locks with e.g. two 1s next to two 2s, the 1s merge into a 2 first
+  // so the next pass can see all three 2s together — rather than the 1→2 result
+  // being orphaned because the 2s already resolved simultaneously.
+  const minValue = Math.min(...groups.map(g => board[g[0][0]][g[0][1]]!.value));
+  const lowestGroups = groups.filter(g => board[g[0][0]][g[0][1]]!.value === minValue);
+
   const nb = cloneBoard(board);
   const events: MergeEvent[] = [];
   let idBase = Date.now();
 
-  // Clear all group cells first (simultaneous resolution)
-  for (const group of groups) {
+  // Clear lowest-value group cells first
+  for (const group of lowestGroups) {
     for (const [r, c] of group) nb[r][c] = null;
   }
 
   // Place merged results
-  for (const group of groups) {
+  for (const group of lowestGroups) {
     const value = board[group[0][0]][group[0][1]]!.value;
     const dest = chooseDest(group, triggers);
     const [dr, dc] = dest;

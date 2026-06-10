@@ -328,8 +328,17 @@ function reducer(state: GameState, action: Action): GameState {
 
       const { newBoard: gravBoard } = applyGravity(newBoard);
       const newTriggers = new Set<string>();
+      // Merge result destinations
       for (const evt of events) {
         if (evt.newValue !== 'clear') newTriggers.add(`${evt.dest[0]},${evt.dest[1]}`);
+      }
+      // Tiles that fell due to gravity after the merge (e.g. unsupported tiles
+      // that drop once space clears below them) — these are the "new" tiles and
+      // should be preferred as merge destinations in the next pass.
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (gravBoard[r][c] && !newBoard[r][c]) newTriggers.add(`${r},${c}`);
+        }
       }
 
       return {

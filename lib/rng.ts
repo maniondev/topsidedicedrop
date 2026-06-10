@@ -28,10 +28,13 @@ export class RNG {
 
 // Weights indexed 0–5 for values 1–6
 function getWeights(score: number): number[] {
-  if (score < 1000)  return [55, 35, 10,  0,  0, 0];
-  if (score < 5000)  return [35, 35, 20,  7,  3, 0];
-  if (score < 15000) return [20, 30, 25, 15, 10, 0];
-  return                    [10, 25, 30, 20, 10, 5];
+  if (score < 800)   return [55, 35, 10,  0,  0, 0];
+  if (score < 1500)  return [48, 35, 15,  2,  0, 0];
+  if (score < 2500)  return [44, 34, 17,  5,  0, 0];
+  if (score < 5000)  return [36, 33, 24,  7,  0, 0];
+  if (score < 7500)  return [27, 32, 27,  9,  5, 0];
+  if (score < 10000) return [20, 30, 28, 13,  7, 2];
+  return                    [15, 30, 25, 15, 10, 5];
 }
 
 export function weightedValue(score: number, rng: RNG): CellValue {
