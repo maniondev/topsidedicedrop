@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.topside.merge",
+      "bundleIdentifier": "com.topside.dicedrop",
+      "buildNumber": "1",
       "minimumOsVersion": "16.0",
       "infoPlist": {
         "NSUserTrackingUsageDescription": "This helps us show you relevant ads.",
@@ -23,10 +24,11 @@
       }
     },
     "android": {
-      "package": "com.topside.merge",
+      "package": "com.topside.dicedrop",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#EDE8DF",
-        "foregroundImage": "./assets/images/icon.png"
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -66,8 +68,8 @@
       [
         "react-native-google-mobile-ads",
         {
-          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
-          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+          "androidAppId": "ca-app-pub-5499315559222720~7457722144",
+          "iosAppId": "ca-app-pub-5499315559222720~1669872133"
         }
       ],
       "expo-tracking-transparency",

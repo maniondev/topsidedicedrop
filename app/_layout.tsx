@@ -2,15 +2,16 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet, Platform } from 'react-native';
+import { StyleSheet, Platform, AppState } from 'react-native';
 import { useFonts, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
 import { Fredoka_600SemiBold, Fredoka_700Bold } from '@expo-google-fonts/fredoka';
 import { Rubik_700Bold } from '@expo-google-fonts/rubik';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
-import mobileAds from 'react-native-google-mobile-ads';
+import mobileAds, { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
 import { preloadAllAds } from '@/lib/adManager';
+import { replayQueue } from '@/lib/scoreQueue';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { PremiumProvider } from '@/contexts/PremiumContext';
 import { SoundProvider } from '@/contexts/SoundContext';
@@ -45,13 +46,34 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   useEffect(() => {
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'active') replayQueue().catch(() => {});
+    });
+    return () => sub.remove();
+  }, []);
+
+  useEffect(() => {
     (async () => {
-      await mobileAds().initialize();
+      try {
+        const consentInfo = await AdsConsent.requestInfoUpdate();
+        if (
+          consentInfo.isConsentFormAvailable &&
+          consentInfo.status === AdsConsentStatus.REQUIRED
+        ) {
+          await AdsConsent.showForm();
+        }
+      } catch (e) {
+        console.warn('UMP consent error:', e);
+      }
+
       if (Platform.OS === 'ios') {
         await new Promise<void>(resolve => setTimeout(resolve, 500));
         await requestTrackingPermissionsAsync();
       }
+
+      await mobileAds().initialize();
       preloadAllAds();
+      replayQueue().catch(() => {});
     })();
   }, []);
 

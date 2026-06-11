@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -42,13 +42,11 @@ function RunRow({ rank, run }: { rank: number; run: RunRecord }) {
     <View style={[styles.runRow, { borderBottomColor: colors.border }]}>
       <Text style={[styles.runRank, { color: rank <= 3 ? colors.accent : colors.textMuted }]}>#{rank}</Text>
       <View style={styles.runInfo}>
-        <Text style={[styles.runName, { color: colors.text }]} numberOfLines={1}>You</Text>
-        <Text style={[styles.runDate, { color: colors.textMuted }]}>{formatDate(run.date)}</Text>
+        <Text style={[styles.runName, { color: colors.text }]} numberOfLines={1}>{formatDate(run.date)}</Text>
+        <Text style={[styles.runDate, { color: colors.textMuted }]}>{run.difficulty}</Text>
       </View>
       <View style={styles.runRight}>
         <View style={styles.runTopRow}>
-          {run.bestChain > 1 && <Text style={[styles.runChain, { color: colors.textMuted }]}>×{run.bestChain}</Text>}
-          <DiffBadge diff={run.difficulty} />
           <Text style={[styles.runScore, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>{formatScore(run.score)}</Text>
         </View>
         {!run.usedContinue && <Text style={[styles.unassistedLabel, { color: colors.accent }]}>unassisted</Text>}
@@ -113,15 +111,13 @@ export default function LeaderboardScreen() {
     ? diffs.reduce((sum, d) => sum + stats.byDifficulty[d].lifetimeScore, 0)
     : stats.byDifficulty[filterDifficulty].lifetimeScore;
 
-  const bestThisWeek = Math.max(0, ...filteredRuns.filter(r => r.date >= weekAgo).map(r => r.score));
+  const bestThisWeek  = Math.max(0, ...filteredRuns.filter(r => r.date >= weekAgo).map(r => r.score));
+  const bestThisMonth = Math.max(0, ...filteredRuns.filter(r => r.date >= monthAgo).map(r => r.score));
   const averageScore = overallRuns.length > 0
     ? Math.round(overallRuns.reduce((a, r) => a + r.score, 0) / overallRuns.length) : 0;
   const totalRuns = filterDifficulty === 'all'
     ? diffs.reduce((sum, d) => sum + stats.byDifficulty[d].totalRuns, 0)
     : stats.byDifficulty[filterDifficulty].totalRuns;
-  const bestChain = filterDifficulty === 'all'
-    ? Math.max(0, ...diffs.map(d => stats.byDifficulty[d].bestChain))
-    : stats.byDifficulty[filterDifficulty].bestChain;
 
   const rankedRuns = [...filteredRuns.filter(timeFilter)].sort((a, b) =>
     sortBy === 'score' ? b.score - a.score : b.date - a.date
@@ -143,15 +139,21 @@ export default function LeaderboardScreen() {
       const unassisted    = filterType === 'unassisted';
       const followerParam = lbScope === 'following' ? playerId : null;
 
-      const [bestRes, lifetimeRes] = await Promise.all([
-        supabase.rpc('get_leaderboard_best', {
-          p_difficulty: diff, p_unassisted: unassisted, p_time_period: filterTime,
-          p_limit: 100, p_follower_id: followerParam,
-        }),
-        supabase.rpc('get_leaderboard_lifetime', {
-          p_difficulty: diff, p_time_period: filterTime,
-          p_limit: 100, p_follower_id: followerParam,
-        }),
+      const fetchTimeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), 8000)
+      );
+      const [bestRes, lifetimeRes] = await Promise.race([
+        Promise.all([
+          supabase.rpc('get_leaderboard_best', {
+            p_difficulty: diff, p_unassisted: unassisted, p_time_period: filterTime,
+            p_limit: 100, p_follower_id: followerParam,
+          }),
+          supabase.rpc('get_leaderboard_lifetime', {
+            p_difficulty: diff, p_time_period: filterTime,
+            p_limit: 100, p_follower_id: followerParam,
+          }),
+        ]),
+        fetchTimeout,
       ]);
 
       if (bestRes.error)     throw bestRes.error;
@@ -177,8 +179,10 @@ export default function LeaderboardScreen() {
             p_time_period: filterTime, p_follower_id: followerParam,
           }),
         ]);
-        setBestRankInfo(scoreForRank > 0    ? (bestRankRes.data     ?? null) : null);
-        setLifetimeRankInfo(lifetimeForRank > 0 ? (lifetimeRankRes.data ?? null) : null);
+        const bestRankData     = Array.isArray(bestRankRes.data)     ? bestRankRes.data[0]     : bestRankRes.data;
+        const lifetimeRankData = Array.isArray(lifetimeRankRes.data) ? lifetimeRankRes.data[0] : lifetimeRankRes.data;
+        setBestRankInfo(scoreForRank > 0    ? (bestRankData     ?? null) : null);
+        setLifetimeRankInfo(lifetimeForRank > 0 ? (lifetimeRankData ?? null) : null);
       }
     } catch {
       setLbError('Could not load leaderboard.');
@@ -201,39 +205,71 @@ export default function LeaderboardScreen() {
     try {
       const newName = await regenerateName();
       setDisplayName(newName);
-      if (activeTab === 'leaderboard') fetchLeaderboard();
+      if (playerId) {
+        setBestEntries(prev => prev.map(e => e.player_id === playerId ? { ...e, display_name: newName } : e));
+        setLifetimeEntries(prev => prev.map(e => e.player_id === playerId ? { ...e, display_name: newName } : e));
+      }
+      fetchLeaderboard();
     } catch {} finally {
       setRenaming(false);
     }
-  }, [activeTab, fetchLeaderboard]);
+  }, [fetchLeaderboard, playerId]);
 
   // When lifetime mode is active, force run type to overall
   const effectiveFilterType = lbMode === 'lifetime' ? 'overall' : filterType;
 
-  const FilterBtn = ({ label, value, current, onPress, disabled }: {
-    label: string; value: string; current: string; onPress: (v: any) => void; disabled?: boolean;
-  }) => (
-    <TouchableOpacity
-      style={[
-        styles.filterBtn,
-        { backgroundColor: current === value ? colors.accent : colors.card,
-          borderColor: current === value ? colors.accent : colors.border,
-          opacity: disabled ? 0.38 : 1 },
-      ]}
-      onPress={() => !disabled && onPress(value)}
-      activeOpacity={disabled ? 1 : 0.7}
-    >
-      <Text style={[styles.filterBtnText, {
-        color: current === value ? colors.accentText : colors.textSecondary,
-        fontWeight: current === value ? '700' : '400',
-      }]}>{label}</Text>
-    </TouchableOpacity>
-  );
+  function FilterDropdown({ label, value, options, onChange, disabled }: {
+    label: string;
+    value: string;
+    options: { label: string; value: string }[];
+    onChange: (v: any) => void;
+    disabled?: boolean;
+  }) {
+    const [open, setOpen] = useState(false);
+    const current = options.find(o => o.value === value);
+    return (
+      <>
+        <TouchableOpacity
+          style={[styles.dropdown, { backgroundColor: colors.accent, borderColor: colors.accent, opacity: disabled ? 0.38 : 1 }]}
+          onPress={() => !disabled && setOpen(true)}
+          activeOpacity={disabled ? 1 : 0.7}
+        >
+          <Text style={[styles.dropdownLabel, { color: colors.accentText, opacity: 0.7 }]}>{label}</Text>
+          <View style={styles.dropdownValue}>
+            <Text style={[styles.dropdownValueText, { color: colors.accentText }]} numberOfLines={1}>
+              {current?.label ?? value}
+            </Text>
+            <Ionicons name="chevron-down" size={13} color={colors.accentText} />
+          </View>
+        </TouchableOpacity>
+        <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+          <Pressable style={styles.dropdownOverlay} onPress={() => setOpen(false)}>
+            <View style={[styles.dropdownMenu, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.dropdownMenuTitle, { color: colors.textMuted }]}>{label}</Text>
+              {options.map(opt => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[styles.dropdownMenuItem, { borderBottomColor: colors.border }]}
+                  onPress={() => { onChange(opt.value); setOpen(false); }}
+                >
+                  <Text style={[styles.dropdownMenuItemText, {
+                    color: opt.value === value ? colors.accent : colors.text,
+                    fontWeight: opt.value === value ? '700' : '400',
+                  }]}>{opt.label}</Text>
+                  {opt.value === value && <Ionicons name="checkmark" size={16} color={colors.accent} />}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Pressable>
+        </Modal>
+      </>
+    );
+  }
 
   const StatCard = ({ mode, label, score, rankInfo, selected, onSelect }: {
     mode: LbMode; label: string; score: number; rankInfo: RankInfo; selected: boolean; onSelect: () => void;
   }) => (
-    <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: selected ? colors.accent : colors.cardBorder, borderWidth: selected ? 2 : 1 }]}>
+    <View style={[styles.statCard, { backgroundColor: colors.card, borderColor: selected ? colors.accent : colors.cardBorder, borderWidth: 2 }]}>
       <View style={styles.statCardHeader}>
         <Text style={[styles.statCardLabel, { color: colors.textMuted }]}>{label}</Text>
         <TouchableOpacity
@@ -255,15 +291,15 @@ export default function LeaderboardScreen() {
         <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
         <View style={styles.statItem}>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>RANK</Text>
-          <Text style={[styles.statValue, { color: rankInfo ? colors.accent : colors.textDim, fontFamily: 'Rubik_700Bold' }]}>
+          <Text style={[styles.statValue, { color: rankInfo ? colors.text : colors.textDim, fontFamily: 'Rubik_700Bold' }]}>
             {rankInfo ? `#${rankInfo.rank}` : '—'}
           </Text>
         </View>
         <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
         <View style={styles.statItem}>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>BETTER THAN</Text>
-          <Text style={[styles.statValue, { color: rankInfo ? colors.accent : colors.textDim, fontFamily: 'Rubik_700Bold' }]}>
-            {rankInfo ? `${rankInfo.percentile}%` : '—'}
+          <Text style={[styles.statValue, { color: rankInfo ? colors.text : colors.textDim, fontFamily: 'Rubik_700Bold' }]}>
+            {rankInfo ? `${Math.round(rankInfo.percentile)}%` : '—'}
           </Text>
         </View>
       </View>
@@ -274,6 +310,19 @@ export default function LeaderboardScreen() {
     <View style={[styles.safe, { backgroundColor: colors.background, paddingTop: top }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>{activeTab === 'yours' ? 'Your Stats' : 'Leaderboard'}</Text>
+      </View>
+
+      {/* Username card */}
+      <View style={[styles.nameCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, marginHorizontal: 16, marginBottom: 12 }]}>
+        <Ionicons name="person-circle-outline" size={18} color={colors.accent} />
+        <Text style={[styles.nameText, { color: colors.text }]} numberOfLines={1}>
+          {displayName ?? '…'}
+        </Text>
+        <TouchableOpacity onPress={handleRegenerate} disabled={renaming} style={styles.regenBtn}>
+          {renaming
+            ? <ActivityIndicator size="small" color={colors.textMuted} />
+            : <Text style={[styles.regenText, { color: colors.textMuted }]} numberOfLines={1}>new name</Text>}
+        </TouchableOpacity>
       </View>
 
       {/* Segment tabs */}
@@ -300,26 +349,52 @@ export default function LeaderboardScreen() {
 
       <ScrollView ref={scrollRef} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-        {/* Shared filters */}
-        <View style={styles.filters}>
-          <View style={styles.filterRow}>
-            <FilterBtn label="All"    value="all"    current={filterDifficulty} onPress={setFilterDifficulty} />
-            <FilterBtn label="Easy"   value="easy"   current={filterDifficulty} onPress={setFilterDifficulty} />
-            <FilterBtn label="Medium" value="medium" current={filterDifficulty} onPress={setFilterDifficulty} />
-            <FilterBtn label="Hard"   value="hard"   current={filterDifficulty} onPress={setFilterDifficulty} />
-          </View>
-          <View style={styles.filterRow}>
-            <FilterBtn
-              label="Overall"    value="overall"    current={effectiveFilterType}
-              onPress={setFilterType}
-              disabled={activeTab === 'leaderboard' && lbMode === 'lifetime'}
-            />
-            <FilterBtn
-              label="Unassisted" value="unassisted" current={effectiveFilterType}
-              onPress={setFilterType}
-              disabled={activeTab === 'leaderboard' && lbMode === 'lifetime'}
-            />
-          </View>
+        {/* Filters */}
+        <View style={styles.filterGrid}>
+          <FilterDropdown
+            label="Difficulty"
+            value={filterDifficulty}
+            options={[
+              { label: 'All', value: 'all' },
+              { label: 'Easy', value: 'easy' },
+              { label: 'Medium', value: 'medium' },
+              { label: 'Hard', value: 'hard' },
+            ]}
+            onChange={setFilterDifficulty}
+          />
+          <FilterDropdown
+            label="Type"
+            value={effectiveFilterType}
+            options={[
+              { label: 'Overall', value: 'overall' },
+              { label: 'Unassisted', value: 'unassisted' },
+            ]}
+            onChange={setFilterType}
+            disabled={activeTab === 'leaderboard' && lbMode === 'lifetime'}
+          />
+          {activeTab === 'leaderboard' && (
+            <>
+              <FilterDropdown
+                label="Period"
+                value={filterTime}
+                options={[
+                  { label: 'All Time', value: 'all' },
+                  { label: 'This Month', value: 'month' },
+                  { label: 'This Week', value: 'week' },
+                ]}
+                onChange={setFilterTime}
+              />
+              <FilterDropdown
+                label="Scope"
+                value={lbScope}
+                options={[
+                  { label: 'Global', value: 'global' },
+                  { label: 'Following', value: 'following' },
+                ]}
+                onChange={setLbScope}
+              />
+            </>
+          )}
         </View>
 
         {activeTab === 'yours' ? (
@@ -328,7 +403,7 @@ export default function LeaderboardScreen() {
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST RUN</Text>
-                  <Text style={[styles.statValue, { color: colors.accent, fontFamily: 'Rubik_700Bold' }]}>
+                  <Text style={[styles.statValue, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
                     {bestRun > 0 ? bestRun.toLocaleString() : '—'}
                   </Text>
                 </View>
@@ -341,9 +416,9 @@ export default function LeaderboardScreen() {
                 </View>
                 <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.statItem}>
-                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST CHAIN</Text>
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>THIS MONTH</Text>
                   <Text style={[styles.statValue, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
-                    {bestChain > 0 ? `×${bestChain}` : '—'}
+                    {bestThisMonth > 0 ? bestThisMonth.toLocaleString() : '—'}
                   </Text>
                 </View>
               </View>
@@ -394,32 +469,6 @@ export default function LeaderboardScreen() {
           </>
         ) : (
           <>
-            {/* Time period filter */}
-            <View style={styles.filterRow}>
-              <FilterBtn label="All Time"   value="all"   current={filterTime} onPress={setFilterTime} />
-              <FilterBtn label="This Month" value="month" current={filterTime} onPress={setFilterTime} />
-              <FilterBtn label="This Week"  value="week"  current={filterTime} onPress={setFilterTime} />
-            </View>
-
-            {/* Global / Following scope */}
-            <View style={styles.filterRow}>
-              <FilterBtn label="Global"    value="global"    current={lbScope} onPress={setLbScope} />
-              <FilterBtn label="Following" value="following" current={lbScope} onPress={setLbScope} />
-            </View>
-
-            {/* Username card */}
-            <View style={[styles.nameCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-              <Ionicons name="person-circle-outline" size={18} color={colors.accent} />
-              <Text style={[styles.nameText, { color: colors.text }]} numberOfLines={1}>
-                {displayName ?? '…'}
-              </Text>
-              <TouchableOpacity onPress={handleRegenerate} disabled={renaming} style={styles.regenBtn}>
-                {renaming
-                  ? <ActivityIndicator size="small" color={colors.textMuted} />
-                  : <Text style={[styles.regenText, { color: colors.textMuted }]} numberOfLines={1}>new name</Text>}
-              </TouchableOpacity>
-            </View>
-
             {/* Stat cards */}
             <StatCard
               mode="best"    label="BEST SCORE"    score={bestRun}      rankInfo={bestRankInfo}
@@ -442,7 +491,7 @@ export default function LeaderboardScreen() {
                   style={[styles.filterBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
                   onPress={() => setFindPlayerVisible(true)}
                 >
-                  <Text style={[styles.filterBtnText, { color: colors.accent }]}>Find Players</Text>
+                  <Text style={[styles.filterBtnText, { color: colors.textSecondary }]}>Find Players</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -478,7 +527,6 @@ export default function LeaderboardScreen() {
                           </View>
                           <View style={styles.runRight}>
                             <View style={styles.runTopRow}>
-                              {entry.best_chain > 1 && <Text style={[styles.runChain, { color: colors.textMuted }]}>×{entry.best_chain}</Text>}
                               <Text style={[styles.runScore, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>{formatScore(entry.score)}</Text>
                             </View>
                             {!entry.used_continue && <Text style={[styles.unassistedLabel, { color: colors.accent }]}>unassisted</Text>}
@@ -540,10 +588,16 @@ const styles = StyleSheet.create({
   segBtn:         { flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center' },
   segBtnText:     { fontSize: 14 },
 
-  filters:        { gap: 8 },
-  filterRow:      { flexDirection: 'row', gap: 8 },
-  filterBtn:      { flex: 1, paddingVertical: 9, borderRadius: 10, borderWidth: 1.5, alignItems: 'center' },
-  filterBtnText:  { fontSize: 13 },
+  filterGrid:          { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  dropdown:            { width: '48.5%', borderRadius: 10, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 9 },
+  dropdownLabel:       { fontSize: 10, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 3 },
+  dropdownValue:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  dropdownValueText:   { fontSize: 14, fontWeight: '600' },
+  dropdownOverlay:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 40 },
+  dropdownMenu:        { width: '100%', borderRadius: 14, borderWidth: 1, overflow: 'hidden' },
+  dropdownMenuTitle:   { fontSize: 11, fontWeight: '700', letterSpacing: 1, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6 },
+  dropdownMenuItem:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1 },
+  dropdownMenuItemText:{ fontSize: 16 },
 
   nameCard:       { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, height: 44 },
   nameText:       { flex: 1, fontSize: 15, fontWeight: '600' },
@@ -580,5 +634,8 @@ const styles = StyleSheet.create({
   runScore:        { fontSize: 17 },
   unassistedLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
   badge:           { fontSize: 10, fontWeight: '700', borderWidth: 1, borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1 },
+  filterRow:       { flexDirection: 'row', gap: 8 },
+  filterBtn:       { flex: 1, borderRadius: 10, borderWidth: 1, paddingVertical: 10, alignItems: 'center' },
+  filterBtnText:   { fontSize: 14, fontWeight: '600' },
   empty:           { textAlign: 'center', padding: 24, fontSize: 14, fontStyle: 'italic' },
 });

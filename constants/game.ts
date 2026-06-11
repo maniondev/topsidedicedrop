@@ -43,8 +43,8 @@ export const VALUE_DOT_COLORS_DEFAULT: Record<number, string> = {
   6: '#ffffff',
 };
 
-export const CHAIN_MULTIPLIERS = [1.0, 1.0, 1.25, 1.5, 2.0];
-export const SIX_CLEAR_BASE    = 20;
+export const CHAIN_MULTIPLIERS = [1.0, 1.25, 1.5, 1.75, 2.0];
+export const SIX_CLEAR_BASE    = 40;
 
 // Delay before the next chain resolution pass. First two merges are fast, then
 // each subsequent pass waits +100ms (capped) for slot-machine build-up.

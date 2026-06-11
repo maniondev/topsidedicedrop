@@ -25,8 +25,8 @@ import { onRunComplete } from '@/lib/adCounter';
 import { saveGame, loadSavedGame, clearSavedGame } from '@/lib/storage';
 import { runEmergencyCondense } from '@/lib/condense';
 import { COLS, ROWS } from '@/constants/game';
-import { supabase } from '@/lib/supabase';
 import { getPlayerIdentity } from '@/lib/playerIdentity';
+import { submitScore } from '@/lib/scoreQueue';
 
 // No tab bar in this screen — more space for the board
 const HUD_H      = 96;
@@ -115,20 +115,18 @@ export default function GameScreen() {
     setPrevBest(bestScore); // capture old best before submitRun overwrites it
     const continueUsed = freeContinueUsed || game.continueAvailable === false;
     submitRun(game.score, game.runBestChain, difficulty, continueUsed);
-    // Submit to global leaderboard (fire and forget)
+    // Submit to global leaderboard — queued locally on failure, replayed on next launch
     if (game.score > 0) {
-      getPlayerIdentity().then(({ playerId, displayName }) => {
-        supabase.rpc('submit_score', {
+      getPlayerIdentity().then(({ playerId, displayName }) =>
+        submitScore({
           p_player_id:     playerId,
           p_display_name:  displayName,
           p_score:         game.score,
           p_best_chain:    game.runBestChain,
           p_difficulty:    difficulty,
           p_used_continue: continueUsed,
-        }).then(({ error }) => {
-          if (error) console.warn('Leaderboard submit failed:', error.message);
-        });
-      }).catch(() => {});
+        })
+      ).catch(() => {});
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.phase]);
@@ -235,6 +233,18 @@ export default function GameScreen() {
     const continueUsed = freeContinueUsed || game.continueAvailable === false;
     await submitRun(game.score, game.runBestChain, difficulty, continueUsed);
     await clearSavedGame(difficulty);
+    if (game.score > 0) {
+      getPlayerIdentity().then(({ playerId, displayName }) =>
+        submitScore({
+          p_player_id:     playerId,
+          p_display_name:  displayName,
+          p_score:         game.score,
+          p_best_chain:    game.runBestChain,
+          p_difficulty:    difficulty,
+          p_used_continue: continueUsed,
+        })
+      ).catch(() => {});
+    }
     router.back();
   }, [game.score, game.runBestChain, difficulty, freeContinueUsed, game.continueAvailable, submitRun]);
 

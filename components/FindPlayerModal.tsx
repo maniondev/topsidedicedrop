@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   searchBar:      { flexDirection: 'row', alignItems: 'center', margin: 16, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, borderWidth: 1 },
   searchIcon:     { marginRight: 8 },
   searchInput:    { flex: 1, fontSize: 15 },
-  listContent:    { paddingHorizontal: 16, paddingBottom: 32, gap: 12 },
+  listContent:    { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 32, gap: 12 },
   section:        { borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
   sectionTitle:   { fontSize: 11, fontWeight: '700', letterSpacing: 1.0, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 },
   row:            { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, gap: 12 },

@@ -133,9 +133,22 @@ function tryRotate(board: Board, p: ActivePiece): ActivePiece | null {
 }
 
 function spawnPiece(queued: QueuedPiece, board: Board): ActivePiece | null {
-  const maxDc = Math.max(...queued.tiles.map(t => t.dc));
-  const pieceW = maxDc + 1;
-  const defaultCol = Math.floor((COLS - pieceW) / 2);
+  // Find the dc that has tiles in 2+ different rows — the "vertical spine".
+  // Center that column on the grid. Falls back to bounding-box centering for
+  // purely horizontal pieces (no multi-row column exists).
+  const dcRows = new Map<number, Set<number>>();
+  for (const t of queued.tiles) {
+    if (!dcRows.has(t.dc)) dcRows.set(t.dc, new Set());
+    dcRows.get(t.dc)!.add(t.dr);
+  }
+  let spineDc: number | null = null;
+  for (const [dc, rows] of dcRows) {
+    if (rows.size >= 2) { spineDc = dc; break; }
+  }
+  const gridCenter = Math.floor(COLS / 2);
+  const defaultCol = spineDc !== null
+    ? gridCenter - spineDc
+    : Math.floor((COLS - (Math.max(...queued.tiles.map(t => t.dc)) + 1)) / 2);
   for (const offset of [0, -1, 1, -2, 2]) {
     const p: ActivePiece = {
       shapeId: queued.shapeId,
