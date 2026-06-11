@@ -4,6 +4,8 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import * as Haptics from 'expo-haptics';
 
+const GAP = 6; // space between each of the 5 buttons
+
 interface Props {
   onLeft: () => void;
   onRight: () => void;
@@ -12,12 +14,13 @@ interface Props {
   onHardDrop: () => void;
   onPause: () => void;
   disabled?: boolean;
+  boardW: number;
 }
 
-function CtrlBtn({ onPress, children, size = 60 }: {
+function CtrlBtn({ onPress, children, size }: {
   onPress: () => void;
   children: React.ReactNode;
-  size?: number;
+  size: number;
 }) {
   const { colors } = useTheme();
   return (
@@ -32,14 +35,14 @@ function CtrlBtn({ onPress, children, size = 60 }: {
 }
 
 // Tap = soft drop one cell. Hold 300ms = hard drop (snap to bottom).
-function DropButton({ onSoftDrop, onHardDrop }: { onSoftDrop: () => void; onHardDrop: () => void }) {
+function DropButton({ onSoftDrop, onHardDrop, size }: { onSoftDrop: () => void; onHardDrop: () => void; size: number }) {
   const { colors } = useTheme();
-  const holdTimerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const didHardDropRef  = useRef(false);
+  const holdTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const didHardDropRef = useRef(false);
 
   return (
     <TouchableOpacity
-      style={[styles.btn, styles.sideBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+      style={[styles.btn, { width: size, height: size, backgroundColor: colors.card, borderColor: colors.cardBorder }]}
       onPressIn={() => {
         didHardDropRef.current = false;
         holdTimerRef.current = setTimeout(() => {
@@ -62,45 +65,39 @@ function DropButton({ onSoftDrop, onHardDrop }: { onSoftDrop: () => void; onHard
   );
 }
 
-export default function Controls({ onLeft, onRight, onRotate, onSoftDrop, onHardDrop, onPause, disabled }: Props) {
+export default function Controls({ onLeft, onRight, onRotate, onSoftDrop, onHardDrop, onPause, disabled, boardW }: Props) {
   const { colors } = useTheme();
-  // Always render the buttons (even while the board resolves/spawns) so they never
-  // flicker out — the game reducer safely ignores moves outside the falling phase.
+  // All 5 buttons equal size; space-between aligns outer edges with board edges.
+  const btnSize = Math.max(36, Math.floor((boardW - GAP * 4) / 5));
 
   return (
     <View style={styles.row}>
-      {/* Pause — left, mirrors down button on right */}
       <TouchableOpacity
-        style={[styles.btn, styles.sideBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+        style={[styles.btn, { width: btnSize, height: btnSize, backgroundColor: colors.card, borderColor: colors.cardBorder }]}
         onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPause(); }}
         activeOpacity={0.65}
       >
         <Ionicons name="pause" size={20} color={colors.textMuted} />
       </TouchableOpacity>
 
-      {/* [←] [↺] [→] centered in remaining space */}
-      <View style={styles.centerGroup}>
-        <CtrlBtn onPress={onLeft}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </CtrlBtn>
-        <CtrlBtn onPress={onRotate}>
-          <MaterialCommunityIcons name="rotate-right" size={24} color={colors.accent} />
-        </CtrlBtn>
-        <CtrlBtn onPress={onRight}>
-          <Ionicons name="arrow-forward" size={24} color={colors.text} />
-        </CtrlBtn>
-      </View>
+      <CtrlBtn onPress={onLeft} size={btnSize}>
+        <Ionicons name="arrow-back" size={22} color={colors.text} />
+      </CtrlBtn>
 
-      {/* Down — tap = 1 cell, hold = snap */}
-      <DropButton onSoftDrop={onSoftDrop} onHardDrop={onHardDrop} />
+      <CtrlBtn onPress={onRotate} size={btnSize}>
+        <MaterialCommunityIcons name="rotate-right" size={22} color={colors.accent} />
+      </CtrlBtn>
+
+      <CtrlBtn onPress={onRight} size={btnSize}>
+        <Ionicons name="arrow-forward" size={22} color={colors.text} />
+      </CtrlBtn>
+
+      <DropButton onSoftDrop={onSoftDrop} onHardDrop={onHardDrop} size={btnSize} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' },
-  centerGroup: { flexDirection: 'row', gap: 12, justifyContent: 'center', flex: 1 },
-  btn:         { borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  sideBtn:     { width: 52, height: 52 },
-  placeholder: { height: 60 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' },
+  btn: { borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 });

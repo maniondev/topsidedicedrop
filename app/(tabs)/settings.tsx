@@ -14,6 +14,7 @@ import { useSound, SoundPackMeta, SOUND_PACK_IDS, SoundPackId } from '@/contexts
 import { useAnimation, AnimPackMeta, ANIM_PACK_IDS, AnimPackId } from '@/contexts/AnimationContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useStats } from '@/contexts/StatsContext';
+import { loadStats, saveStats } from '@/lib/storage';
 import PremiumModal from '@/components/PremiumModal';
 import { ThemeColors, ThemeId, ThemeMeta, THEME_IDS, Themes } from '@/constants/theme';
 
@@ -26,7 +27,7 @@ export default function SettingsScreen() {
   const { soundEnabled, setSoundEnabled, soundPack, setSoundPack, play } = useSound();
   const { animPack, setAnimPack } = useAnimation();
   const { isPremium, upgrade, restorePurchases, devToggle } = usePremium();
-  const { resetStats } = useStats();
+  const { resetStats, refresh } = useStats();
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const dieRefs = useRef<Partial<Record<AnimPackId, { play: () => void }>>>({});
@@ -36,6 +37,32 @@ export default function SettingsScreen() {
   }, []));
 
   const handleUpgrade = () => setPremiumModalOpen(true);
+
+  const boostStatsForScreenshots = async () => {
+    const stats = await loadStats();
+    const DAY = 24 * 60 * 60 * 1000;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    // Set medium best scores
+    stats.byDifficulty.medium.bestScore = 12294;
+    stats.byDifficulty.medium.bestUnassisted = 4174;
+    stats.byDifficulty.medium.totalRuns = Math.max(stats.byDifficulty.medium.totalRuns, 47);
+    stats.byDifficulty.medium.lifetimeScore = Math.max(stats.byDifficulty.medium.lifetimeScore, 189430);
+    // Inject 17 consecutive daily runs (one per day) for streak
+    const existingDays = new Set(stats.recentRuns.map(r => {
+      const d = new Date(r.date); d.setHours(0, 0, 0, 0); return d.getTime();
+    }));
+    const fakeRuns = [];
+    for (let i = 0; i < 17; i++) {
+      const day = today.getTime() - i * DAY;
+      if (!existingDays.has(day)) {
+        fakeRuns.push({ score: Math.floor(800 + Math.random() * 3000), date: day + 10 * 60 * 1000, bestChain: Math.floor(1 + Math.random() * 5), difficulty: 'medium' as const, usedContinue: false });
+      }
+    }
+    stats.recentRuns = [...fakeRuns, ...stats.recentRuns].slice(0, 100);
+    await saveStats(stats);
+    await refresh();
+    Alert.alert('Done', 'Stats boosted for screenshots!');
+  };
 
   const confirmReset = () => {
     Alert.alert(
@@ -79,6 +106,14 @@ export default function SettingsScreen() {
           )}
           {!isPremium && (
             <RowItem label="Restore Purchases" onPress={restorePurchases} colors={colors} styles={styles} />
+          )}
+          {__DEV__ && (
+            <RowItem
+              label="⚙️ Dev: Boost Stats (screenshots)"
+              onPress={boostStatsForScreenshots}
+              colors={colors}
+              styles={styles}
+            />
           )}
           {__DEV__ && (
             <RowItem

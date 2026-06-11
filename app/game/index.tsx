@@ -1,9 +1,9 @@
 import React, { useEffect, useCallback, useState, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Platform, BackHandler, AppState,
+  View, Text, TouchableOpacity, StyleSheet, Platform, BackHandler, AppState, LayoutChangeEvent,
 } from 'react-native';
 import { useWindowDimensions } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
@@ -29,10 +29,11 @@ import { getPlayerIdentity } from '@/lib/playerIdentity';
 import { submitScore } from '@/lib/scoreQueue';
 
 // No tab bar in this screen — more space for the board
-const HUD_H      = 96;
-const CONTROLS_H = 76;
-const BANNER_H   = 60; // matches BANNER_RESERVED_H in AdBanner
-const V_PAD      = 40; // slack so the centered game block sits a bit lower / balanced
+const HUD_H    = 96;
+const BANNER_H = 60; // matches BANNER_RESERVED_H in AdBanner
+const CTRL_GAP = 6;  // must match GAP in Controls.tsx
+const S1       = 8;  // HUD → board (fixed px — board resizes, gaps don't)
+const S2       = 12; // board → controls, controls → ad
 
 export default function GameScreen() {
   const { fresh } = useLocalSearchParams<{ fresh?: string }>();
@@ -50,13 +51,23 @@ export default function GameScreen() {
   // modal can show the previous best when you set a new record.
   const [prevBest, setPrevBest] = useState(0);
 
-  const bannerH  = isPremium ? 0 : BANNER_H;
-  const usedH    = safeTop + safeBottom + HUD_H + CONTROLS_H + bannerH + V_PAD;
-  const availH   = height - usedH;
-  const csH      = Math.floor(availH / ROWS);
-  const csW      = Math.floor((width - 32) / COLS);
-  const cellSize = Math.max(Math.min(csH, csW), 32);
-  const boardW   = cellSize * COLS;
+  // Measured height of the gameArea container — the only reliable way to know available
+  // vertical space on Android, where useWindowDimensions and useSafeAreaInsets can disagree.
+  const [gameAreaH, setGameAreaH] = useState(0);
+  const onGameAreaLayout = useCallback((e: LayoutChangeEvent) => {
+    setGameAreaH(e.nativeEvent.layout.height);
+  }, []);
+
+  const bannerH       = isPremium ? 0 : BANNER_H;
+  const spacingH      = S1 + S2 + (isPremium ? 0 : S2); // fixed gaps between sections
+  const csW           = Math.floor((width - 32) / COLS);
+  const approxBtnSize = Math.max(36, Math.floor((csW * COLS - CTRL_GAP * 4) / 5));
+  // Use measured container height when available; fall back to dimension-based estimate for first frame.
+  const nonBoardH     = HUD_H + approxBtnSize + bannerH + spacingH;
+  const effectiveH    = gameAreaH > 0 ? gameAreaH : Math.max(0, height - safeTop - safeBottom);
+  const csH           = Math.floor((effectiveH - nonBoardH) / ROWS);
+  const cellSize      = Math.max(Math.min(csH, csW), 32);
+  const boardW        = cellSize * COLS;
 
   const game = useGame(gravityMs, paused);
 
@@ -343,9 +354,10 @@ export default function GameScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
 
-      {/* Game block — vertically centered so board sits lower & balanced */}
-      <View style={styles.gameArea}>
-        {/* Score | Best | Next */}
+      {/* All game content in one column — equal flex spacers give identical gaps
+          between every section (HUD ↔ board ↔ controls ↔ ad). When the ad is
+          absent (premium) the spacers grow and the board expands on tight screens. */}
+      <View style={styles.gameArea} onLayout={onGameAreaLayout}>
         <View style={[styles.hudRow, { height: HUD_H }]}>
           <HUD
             score={game.score}
@@ -355,7 +367,8 @@ export default function GameScreen() {
           />
         </View>
 
-        {/* Board with swipe gestures */}
+        <View style={{ height: S1 }} />
+
         <GestureDetector gesture={controlsDisabled ? Gesture.Tap() : boardGesture}>
           <View style={[styles.boardWrap, { backgroundColor: colors.surfaceRaise }]}>
             <GameBoard
@@ -370,8 +383,9 @@ export default function GameScreen() {
           </View>
         </GestureDetector>
 
-        {/* Controls — width matches board */}
-        <View style={[styles.controlsRow, { height: CONTROLS_H, width: boardW }]}>
+        <View style={{ height: S2 }} />
+
+        <View style={{ width: boardW }}>
           <Controls
             onLeft={game.moveLeft}
             onRight={game.moveRight}
@@ -380,12 +394,13 @@ export default function GameScreen() {
             onHardDrop={hardDropWithSound}
             onPause={() => setPaused(true)}
             disabled={controlsDisabled}
+            boardW={boardW}
           />
         </View>
-      </View>
 
-      {/* Banner pinned at bottom — always visible */}
-      {!isPremium && <AdBanner />}
+        {!isPremium && <View style={{ height: S2 }} />}
+        {!isPremium && <AdBanner />}
+      </View>
 
       <GameOverModal
         visible={game.phase === 'gameOver'}
@@ -413,9 +428,8 @@ export default function GameScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe:        { flex: 1 },
-  gameArea:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  hudRow:      { alignItems: 'center', justifyContent: 'center', width: '100%' },
-  boardWrap:   { borderRadius: 4, overflow: 'hidden', marginVertical: 8 },
-  controlsRow: { alignItems: 'center', justifyContent: 'center', marginTop: 8 },
+  safe:     { flex: 1 },
+  gameArea: { flex: 1, alignItems: 'center', justifyContent: 'flex-start' },
+  hudRow:   { alignItems: 'center', justifyContent: 'center', width: '100%' },
+  boardWrap:{ borderRadius: 4, overflow: 'hidden' },
 });

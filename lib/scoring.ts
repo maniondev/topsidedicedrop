@@ -6,7 +6,7 @@ function multiplier(pass: number): number {
 }
 
 export function scoreMerge(newValue: CellValue, chainPass: number): number {
-  return Math.round(newValue * multiplier(chainPass));
+  return Math.round((newValue - 1) * 2 * multiplier(chainPass));
 }
 
 export function scoreClear(chainPass: number): number {

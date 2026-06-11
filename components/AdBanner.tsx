@@ -28,5 +28,5 @@ export default function AdBanner() {
 const styles = StyleSheet.create({
   // Fixed height + centered: an unloaded banner reserves the same space as a loaded one,
   // so the board above never jumps when the ad populates.
-  container: { height: BANNER_RESERVED_H, alignItems: 'center', justifyContent: 'center' },
+  container: { height: BANNER_RESERVED_H, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
 });

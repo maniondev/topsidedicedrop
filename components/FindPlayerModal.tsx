@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Modal, FlatList, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/lib/supabase';
@@ -26,19 +27,38 @@ function formatScore(n: number): string {
 
 export default function FindPlayerModal({ visible, playerId, mode, onClose, onChanged }: Props) {
   const { colors } = useTheme();
+  const { top: safeTop } = useSafeAreaInsets();
   const [query,           setQuery]           = useState('');
   const [searching,       setSearching]       = useState(false);
   const [searchResults,   setSearchResults]   = useState<SearchResult[]>([]);
   const [following,       setFollowing]       = useState<FollowingEntry[]>([]);
   const [followingLoaded, setFollowingLoaded] = useState(false);
+  const [followingError,  setFollowingError]  = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadFollowing = useCallback(async () => {
     if (!playerId) return;
-    const { data } = await supabase.rpc('get_following', { p_player_id: playerId });
+    setFollowingError(false);
+
+    if (mode === 'following') {
+      // get_following RPC has a direction bug; derive from leaderboard-following scope which is confirmed working.
+      const { data, error } = await supabase.rpc('get_leaderboard_best', {
+        p_difficulty: null, p_unassisted: false, p_time_period: 'all',
+        p_limit: 100, p_follower_id: playerId,
+      });
+      if (error) { setFollowingError(true); setFollowingLoaded(true); return; }
+      const entries = ((data ?? []) as Array<{ player_id: string; display_name: string; score: number }>)
+        .filter(e => e.player_id !== playerId);
+      setFollowing(entries.map(e => ({ player_id: e.player_id, display_name: e.display_name, best_score: e.score, run_count: 0 })));
+      setFollowingLoaded(true);
+      return;
+    }
+
+    const { data, error } = await supabase.rpc('get_following', { p_player_id: playerId });
+    if (error) { setFollowingError(true); setFollowingLoaded(true); return; }
     setFollowing(data ?? []);
     setFollowingLoaded(true);
-  }, [playerId]);
+  }, [playerId, mode]);
 
   useEffect(() => {
     if (visible && playerId) loadFollowing();
@@ -46,6 +66,7 @@ export default function FindPlayerModal({ visible, playerId, mode, onClose, onCh
       setQuery('');
       setSearchResults([]);
       setFollowingLoaded(false);
+      setFollowingError(false);
     }
   }, [visible, playerId, loadFollowing]);
 
@@ -91,7 +112,7 @@ export default function FindPlayerModal({ visible, playerId, mode, onClose, onCh
         style={[styles.container, { backgroundColor: colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <View style={[styles.header, { borderBottomColor: colors.border, paddingTop: Math.max(28, safeTop + 8) }]}>
           <Text style={[styles.title, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
             {mode === 'following' ? 'Following' : 'Find Players'}
           </Text>
@@ -127,12 +148,21 @@ export default function FindPlayerModal({ visible, playerId, mode, onClose, onCh
           renderItem={null}
           ListHeaderComponent={
             <>
-              {mode === 'following' && followingLoaded && (
+              {mode === 'following' && (
                 <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
                   <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-                    FOLLOWING ({following.length})
+                    FOLLOWING{followingLoaded && !followingError ? ` (${following.length})` : ''}
                   </Text>
-                  {following.length === 0 ? (
+                  {!followingLoaded ? (
+                    <ActivityIndicator style={{ padding: 16 }} color={colors.accent} />
+                  ) : followingError ? (
+                    <View style={styles.errorRow}>
+                      <Text style={[styles.empty, { color: colors.textMuted }]}>Couldn't load following list.</Text>
+                      <TouchableOpacity onPress={loadFollowing} style={styles.retryBtn}>
+                        <Text style={[styles.retryText, { color: colors.accent }]}>Retry</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : following.length === 0 ? (
                     <Text style={[styles.empty, { color: colors.textMuted }]}>
                       Not following anyone yet.
                     </Text>
@@ -142,7 +172,7 @@ export default function FindPlayerModal({ visible, playerId, mode, onClose, onCh
                         <View style={styles.rowInfo}>
                           <Text style={[styles.rowName, { color: colors.text }]}>{f.display_name}</Text>
                           <Text style={[styles.rowSub, { color: colors.textMuted }]}>
-                            Best {formatScore(f.best_score)} · {f.run_count} {f.run_count === 1 ? 'run' : 'runs'}
+                            Best {formatScore(f.best_score)}{f.run_count > 0 ? ` · ${f.run_count} ${f.run_count === 1 ? 'run' : 'runs'}` : ''}
                           </Text>
                         </View>
                         <TouchableOpacity
@@ -203,7 +233,7 @@ export default function FindPlayerModal({ visible, playerId, mode, onClose, onCh
 
 const styles = StyleSheet.create({
   container:      { flex: 1 },
-  header:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, borderBottomWidth: 1 },
+  header:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1 },
   title:          { fontSize: 20 },
   searchBar:      { flexDirection: 'row', alignItems: 'center', margin: 16, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, borderWidth: 1 },
   searchIcon:     { marginRight: 8 },
@@ -218,4 +248,7 @@ const styles = StyleSheet.create({
   actionBtn:      { borderRadius: 8, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 6 },
   actionBtnText:  { fontSize: 13, fontWeight: '600' },
   empty:          { textAlign: 'center', padding: 16, fontSize: 14, fontStyle: 'italic' },
+  errorRow:       { alignItems: 'center', paddingBottom: 8 },
+  retryBtn:       { paddingVertical: 6, paddingHorizontal: 16 },
+  retryText:      { fontSize: 14, fontWeight: '600' },
 });

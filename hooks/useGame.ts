@@ -332,7 +332,7 @@ function reducer(state: GameState, action: Action): GameState {
         return { ...state, board: gravBoard, triggers: newTriggers };
       }
 
-      const pass = state.chainPass + 1;
+      const pass = state.chainPass;
       let gain = 0;
       for (const evt of events) {
         if (evt.newValue === 'clear') gain += scoreClear(pass);
@@ -358,8 +358,8 @@ function reducer(state: GameState, action: Action): GameState {
         ...state,
         board: gravBoard,
         score: state.score + gain,
-        chainPass: pass,
-        runBestChain: Math.max(state.runBestChain, pass),
+        chainPass: pass + 1,
+        runBestChain: Math.max(state.runBestChain, pass + 1),
         triggers: newTriggers,
         lastMergeEvents: events,
       };
