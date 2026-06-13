@@ -19,6 +19,7 @@ import { StatsProvider } from '@/contexts/StatsContext';
 import { DifficultyProvider } from '@/contexts/DifficultyContext';
 import { GameStatusProvider } from '@/contexts/GameStatusContext';
 import { AnimationProvider } from '@/contexts/AnimationContext';
+import { DiceStyleProvider } from '@/contexts/DiceStyleContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -46,8 +47,14 @@ export default function RootLayout() {
   }, [fontsLoaded]);
 
   useEffect(() => {
+    let initialActive = true; // skip the first 'active' event which fires on cold launch
     const sub = AppState.addEventListener('change', state => {
-      if (state === 'active') replayQueue().catch(() => {});
+      if (state === 'active') {
+        if (initialActive) { initialActive = false; return; }
+        replayQueue().catch(() => {});
+      } else {
+        initialActive = false;
+      }
     });
     return () => sub.remove();
   }, []);
@@ -88,7 +95,9 @@ export default function RootLayout() {
               <GameStatusProvider>
                 <SoundProvider>
                   <AnimationProvider>
-                    <AppShell />
+                    <DiceStyleProvider>
+                      <AppShell />
+                    </DiceStyleProvider>
                   </AnimationProvider>
                 </SoundProvider>
               </GameStatusProvider>

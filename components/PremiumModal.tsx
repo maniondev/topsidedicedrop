@@ -21,7 +21,12 @@ export default function PremiumModal({ visible, onClose }: Props) {
             Topside: Dice Drop Premium
           </Text>
           <View style={styles.perks}>
-            {['Remove banner ads', 'Unlimited undos', 'Reroll next piece'].map(p => (
+            {[
+              'No banner ads',
+              '1 free continue per run',
+              'All themes, sounds & animations',
+              'All dice styles',
+            ].map(p => (
               <Text key={p} style={[styles.perk, { color: colors.textSecondary }]}>• {p}</Text>
             ))}
           </View>

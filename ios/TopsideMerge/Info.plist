@@ -27,14 +27,14 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>topside-merge</string>
-          <string>com.topside.merge</string>
+          <string>topside-dicedrop</string>
+          <string>com.topside.dicedrop</string>
         </array>
       </dict>
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>exp+topside-merge</string>
+          <string>exp+topside-dicedrop</string>
         </array>
       </dict>
     </array>

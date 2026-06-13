@@ -1,11 +1,11 @@
 {
   "expo": {
     "name": "Topside: Dice Drop",
-    "slug": "topside-merge",
+    "slug": "topside-dicedrop",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "topside-merge",
+    "scheme": "topside-dicedrop",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {

@@ -9,14 +9,18 @@ import { useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
-import { useTheme } from '@/contexts/ThemeContext';
+import { Canvas, RoundedRect, Circle, Rect, Group, BlurMask, Line, RadialGradient, vec, rrect, rect } from '@shopify/react-native-skia';
+import { useTheme, useDieColors } from '@/contexts/ThemeContext';
 import { useSound, SoundPackMeta, SOUND_PACK_IDS, SoundPackId } from '@/contexts/SoundContext';
 import { useAnimation, AnimPackMeta, ANIM_PACK_IDS, AnimPackId } from '@/contexts/AnimationContext';
+import { useDiceStyle, DiceStyleMeta, DICE_STYLE_IDS, DiceStyleId } from '@/contexts/DiceStyleContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useStats } from '@/contexts/StatsContext';
 import { loadStats, saveStats } from '@/lib/storage';
+import { submitScoreForCurrentPlayer } from '@/lib/scoreQueue';
 import PremiumModal from '@/components/PremiumModal';
 import { ThemeColors, ThemeId, ThemeMeta, THEME_IDS, Themes } from '@/constants/theme';
+import { openNativeReview } from '@/lib/reviewPrompt';
 
 const FREE_THEMES: ThemeId[] = ['dice', 'light', 'dark'];
 
@@ -26,6 +30,7 @@ export default function SettingsScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { soundEnabled, setSoundEnabled, soundPack, setSoundPack, play } = useSound();
   const { animPack, setAnimPack } = useAnimation();
+  const { diceStyle, setDiceStyle } = useDiceStyle();
   const { isPremium, upgrade, restorePurchases, devToggle } = usePremium();
   const { resetStats, refresh } = useStats();
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
@@ -61,13 +66,14 @@ export default function SettingsScreen() {
     stats.recentRuns = [...fakeRuns, ...stats.recentRuns].slice(0, 100);
     await saveStats(stats);
     await refresh();
+    await submitScoreForCurrentPlayer({ p_score: 12294, p_best_chain: 9, p_difficulty: 'medium', p_used_continue: false });
     Alert.alert('Done', 'Stats boosted for screenshots!');
   };
 
   const confirmReset = () => {
     Alert.alert(
       'Reset Stats?',
-      'This permanently erases your best score, run history, and all stats. This cannot be undone.',
+      'This permanently erases your local stats and removes your scores from the global leaderboard. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Reset', style: 'destructive', onPress: async () => {
@@ -91,7 +97,7 @@ export default function SettingsScreen() {
               <Ionicons name="star" size={20} color={colors.premiumGold} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.premiumTitle, { color: colors.premiumGold }]}>Premium Active</Text>
-                <Text style={styles.premiumSub}>All themes · sounds · animations · No ads · 1 free continue/run</Text>
+                <Text style={styles.premiumSub}>No ads · 1 free continue/run · All themes, sounds, animations & dice styles</Text>
               </View>
             </View>
           ) : (
@@ -137,94 +143,128 @@ export default function SettingsScreen() {
           )}
         </View>
 
-        {/* Theme */}
-        <Section label="Theme" styles={styles}>
-          <View style={styles.themeGrid}>
-            {THEME_IDS.map(id => (
-              <ThemeCard
-                key={id}
-                id={id}
-                selected={themeId === id}
-                locked={!isPremium && !FREE_THEMES.includes(id)}
-                onSelect={() => {
-                  if (!isPremium && !FREE_THEMES.includes(id)) { handleUpgrade(); return; }
-                  setTheme(id);
-                }}
-                colors={colors}
-                styles={styles}
-              />
-            ))}
-          </View>
-        </Section>
+        {/* Customize — single card */}
+        <View style={[styles.section, { marginBottom: 24 }]}>
+          <View style={styles.sectionCard}>
 
-        {/* Sound Pack */}
-        <Section label="Sound Pack" styles={styles}>
-          <View style={styles.packGrid}>
-            {SOUND_PACK_IDS.filter(id => !SoundPackMeta[id].hidden).map(id => {
-              const locked = id !== 'topside' && !isPremium;
-              return (
-                <PackCard
+            {/* Theme */}
+            <Text style={styles.innerSectionLabel}>Theme</Text>
+            <View style={styles.themeGrid}>
+              {THEME_IDS.map(id => (
+                <ThemeCard
                   key={id}
-                  label={SoundPackMeta[id].label}
-                  selected={soundPack === id}
-                  locked={locked}
+                  id={id}
+                  selected={themeId === id}
+                  locked={!isPremium && !FREE_THEMES.includes(id)}
                   onSelect={() => {
-                    if (locked) {
-                      // Preview the pack sound without switching — free users can hear it
+                    if (!isPremium && !FREE_THEMES.includes(id)) { handleUpgrade(); return; }
+                    setTheme(id);
+                  }}
+                  colors={colors}
+                  styles={styles}
+                />
+              ))}
+            </View>
+
+            <View style={[styles.innerSep, { backgroundColor: colors.separator }]} />
+
+            {/* Sound Pack */}
+            <Text style={styles.innerSectionLabel}>Sound Pack</Text>
+            <View style={styles.packGrid}>
+              {SOUND_PACK_IDS.filter(id => !SoundPackMeta[id].hidden).map(id => {
+                const locked = id !== 'topside' && !isPremium;
+                return (
+                  <PackCard
+                    key={id}
+                    label={SoundPackMeta[id].label}
+                    selected={soundPack === id}
+                    locked={locked}
+                    onSelect={() => {
+                      if (locked) {
+                        setSoundPack(id);
+                        setTimeout(() => play('merge1'), 150);
+                        setTimeout(() => play('merge2'), 450);
+                        setTimeout(() => play('merge3'), 750);
+                        setTimeout(() => handleUpgrade(), 900);
+                        setTimeout(() => setSoundPack(soundPack), 1800);
+                        return;
+                      }
                       setSoundPack(id);
                       setTimeout(() => play('merge1'), 150);
                       setTimeout(() => play('merge2'), 450);
                       setTimeout(() => play('merge3'), 750);
-                      setTimeout(() => handleUpgrade(), 900);
-                      setTimeout(() => setSoundPack(soundPack), 1800);
-                      return;
-                    }
-                    setSoundPack(id);
-                    // Preview: play merge1→2→3 in sequence after pack loads
-                    setTimeout(() => play('merge1'), 150);
-                    setTimeout(() => play('merge2'), 450);
-                    setTimeout(() => play('merge3'), 750);
-                  }}
-                  icon="musical-notes"
-                  colors={colors}
-                  styles={styles}
-                />
-              );
-            })}
-          </View>
-        </Section>
+                    }}
+                    icon="musical-notes"
+                    colors={colors}
+                    styles={styles}
+                  />
+                );
+              })}
+            </View>
 
-        {/* Animation Pack */}
-        <Section label="Animation Pack" styles={styles}>
-          <View style={styles.packGrid}>
-            {ANIM_PACK_IDS.filter(id => !AnimPackMeta[id].hidden).map(id => {
-              const meta = AnimPackMeta[id];
-              const locked = !meta.free && !isPremium;
-              return (
-                <PackCard
-                  key={id}
-                  label={meta.label}
-                  selected={animPack === id}
-                  locked={locked}
-                  onSelect={() => {
-                    dieRefs.current[id]?.play();
-                    if (locked) { handleUpgrade(); return; }
-                    setAnimPack(id);
-                  }}
-                  preview={
-                    <AnimatedDie
-                      ref={handle => { dieRefs.current[id] = handle ?? undefined; }}
-                      packId={id}
-                      color={animPack === id ? colors.accent : colors.textSecondary}
-                    />
-                  }
-                  colors={colors}
-                  styles={styles}
-                />
-              );
-            })}
+            <View style={[styles.innerSep, { backgroundColor: colors.separator }]} />
+
+            {/* Animation Pack */}
+            <Text style={styles.innerSectionLabel}>Animation Pack</Text>
+            <View style={styles.packGrid}>
+              {ANIM_PACK_IDS.filter(id => !AnimPackMeta[id].hidden).map(id => {
+                const meta = AnimPackMeta[id];
+                const locked = !meta.free && !isPremium;
+                return (
+                  <PackCard
+                    key={id}
+                    label={meta.label}
+                    selected={animPack === id}
+                    locked={locked}
+                    onSelect={() => {
+                      dieRefs.current[id]?.play();
+                      if (locked) { handleUpgrade(); return; }
+                      setAnimPack(id);
+                    }}
+                    preview={
+                      <AnimatedDie
+                        ref={handle => { dieRefs.current[id] = handle ?? undefined; }}
+                        packId={id}
+                        color={animPack === id ? colors.accent : colors.textSecondary}
+                      />
+                    }
+                    colors={colors}
+                    styles={styles}
+                  />
+                );
+              })}
+            </View>
+
+            <View style={[styles.innerSep, { backgroundColor: colors.separator }]} />
+
+            {/* Dice Style */}
+            <Text style={styles.innerSectionLabel}>Dice Style</Text>
+            <View style={styles.packGrid}>
+              {DICE_STYLE_IDS.map(id => {
+                const meta = DiceStyleMeta[id];
+                const locked = !meta.free && !isPremium;
+                return (
+                  <PackCard
+                    key={id}
+                    label={meta.label}
+                    selected={diceStyle === id}
+                    locked={locked}
+                    onSelect={() => {
+                      if (locked) { handleUpgrade(); return; }
+                      setDiceStyle(id);
+                    }}
+                    preview={
+                      <DiceStylePreview styleId={id} />
+                    }
+                    colors={colors}
+                    styles={styles}
+                  />
+                );
+              })}
+            </View>
+
           </View>
-        </Section>
+        </View>
 
         {/* Sound toggle */}
         <Section label="Sound" styles={styles}>
@@ -244,11 +284,12 @@ export default function SettingsScreen() {
 
         {/* About */}
         <Section label="About" styles={styles}>
+          <RowItem label="Rate Dice Drop ★" colors={colors} styles={styles} onPress={openNativeReview} />
           <RowItem label="Privacy Policy" colors={colors} styles={styles} onPress={() => Linking.openURL('https://sites.google.com/view/topsideapp/home')} />
           <RowItem label="Version" value={Constants.expoConfig?.version ?? '—'} colors={colors} styles={styles} />
         </Section>
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 8 }} />
       </ScrollView>
 
       <PremiumModal visible={premiumModalOpen} onClose={() => setPremiumModalOpen(false)} />
@@ -257,6 +298,91 @@ export default function SettingsScreen() {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
+
+const PREVIEW_RED = '#D92B2B';
+const PREVIEW_DOT = '#ffffff';
+const PIP_CENTER: [number, number] = [0.50, 0.50];
+
+function DiceStylePreview({ styleId }: { styleId: DiceStyleId }) {
+  const cs = 20;
+  const pad = 1.5;
+  const rw = cs - pad * 2;
+  const rx = pad, ry = pad;
+  const cx = rx + rw / 2, cy = ry + rw / 2;
+  const dotR = Math.max(cs * 0.13, 3.5);
+  const pipSize = Math.max(cs * 0.22, 5);
+  const fc = PREVIEW_RED;
+  const dc = PREVIEW_DOT;
+
+  return (
+    <Canvas style={{ width: cs, height: cs }}>
+      {styleId === 'classic' && (
+        <>
+          <RoundedRect x={rx} y={ry} width={rw} height={rw} r={6} color={fc} />
+          <Circle cx={cx} cy={cy} r={dotR} color={dc} />
+        </>
+      )}
+      {styleId === 'sketch' && (
+        <>
+          <RoundedRect x={rx} y={ry} width={rw} height={rw} r={6} color={fc} style="stroke" strokeWidth={2.8} />
+          <Circle cx={cx} cy={cy} r={Math.max(cs * 0.13, 3.5)} color={fc} style="stroke" strokeWidth={2} />
+        </>
+      )}
+      {styleId === 'round' && (
+        <>
+          <Circle cx={cx} cy={cy} r={rw / 2} color={fc} />
+          <Circle cx={cx} cy={cy} r={dotR * 0.92} color={dc} />
+        </>
+      )}
+      {styleId === 'pixel' && (
+        <>
+          <Rect x={rx} y={ry} width={rw} height={rw} color={fc} />
+          <Rect x={rx} y={ry} width={rw} height={1.5} color="rgba(255,255,255,0.3)" />
+          <Rect x={rx} y={ry} width={1.5} height={rw} color="rgba(255,255,255,0.3)" />
+          <Rect x={rx} y={ry + rw - 1.5} width={rw} height={1.5} color="rgba(0,0,0,0.3)" />
+          <Rect x={rx + rw - 1.5} y={ry} width={1.5} height={rw} color="rgba(0,0,0,0.3)" />
+          <Rect x={cx - pipSize / 2} y={cy - pipSize / 2} width={pipSize} height={pipSize} color={dc} />
+        </>
+      )}
+      {styleId === 'neon' && (
+        <>
+          <RoundedRect x={rx} y={ry} width={rw} height={rw} r={6} color="rgba(6,3,16,0.93)" />
+          <RoundedRect x={rx} y={ry} width={rw} height={rw} r={6} color={fc} style="stroke" strokeWidth={2.5}>
+            <BlurMask blur={4} style="solid" />
+          </RoundedRect>
+          <RoundedRect x={rx + 1} y={ry + 1} width={rw - 2} height={rw - 2} r={5} color={fc} style="stroke" strokeWidth={0.8} />
+          <Circle cx={cx} cy={cy} r={dotR} color={fc}>
+            <BlurMask blur={2.5} style="solid" />
+          </Circle>
+          <Circle cx={cx} cy={cy} r={dotR * 0.55} color={fc} />
+        </>
+      )}
+      {styleId === 'raised' && (() => {
+        const bevel = Math.max(cs * 0.12, 3);
+        const clip = rrect(rect(rx, ry, rw, rw), 6, 6);
+        return (
+          <>
+            <Group clip={clip}>
+              <Rect x={rx} y={ry} width={rw} height={rw} color={fc} />
+              <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
+                <RadialGradient c={vec(rx, ry)} r={rw * 1.5} colors={['rgba(255,255,255,0.38)', 'rgba(255,255,255,0)']} />
+              </Rect>
+              <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
+                <RadialGradient c={vec(rx + rw, ry + rw)} r={rw * 1.5} colors={['rgba(0,0,0,0.42)', 'rgba(0,0,0,0)']} />
+              </Rect>
+              <Rect x={rx} y={ry} width={rw} height={bevel} color="rgba(255,255,255,0.48)" />
+              <Rect x={rx} y={ry + bevel} width={bevel} height={rw - bevel} color="rgba(255,255,255,0.28)" />
+              <Rect x={rx} y={ry + rw - bevel} width={rw} height={bevel} color="rgba(0,0,0,0.45)" />
+              <Rect x={rx + rw - bevel} y={ry} width={bevel} height={rw - bevel} color="rgba(0,0,0,0.28)" />
+            </Group>
+            <Circle cx={cx + 1} cy={cy + 1} r={dotR} color="rgba(0,0,0,0.35)" />
+            <Circle cx={cx} cy={cy} r={dotR} color={dc} />
+          </>
+        );
+      })()}
+    </Canvas>
+  );
+}
 
 function Section({ label, children, styles }: {
   label: string; children: React.ReactNode;
@@ -497,11 +623,9 @@ const AnimatedDie = forwardRef(function AnimatedDie(
   useImperativeHandle(ref, () => ({ play: triggerPreview }));
 
   return (
-    <TouchableOpacity onPress={triggerPreview} hitSlop={8}>
-      <Animated.View style={animStyle}>
-        <Ionicons name="dice" size={20} color={color} />
-      </Animated.View>
-    </TouchableOpacity>
+    <Animated.View style={animStyle}>
+      <Ionicons name="dice" size={20} color={color} />
+    </Animated.View>
   );
 });
 
@@ -640,9 +764,9 @@ function makeStyles(c: ThemeColors) {
       paddingBottom: 8,
     },
     themeCardInner: {
-      height: 44,
+      height: 26,
       margin: 6,
-      borderRadius: 8,
+      borderRadius: 6,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -663,6 +787,22 @@ function makeStyles(c: ThemeColors) {
       fontSize: 11,
       fontWeight: '700',
       flex: 1,
+    },
+
+    innerSectionLabel: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: c.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 1.2,
+      paddingTop: 14,
+      paddingBottom: 2,
+      paddingLeft: 12,
+    },
+    innerSep: {
+      height: StyleSheet.hairlineWidth,
+      marginHorizontal: 12,
+      marginTop: 4,
     },
 
     // Pack picker (sound + animation)

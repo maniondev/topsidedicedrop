@@ -22,11 +22,12 @@ import PauseModal from '@/components/game/PauseModal';
 import EmergencyCondenseOverlay from '@/components/game/EmergencyCondenseOverlay';
 import AdBanner from '@/components/AdBanner';
 import { onRunComplete } from '@/lib/adCounter';
-import { saveGame, loadSavedGame, clearSavedGame } from '@/lib/storage';
+import { saveGame, loadSavedGame, clearSavedGame, savePendingRun, clearPendingRun } from '@/lib/storage';
 import { runEmergencyCondense } from '@/lib/condense';
 import { COLS, ROWS } from '@/constants/game';
-import { getPlayerIdentity } from '@/lib/playerIdentity';
-import { submitScore } from '@/lib/scoreQueue';
+import { submitScoreForCurrentPlayer } from '@/lib/scoreQueue';
+import { getReviewOptedOut, setReviewOptedOut, isReviewMilestone, openNativeReview, getReviewLastPrompted, setReviewLastPrompted } from '@/lib/reviewPrompt';
+import ReviewPromptModal from '@/components/ReviewPromptModal';
 
 // No tab bar in this screen — more space for the board
 const HUD_H    = 96;
@@ -47,9 +48,12 @@ export default function GameScreen() {
   const { top: safeTop, bottom: safeBottom } = useSafeAreaInsets();
 
   const [paused, setPaused] = useState(false);
-  // Best score captured at game-over, BEFORE this run is submitted — so the
-  // modal can show the previous best when you set a new record.
   const [prevBest, setPrevBest] = useState(0);
+  const [reviewPromptVisible, setReviewPromptVisible] = useState(false);
+  const reviewOptedOutRef      = useRef(false);
+  const reviewPendingRef       = useRef(false);
+  const reviewLastPromptedRef  = useRef(0);
+  const reviewPendingCountRef  = useRef(0);
 
   // Measured height of the gameArea container — the only reliable way to know available
   // vertical space on Android, where useWindowDimensions and useSafeAreaInsets can disagree.
@@ -74,6 +78,10 @@ export default function GameScreen() {
 
 
   const [freeContinueUsed,  setFreeContinueUsed]  = useState(false);
+  const [adContinueUsed,   setAdContinueUsed]    = useState(false);
+  // Captures game state at the moment the player taps "Continue" (before the ad plays),
+  // so the ad callback has the correct pre-continue values even with stale closure.
+  const preContinueRef = useRef<{ score: number; chain: number; alreadyUsedContinue: boolean } | null>(null);
 
   // On mount: start fresh if ?fresh=1, otherwise resume a saved game if one exists
   useEffect(() => {
@@ -92,6 +100,26 @@ export default function GameScreen() {
     }).catch(() => { game.startGame(); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Load review opt-out + last-prompted once on mount.
+  useEffect(() => {
+    getReviewOptedOut().then(v  => { reviewOptedOutRef.current = v; });
+    getReviewLastPrompted().then(n => { reviewLastPromptedRef.current = n; });
+  }, []);
+
+  // When the game-over modal closes (phase leaves 'gameOver'), show review if pending.
+  const prevPhaseWasGameOver = useRef(false);
+  useEffect(() => {
+    if (prevPhaseWasGameOver.current && game.phase !== 'gameOver') {
+      if (reviewPendingRef.current && !reviewOptedOutRef.current) {
+        reviewPendingRef.current = false;
+        reviewLastPromptedRef.current = reviewPendingCountRef.current;
+        setReviewLastPrompted(reviewPendingCountRef.current);
+        setReviewPromptVisible(true);
+      }
+    }
+    prevPhaseWasGameOver.current = game.phase === 'gameOver';
+  }, [game.phase]);
 
   // Auto-pause when the app backgrounds (lock screen, app switch, incoming call)
   // — but only during active play, so it never interferes with the rewarded-ad
@@ -117,28 +145,33 @@ export default function GameScreen() {
   }, []);
 
   const { adLoaded, showAd } = useRewardedAd(useCallback(() => {
+    // Ad rewarded — submit pre-continue score as unassisted (if no continue was used before)
+    const pre = preContinueRef.current;
+    if (pre && !pre.alreadyUsedContinue) {
+      submitPreContinueRun(pre.score, pre.chain, difficulty);
+      if (pre.score > 0) {
+        submitScoreForCurrentPlayer({ p_score: pre.score, p_best_chain: pre.chain, p_difficulty: difficulty, p_used_continue: false });
+      }
+    }
+    preContinueRef.current = null;
+    clearPendingRun(); // game is resuming, pending run is no longer valid
+    setAdContinueUsed(true);
     game.startCondense();
-  }, [game.startCondense]));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.startCondense, difficulty]));
 
   useEffect(() => {
     if (game.phase !== 'gameOver') return;
     play('gameover');
-    setPrevBest(bestScore); // capture old best before submitRun overwrites it
-    const continueUsed = freeContinueUsed || game.continueAvailable === false;
-    submitRun(game.score, game.runBestChain, difficulty, continueUsed);
-    // Submit to global leaderboard — queued locally on failure, replayed on next launch
-    if (game.score > 0) {
-      getPlayerIdentity().then(({ playerId, displayName }) =>
-        submitScore({
-          p_player_id:     playerId,
-          p_display_name:  displayName,
-          p_score:         game.score,
-          p_best_chain:    game.runBestChain,
-          p_difficulty:    difficulty,
-          p_used_continue: continueUsed,
-        })
-      ).catch(() => {});
-    }
+    setPrevBest(bestScore);
+    // Persist to AsyncStorage so a score is never lost if the app is killed before
+    // the player taps New Game. Consumed on next launch by StatsContext.
+    savePendingRun({
+      score:        game.score,
+      chain:        game.runBestChain,
+      difficulty,
+      continueUsed: freeContinueUsed || adContinueUsed,
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.phase]);
 
@@ -183,23 +216,54 @@ export default function GameScreen() {
   }, [game.hardDrop]);
 
   const handleFreeContinue = useCallback(() => {
-    // Log pre-continue score as an unassisted run (history + bestUnassisted only,
-    // no totalRuns / lifetimeScore — the final run covers those).
-    submitPreContinueRun(game.score, game.runBestChain, difficulty);
+    const alreadyUsedContinue = freeContinueUsed || adContinueUsed;
+    // Only update bestUnassisted and submit to unassisted leaderboard on the first continue —
+    // scores earned after a continue are no longer unassisted.
+    if (!alreadyUsedContinue) {
+      submitPreContinueRun(game.score, game.runBestChain, difficulty);
+      if (game.score > 0) {
+        submitScoreForCurrentPlayer({ p_score: game.score, p_best_chain: game.runBestChain, p_difficulty: difficulty, p_used_continue: false });
+      }
+    }
+    clearPendingRun(); // game is resuming, pending run is no longer valid
     setFreeContinueUsed(true);
     game.startCondense();
-  }, [game.score, game.runBestChain, difficulty, submitPreContinueRun, game.startCondense]);
+  }, [game.score, game.runBestChain, difficulty, freeContinueUsed, adContinueUsed, submitPreContinueRun, game.startCondense]);
 
   const handleContinue = useCallback(() => {
-    if (adLoaded) showAd();
-  }, [adLoaded, showAd]);
+    if (adLoaded) {
+      // Capture score NOW before the ad plays — the ad callback closure may be stale
+      preContinueRef.current = { score: game.score, chain: game.runBestChain, alreadyUsedContinue: freeContinueUsed || adContinueUsed };
+      showAd();
+    }
+  }, [adLoaded, showAd, game.score, game.runBestChain, freeContinueUsed, adContinueUsed]);
 
   const handleNewGame = useCallback(() => {
     setPaused(false);
     onRunComplete();
+    const continueUsed = freeContinueUsed || adContinueUsed;
+    submitRun(game.score, game.runBestChain, difficulty, continueUsed);
+    if (game.score > 0) {
+      submitScoreForCurrentPlayer({ p_score: game.score, p_best_chain: game.runBestChain, p_difficulty: difficulty, p_used_continue: continueUsed });
+    }
+    clearPendingRun();
+
+    // Check review milestone using total runs across all difficulties (+1 for this run).
+    const totalRuns = (['easy', 'medium', 'hard'] as const)
+      .reduce((sum, d) => sum + statsFor(d).totalRuns, 0) + 1;
+    if (
+      !reviewOptedOutRef.current &&
+      isReviewMilestone(totalRuns) &&
+      totalRuns > reviewLastPromptedRef.current
+    ) {
+      reviewPendingRef.current = true;
+      reviewPendingCountRef.current = totalRuns;
+    }
+
     setFreeContinueUsed(false);
+    setAdContinueUsed(false);
     game.resetGame();
-  }, [game.resetGame]);
+  }, [game.score, game.runBestChain, difficulty, freeContinueUsed, adContinueUsed, submitRun, statsFor, game.resetGame]);
 
   // Robust Emergency Condense: a single screen-level effect drives the board
   // compression and resume. Guarded by a ref so it runs exactly once per
@@ -224,7 +288,8 @@ export default function GameScreen() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.phase]);
 
-  // Save game and return to lobby
+  // Save game and return to lobby — run is not over, clear pending so it isn't
+  // committed on next launch as an abandoned score.
   const handleSaveAndQuit = useCallback(async () => {
     const exported = game.exportState();
     await saveGame({
@@ -236,28 +301,21 @@ export default function GameScreen() {
       difficulty,
       savedAt: Date.now(),
     });
+    clearPendingRun();
     router.back();
   }, [game.exportState, difficulty]);
 
-  // Quit without saving — log score to stats, then leave
+  // Quit without saving — commit the run right now, then leave.
   const handleQuitAndLog = useCallback(async () => {
-    const continueUsed = freeContinueUsed || game.continueAvailable === false;
+    const continueUsed = freeContinueUsed || adContinueUsed;
     await submitRun(game.score, game.runBestChain, difficulty, continueUsed);
     await clearSavedGame(difficulty);
     if (game.score > 0) {
-      getPlayerIdentity().then(({ playerId, displayName }) =>
-        submitScore({
-          p_player_id:     playerId,
-          p_display_name:  displayName,
-          p_score:         game.score,
-          p_best_chain:    game.runBestChain,
-          p_difficulty:    difficulty,
-          p_used_continue: continueUsed,
-        })
-      ).catch(() => {});
+      submitScoreForCurrentPlayer({ p_score: game.score, p_best_chain: game.runBestChain, p_difficulty: difficulty, p_used_continue: continueUsed });
     }
+    clearPendingRun();
     router.back();
-  }, [game.score, game.runBestChain, difficulty, freeContinueUsed, game.continueAvailable, submitRun]);
+  }, [game.score, game.runBestChain, difficulty, freeContinueUsed, adContinueUsed, submitRun]);
 
   // Quit without saving — discard score entirely, no stats recorded
   const handleQuitDiscard = useCallback(async () => {
@@ -421,6 +479,24 @@ export default function GameScreen() {
         onQuitAndLog={handleQuitAndLog}
         onQuitDiscard={handleQuitDiscard}
         hasProgress={game.score > 0 || game.board.some(row => row.some(cell => cell !== null))}
+      />
+
+      <ReviewPromptModal
+        visible={reviewPromptVisible}
+        onRate={() => {
+          setReviewPromptVisible(false);
+          reviewOptedOutRef.current = true;
+          setReviewOptedOut();
+          openNativeReview();
+        }}
+        onLater={() => {
+          setReviewPromptVisible(false);
+        }}
+        onDontAsk={() => {
+          setReviewPromptVisible(false);
+          reviewOptedOutRef.current = true;
+          setReviewOptedOut();
+        }}
       />
 
     </SafeAreaView>
