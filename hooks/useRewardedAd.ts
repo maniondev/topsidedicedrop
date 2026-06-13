@@ -72,5 +72,5 @@ export function useRewardedAd(onRewarded: () => void) {
     unsubLoadedRef.current = unsub;
   }, []);
 
-  return { adLoaded, showAd, showAdWithFallback };
+  return { adLoaded, showAdWithFallback };
 }

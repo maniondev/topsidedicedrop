@@ -32,9 +32,6 @@ export default function EmergencyCondenseOverlay({ visible }: Props) {
         <Text style={[styles.title, { color: colors.accent, fontFamily: 'Rubik_700Bold' }]}>
           Condensing…
         </Text>
-        <Text style={[styles.sub, { color: colors.textSecondary }]}>
-          Compressing the board
-        </Text>
       </View>
     </Animated.View>
   );
@@ -43,15 +40,13 @@ export default function EmergencyCondenseOverlay({ visible }: Props) {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.72)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 100,
   },
   card: {
-    padding: 32, borderRadius: 20, borderWidth: 2,
-    alignItems: 'center', gap: 10, minWidth: 240,
+    padding: 28, borderRadius: 20, borderWidth: 2,
+    alignItems: 'center', minWidth: 200,
   },
   title: { fontSize: 22, textAlign: 'center' },
-  sub:   { fontSize: 14 },
 });
