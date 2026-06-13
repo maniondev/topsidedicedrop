@@ -53,6 +53,7 @@ interface GameState {
   runBestChain: number;
   triggers: Set<string>;
   lockResetKey: number;
+  lockResetCount: number;
   lastMergeEvents: MergeEvent[];
 }
 
@@ -68,6 +69,7 @@ type Action =
   | { type: 'RESOLVE_STEP' }
   | { type: 'SPAWN_NEXT'; newPiece: QueuedPiece }
   | { type: 'START_CONDENSE' }
+  | { type: 'UPDATE_CONDENSE_BOARD'; board: Board; scoreGained: number }
   | { type: 'FINISH_CONDENSE'; board: Board; scoreGained: number }
   | { type: 'RESET'; initialQueue: QueuedPiece[] };
 
@@ -177,9 +179,12 @@ function initialState(): GameState {
     runBestChain: 0,
     triggers: EMPTY_TRIGGERS,
     lockResetKey: 0,
+    lockResetCount: 0,
     lastMergeEvents: [],
   };
 }
+
+const MAX_LOCK_RESETS = 12;
 
 // ── Reducer ───────────────────────────────────────────────────────────────────
 
@@ -249,11 +254,17 @@ function reducer(state: GameState, action: Action): GameState {
       const moved = { ...state.activePiece, anchorCol: state.activePiece.anchorCol + dc };
       if (!isLegal(state.board, moved)) return state;
       const contact = inContact(state.board, moved);
+      const atCap = state.lockResetCount >= MAX_LOCK_RESETS;
+      // Once cap is hit, keep piece in locking so the running timer isn't restarted
+      // by a falling→locking phase oscillation.
+      const newPhase = contact || (atCap && state.phase === 'locking') ? 'locking' : 'falling';
+      const resetsTimer = state.phase === 'locking' && newPhase === 'locking' && !atCap;
       return {
         ...state,
         activePiece: moved,
-        phase: contact ? 'locking' : 'falling',
-        lockResetKey: state.phase === 'locking' ? state.lockResetKey + 1 : state.lockResetKey,
+        phase: newPhase,
+        lockResetKey: resetsTimer ? state.lockResetKey + 1 : state.lockResetKey,
+        lockResetCount: resetsTimer ? state.lockResetCount + 1 : state.lockResetCount,
       };
     }
 
@@ -263,11 +274,15 @@ function reducer(state: GameState, action: Action): GameState {
       const kicked = tryRotate(state.board, state.activePiece);
       if (!kicked) return state;
       const contact = inContact(state.board, kicked);
+      const atCap = state.lockResetCount >= MAX_LOCK_RESETS;
+      const newPhase = contact || (atCap && state.phase === 'locking') ? 'locking' : 'falling';
+      const resetsTimer = state.phase === 'locking' && newPhase === 'locking' && !atCap;
       return {
         ...state,
         activePiece: kicked,
-        phase: contact ? 'locking' : 'falling',
-        lockResetKey: state.phase === 'locking' ? state.lockResetKey + 1 : state.lockResetKey,
+        phase: newPhase,
+        lockResetKey: resetsTimer ? state.lockResetKey + 1 : state.lockResetKey,
+        lockResetCount: resetsTimer ? state.lockResetCount + 1 : state.lockResetCount,
       };
     }
 
@@ -284,7 +299,6 @@ function reducer(state: GameState, action: Action): GameState {
         ...state,
         activePiece: { ...state.activePiece, anchorRow: gr },
         phase: 'locking',
-        lockResetKey: state.lockResetKey + 1,
       };
     }
 
@@ -336,7 +350,7 @@ function reducer(state: GameState, action: Action): GameState {
       let gain = 0;
       for (const evt of events) {
         if (evt.newValue === 'clear') gain += scoreClear(pass);
-        else gain += scoreMerge(evt.newValue as CellValue, pass);
+        else gain += scoreMerge(evt.newValue as CellValue, pass, evt.group.length);
       }
 
       const { newBoard: gravBoard } = applyGravity(newBoard);
@@ -383,12 +397,18 @@ function reducer(state: GameState, action: Action): GameState {
         activePiece: piece,
         queue: newQueue,
         phase: inContact(state.board, piece) ? 'locking' : 'falling',
+        lockResetCount: 0,
       };
     }
 
     case 'START_CONDENSE': {
       if (state.phase !== 'gameOver' || state.continueUsed) return state;
       return { ...state, phase: 'condensing' };
+    }
+
+    case 'UPDATE_CONDENSE_BOARD': {
+      if (state.phase !== 'condensing') return state;
+      return { ...state, board: action.board, score: state.score + action.scoreGained };
     }
 
     case 'FINISH_CONDENSE': {
@@ -447,7 +467,7 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
     return () => clearInterval(id);
   }, [state.phase, gravityMs, paused]);
 
-  // Lock delay — stops when paused; resets on lockResetKey change
+  // Lock delay — resets on phase change to locking or explicit lockResetKey bump.
   useEffect(() => {
     if (state.phase !== 'locking' || paused) return;
     const id = setTimeout(() => dispatch({ type: 'LOCK_PIECE' }), LOCK_DELAY_MS);
@@ -498,6 +518,9 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
   const hardDrop  = useCallback(() => dispatch({ type: 'HARD_DROP' }), []);
 
   const startCondense = useCallback(() => dispatch({ type: 'START_CONDENSE' }), []);
+  const updateCondenseBoard = useCallback((board: Board, scoreGained: number) => {
+    dispatch({ type: 'UPDATE_CONDENSE_BOARD', board, scoreGained });
+  }, []);
   const finishCondense = useCallback((board: Board, scoreGained: number) => {
     dispatch({ type: 'FINISH_CONDENSE', board, scoreGained });
   }, []);
@@ -547,6 +570,7 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
     softDrop,
     hardDrop,
     startCondense,
+    updateCondenseBoard,
     finishCondense,
     exportState,
     loadSaved,

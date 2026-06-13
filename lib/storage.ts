@@ -112,9 +112,8 @@ export async function clearStats(): Promise<Stats> {
   return empty;
 }
 
-// Records the score at the moment of Free Continue — unassisted, history-only.
-// Does NOT count as a run (totalRuns) or add to lifetimeScore — the final
-// continued run covers those. Only updates bestUnassisted/bestChain if beaten.
+// Records the pre-continue score for bestUnassisted tracking only.
+// Never touches totalRuns, lifetimeScore, or recentRuns — the final run covers those.
 export async function recordPreContinueRun(
   score: number,
   bestChain: number,
@@ -124,12 +123,37 @@ export async function recordPreContinueRun(
   const d = stats.byDifficulty[difficulty];
   if (score > d.bestUnassisted) d.bestUnassisted = score;
   if (bestChain > d.bestChain) d.bestChain = bestChain;
-  stats.recentRuns = [
-    { score, date: Date.now(), bestChain, difficulty, usedContinue: false },
-    ...stats.recentRuns,
-  ].slice(0, 100);
   await saveStats(stats);
   return stats;
+}
+
+// ── Pending run (crash-safe score persistence) ────────────────────────────────
+// Written at every game-over, cleared when the run is fully committed (new game,
+// quit-and-log, save-and-quit) or consumed on next launch after an app kill.
+
+export interface PendingRun {
+  score: number;
+  chain: number;
+  difficulty: Difficulty;
+  continueUsed: boolean;
+  savedAt: number;
+}
+
+const PENDING_RUN_KEY = `${PREFIX}pending_run`;
+
+export async function savePendingRun(run: Omit<PendingRun, 'savedAt'>): Promise<void> {
+  try { await AsyncStorage.setItem(PENDING_RUN_KEY, JSON.stringify({ ...run, savedAt: Date.now() })); } catch {}
+}
+
+export async function loadPendingRun(): Promise<PendingRun | null> {
+  try {
+    const raw = await AsyncStorage.getItem(PENDING_RUN_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+export async function clearPendingRun(): Promise<void> {
+  try { await AsyncStorage.removeItem(PENDING_RUN_KEY); } catch {}
 }
 
 export async function recordRun(

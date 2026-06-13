@@ -40,7 +40,7 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
         const info = await Purchases.getCustomerInfo();
         setIsPremium(hasEntitlement(info));
       } catch (e) {
-        console.warn('RevenueCat setup error:', e);
+        if (__DEV__) console.warn('RevenueCat setup error:', e);
       } finally {
         setIsLoading(false);
       }

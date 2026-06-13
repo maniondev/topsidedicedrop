@@ -9,8 +9,6 @@ interface Props {
   prevBest: number;
   // free continue: premium gets 1 free per run (no ad)
   freeContinueAvailable: boolean;
-  // paid continue: rewarded ad available
-  adLoaded: boolean;
   onFreeContinue: () => void;
   onContinue: () => void;
   onNewGame: () => void;
@@ -18,7 +16,7 @@ interface Props {
 
 export default function GameOverModal({
   visible, score, bestScore, prevBest,
-  freeContinueAvailable, adLoaded,
+  freeContinueAvailable,
   onFreeContinue, onContinue, onNewGame,
 }: Props) {
   const { colors } = useTheme();
@@ -53,17 +51,14 @@ export default function GameOverModal({
             </TouchableOpacity>
           )}
 
-          {/* Ad continue — always shown (when no free continue); disabled until an ad is ready */}
+          {/* Ad continue — always tappable; shows ad if ready, grants reward after 1.5s fallback if not */}
           {!freeContinueAvailable && (
             <TouchableOpacity
-              style={[styles.continueBtn, { backgroundColor: colors.accent, opacity: adLoaded ? 1 : 0.5 }]}
+              style={[styles.continueBtn, { backgroundColor: colors.accent }]}
               onPress={onContinue}
-              disabled={!adLoaded}
             >
               <Text style={[styles.continueBtnText, { color: colors.accentText }]}>▶ Continue</Text>
-              <Text style={[styles.continueSub, { color: colors.accentText }]}>
-                {adLoaded ? 'Watch a short ad' : 'Loading ad…'}
-              </Text>
+              <Text style={[styles.continueSub, { color: colors.accentText }]}>Watch a short ad</Text>
             </TouchableOpacity>
           )}
 

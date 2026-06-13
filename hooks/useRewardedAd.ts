@@ -8,8 +8,8 @@ export function useRewardedAd(onRewarded: () => void) {
   const callbackRef = useRef(onRewarded);
   callbackRef.current = onRewarded;
 
-  // Track whether the reward was earned during the current ad presentation.
   const earnedRef = useRef(false);
+  const unsubLoadedRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const unsubLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => setAdLoaded(true));
@@ -45,13 +45,32 @@ export function useRewardedAd(onRewarded: () => void) {
     return () => { unsubLoaded(); unsubEarned(); unsubClosed(); unsubError(); };
   }, []);
 
-  const showAd = useCallback(() => {
+  // If the ad isn't ready, trigger a load and wait up to 1.5s.
+  // If it loads in time we show it; otherwise we grant the reward for free
+  // so the player is never stuck on a broken ad.
+  const showAdWithFallback = useCallback(() => {
     if (ad.loaded) {
       ad.show().catch(() => { ad.load(); });
-      return true;
+      return;
     }
-    return false; // caller can fall back when no ad is ready
+    ad.load();
+    const fallbackTimer = setTimeout(() => {
+      // Ad still didn't load — grant reward directly
+      unsubLoadedRef.current?.();
+      callbackRef.current();
+    }, 1500);
+    // If the ad loads in time, cancel the fallback and show it
+    const unsub = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
+      clearTimeout(fallbackTimer);
+      unsub();
+      ad.show().catch(() => {
+        // show() failed after load — grant reward anyway
+        callbackRef.current();
+        ad.load();
+      });
+    });
+    unsubLoadedRef.current = unsub;
   }, []);
 
-  return { adLoaded, showAd };
+  return { adLoaded, showAd, showAdWithFallback };
 }

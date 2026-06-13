@@ -45,12 +45,15 @@ function chooseDest(
   triggers: Set<string>,
 ): [number, number] {
   // Always resolve at the lowest row in the group (gravity-consistent).
-  // Among tiles in that row, prefer the trigger tile, then rightmost.
+  // Among tiles in that row, prefer the trigger tile, then closest to center.
   const maxRow = Math.max(...group.map(([r]) => r));
   const bottom = group.filter(([r]) => r === maxRow);
   const triggered = bottom.find(([r, c]) => triggers.has(`${r},${c}`));
   if (triggered) return triggered;
-  return bottom.reduce((best, cur) => cur[1] > best[1] ? cur : best);
+  const center = Math.floor(COLS / 2);
+  return bottom.reduce((best, cur) =>
+    Math.abs(cur[1] - center) < Math.abs(best[1] - center) ? cur : best
+  );
 }
 
 export function resolveMerges(

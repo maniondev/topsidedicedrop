@@ -65,6 +65,8 @@ export type ThemeColors = {
   // Optional stat card color overrides on the Play tab
   statSolvedColor?:  string;
   statPerfectColor?: string;
+  // When set, stat/leaderboard numbers use this color instead of text
+  statNumColor?: string;
   // Optional per-theme game color overrides (replaces GameColors for die faces/targets)
   gameColors?:     Partial<Record<FaceColorName, string>>;
   gameColorsDim?:  Partial<Record<FaceColorName, string>>;
@@ -120,6 +122,7 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     perfectColor:  '#E53848',
     statSolvedColor:  '#F08A2C',
     statPerfectColor: '#E53848',
+    statNumColor:  '#5A4830',
     iconBg:        '#F3EEDF',
     adBg:          '#F2EAD8',
     adBorder:      '#E0CCA8',
@@ -178,6 +181,7 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     inputBg:       '#EEF4FB',
     danger:        '#CC3333',
     success:       '#1E8840',
+    statNumColor:  '#555570',
     iconBg:        '#E9E9F3',
     adBg:          '#F0F0F8',
     adBorder:      '#D8D8EE',

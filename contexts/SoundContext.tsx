@@ -244,7 +244,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       // Release old pool
-      Object.values(poolsRef.current).forEach(arr => arr?.forEach(s => { try { s.release(); } catch {} }));
+      Object.values(poolsRef.current).forEach(arr => arr?.forEach(s => { try { s.stop(); s.release(); } catch {} }));
       poolsRef.current = {};
 
       const pools: Partial<Record<SoundName, Sound[]>> = {};
@@ -277,7 +277,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     return () => {
-      Object.values(poolsRef.current).forEach(arr => arr?.forEach(s => { try { s.release(); } catch {} }));
+      Object.values(poolsRef.current).forEach(arr => arr?.forEach(s => { try { s.stop(); s.release(); } catch {} }));
       poolsRef.current = {};
       try { Sound.setActive(false); } catch {};
     };

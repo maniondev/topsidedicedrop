@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, Pressable } from 'react-native';
+import Animated, { useSharedValue, withTiming, Easing, useAnimatedStyle, interpolateColor } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,7 +48,7 @@ function RunRow({ rank, run }: { rank: number; run: RunRecord }) {
       </View>
       <View style={styles.runRight}>
         <View style={styles.runTopRow}>
-          <Text style={[styles.runScore, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>{formatScore(run.score)}</Text>
+          <Text style={[styles.runScore, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>{formatScore(run.score)}</Text>
         </View>
         {!run.usedContinue && <Text style={[styles.unassistedLabel, { color: colors.accent }]}>unassisted</Text>}
       </View>
@@ -62,6 +63,31 @@ export default function LeaderboardScreen() {
   const scrollRef = useRef<ScrollView>(null);
 
   const [activeTab,       setActiveTab]       = useState<'yours' | 'leaderboard'>('yours');
+
+  // Sliding segment control
+  const segPos      = useSharedValue(0); // 0 = yours, 1 = leaderboard
+  const segWidthSV  = useSharedValue(0); // measured container width
+
+  const SEG_TIMING = { duration: 220, easing: Easing.out(Easing.cubic) };
+
+  useEffect(() => {
+    const target = activeTab === 'leaderboard' ? 1 : 0;
+    if (Math.abs(segPos.value - target) < 0.01) return;
+    segPos.value = withTiming(target, SEG_TIMING);
+  }, [activeTab]);
+
+  const pillStyle = useAnimatedStyle(() => {
+    const pw = (segWidthSV.value - 11) / 2;
+    return { width: pw, transform: [{ translateX: segPos.value * (pw + 3) }] };
+  });
+
+  const leftTextStyle  = useAnimatedStyle(() => ({
+    color: interpolateColor(segPos.value, [0, 1], [colors.accentText, colors.textSecondary]),
+  }));
+  const rightTextStyle = useAnimatedStyle(() => ({
+    color: interpolateColor(segPos.value, [0, 1], [colors.textSecondary, colors.accentText]),
+  }));
+
   const [filterDifficulty, setFilterDifficulty] = useState<Difficulty | 'all'>('all');
   const [filterType,      setFilterType]      = useState<'overall' | 'unassisted'>('overall');
   const [filterTime,      setFilterTime]      = useState<TimePeriod>('all');
@@ -83,6 +109,8 @@ export default function LeaderboardScreen() {
   const [lifetimeRankInfo,setLifetimeRankInfo]= useState<RankInfo>(null);
   const [lbLoading,       setLbLoading]       = useState(false);
   const [lbError,         setLbError]         = useState<string | null>(null);
+  const [dbBestScore,     setDbBestScore]     = useState<number>(0);
+  const [dbLifetimeScore, setDbLifetimeScore] = useState<number>(0);
 
   // Local stat derivations
   const isUnassisted = filterType === 'unassisted';
@@ -134,9 +162,11 @@ export default function LeaderboardScreen() {
   const fetchLeaderboard = useCallback(async () => {
     setLbLoading(true);
     setLbError(null);
+    setDbBestScore(0);
+    setDbLifetimeScore(0);
     try {
       const diff          = filterDifficulty === 'all' ? null : filterDifficulty;
-      const unassisted    = filterType === 'unassisted';
+      const unassisted    = effectiveFilterType === 'unassisted';
       const followerParam = lbScope === 'following' ? playerId : null;
 
       const fetchTimeout = new Promise<never>((_, reject) =>
@@ -168,6 +198,8 @@ export default function LeaderboardScreen() {
         const myLifetime = (lifetimeRes.data as LifetimeEntry[])?.find(e => e.player_id === playerId);
         const scoreForRank    = myBest?.score           ?? 0;
         const lifetimeForRank = myLifetime?.lifetime_score ?? 0;
+        setDbBestScore(scoreForRank);
+        setDbLifetimeScore(lifetimeForRank);
 
         const [bestRankRes, lifetimeRankRes] = await Promise.all([
           supabase.rpc('get_best_rank_and_percentile', {
@@ -284,21 +316,21 @@ export default function LeaderboardScreen() {
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>SCORE</Text>
-          <Text style={[styles.statValue, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
+          <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
             {score > 0 ? formatScore(score) : '—'}
           </Text>
         </View>
         <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
         <View style={styles.statItem}>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>RANK</Text>
-          <Text style={[styles.statValue, { color: rankInfo ? colors.text : colors.textDim, fontFamily: 'Rubik_700Bold' }]}>
+          <Text style={[styles.statValue, { color: rankInfo ? (colors.statNumColor ?? colors.text) : colors.textDim, fontFamily: 'Rubik_700Bold' }]}>
             {rankInfo ? `#${rankInfo.rank}` : '—'}
           </Text>
         </View>
         <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
         <View style={styles.statItem}>
           <Text style={[styles.statLabel, { color: colors.textMuted }]}>BETTER THAN</Text>
-          <Text style={[styles.statValue, { color: rankInfo ? colors.text : colors.textDim, fontFamily: 'Rubik_700Bold' }]}>
+          <Text style={[styles.statValue, { color: rankInfo ? (colors.statNumColor ?? colors.text) : colors.textDim, fontFamily: 'Rubik_700Bold' }]}>
             {rankInfo ? `${Math.round(rankInfo.percentile)}%` : '—'}
           </Text>
         </View>
@@ -325,26 +357,21 @@ export default function LeaderboardScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Segment tabs */}
+      {/* Segment tabs — sliding pill */}
       <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
-        <View style={[styles.segment, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <TouchableOpacity
-            style={[styles.segBtn, activeTab === 'yours' && { backgroundColor: colors.accent }]}
-            onPress={() => setActiveTab('yours')}
+          <View
+            style={[styles.segment, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+            onLayout={(e) => { segWidthSV.value = e.nativeEvent.layout.width; }}
           >
-            <Text style={[styles.segBtnText, { color: activeTab === 'yours' ? colors.accentText : colors.textSecondary, fontWeight: activeTab === 'yours' ? '700' : '400' }]}>
-              Your Stats
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.segBtn, activeTab === 'leaderboard' && { backgroundColor: colors.accent }]}
-            onPress={() => setActiveTab('leaderboard')}
-          >
-            <Text style={[styles.segBtnText, { color: activeTab === 'leaderboard' ? colors.accentText : colors.textSecondary, fontWeight: activeTab === 'leaderboard' ? '700' : '400' }]}>
-              Leaderboard
-            </Text>
-          </TouchableOpacity>
-        </View>
+            {/* Sliding pill behind the labels */}
+            <Animated.View style={[styles.segPill, { backgroundColor: colors.accent }, pillStyle]} />
+            <TouchableOpacity style={styles.segBtn} onPress={() => setActiveTab('yours')} activeOpacity={0.8}>
+              <Animated.Text style={[styles.segBtnText, leftTextStyle]}>Your Stats</Animated.Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.segBtn} onPress={() => setActiveTab('leaderboard')} activeOpacity={0.8}>
+              <Animated.Text style={[styles.segBtnText, rightTextStyle]}>Leaderboard</Animated.Text>
+            </TouchableOpacity>
+          </View>
       </View>
 
       <ScrollView ref={scrollRef} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -403,21 +430,21 @@ export default function LeaderboardScreen() {
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST RUN</Text>
-                  <Text style={[styles.statValue, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
+                  <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
                     {bestRun > 0 ? bestRun.toLocaleString() : '—'}
                   </Text>
                 </View>
                 <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.statItem}>
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>THIS WEEK</Text>
-                  <Text style={[styles.statValue, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
+                  <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
                     {bestThisWeek > 0 ? bestThisWeek.toLocaleString() : '—'}
                   </Text>
                 </View>
                 <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.statItem}>
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>THIS MONTH</Text>
-                  <Text style={[styles.statValue, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
+                  <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
                     {bestThisMonth > 0 ? bestThisMonth.toLocaleString() : '—'}
                   </Text>
                 </View>
@@ -428,21 +455,21 @@ export default function LeaderboardScreen() {
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>TOTAL RUNS</Text>
-                  <Text style={[styles.statValue, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
+                  <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
                     {totalRuns > 0 ? totalRuns : '—'}
                   </Text>
                 </View>
                 <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.statItem}>
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>LIFETIME</Text>
-                  <Text style={[styles.statValue, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
+                  <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
                     {lifetimeScore > 0 ? formatScore(lifetimeScore) : '—'}
                   </Text>
                 </View>
                 <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.statItem}>
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>AVERAGE</Text>
-                  <Text style={[styles.statValue, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
+                  <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
                     {averageScore > 0 ? averageScore.toLocaleString() : '—'}
                   </Text>
                 </View>
@@ -471,11 +498,11 @@ export default function LeaderboardScreen() {
           <>
             {/* Stat cards */}
             <StatCard
-              mode="best"    label="BEST SCORE"    score={bestRun}      rankInfo={bestRankInfo}
+              mode="best"    label="BEST SCORE"    score={dbBestScore}     rankInfo={bestRankInfo}
               selected={lbMode === 'best'}    onSelect={() => setLbMode('best')}
             />
             <StatCard
-              mode="lifetime" label="LIFETIME SCORE" score={lifetimeScore} rankInfo={lifetimeRankInfo}
+              mode="lifetime" label="LIFETIME SCORE" score={dbLifetimeScore} rankInfo={lifetimeRankInfo}
               selected={lbMode === 'lifetime'} onSelect={() => setLbMode('lifetime')}
             />
 
@@ -527,7 +554,7 @@ export default function LeaderboardScreen() {
                           </View>
                           <View style={styles.runRight}>
                             <View style={styles.runTopRow}>
-                              <Text style={[styles.runScore, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>{formatScore(entry.score)}</Text>
+                              <Text style={[styles.runScore, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>{formatScore(entry.score)}</Text>
                             </View>
                             {!entry.used_continue && <Text style={[styles.unassistedLabel, { color: colors.accent }]}>unassisted</Text>}
                           </View>
@@ -548,7 +575,7 @@ export default function LeaderboardScreen() {
                             </Text>
                             <Text style={[styles.runDate, { color: colors.textMuted }]}>{entry.run_count} runs</Text>
                           </View>
-                          <Text style={[styles.runScore, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
+                          <Text style={[styles.runScore, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
                             {formatScore(entry.lifetime_score)}
                           </Text>
                         </View>
@@ -585,7 +612,8 @@ const styles = StyleSheet.create({
   content:        { paddingHorizontal: 16, paddingBottom: 32, gap: 12 },
 
   segment:        { flexDirection: 'row', borderRadius: 12, borderWidth: 1, padding: 3, gap: 3 },
-  segBtn:         { flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center' },
+  segPill:        { position: 'absolute', top: 3, bottom: 3, left: 3, borderRadius: 9 },
+  segBtn:         { flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center', zIndex: 1 },
   segBtnText:     { fontSize: 14 },
 
   filterGrid:          { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

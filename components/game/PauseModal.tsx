@@ -74,7 +74,7 @@ export default function PauseModal({ visible, onResume, onContinueLater, onQuitA
             <Ionicons
               name={soundEnabled ? 'volume-high' : 'volume-mute'}
               size={18}
-              color={soundEnabled ? colors.text : colors.textDim}
+              color={soundEnabled ? colors.accent : colors.textDim}
             />
           </TouchableOpacity>
 

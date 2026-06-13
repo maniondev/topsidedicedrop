@@ -23,7 +23,7 @@ import EmergencyCondenseOverlay from '@/components/game/EmergencyCondenseOverlay
 import AdBanner from '@/components/AdBanner';
 import { onRunComplete } from '@/lib/adCounter';
 import { saveGame, loadSavedGame, clearSavedGame, savePendingRun, clearPendingRun } from '@/lib/storage';
-import { runEmergencyCondense } from '@/lib/condense';
+import { runMergePhase, computeClearSteps } from '@/lib/condense';
 import { COLS, ROWS } from '@/constants/game';
 import { submitScoreForCurrentPlayer } from '@/lib/scoreQueue';
 import { getReviewOptedOut, setReviewOptedOut, isReviewMilestone, openNativeReview, getReviewLastPrompted, setReviewLastPrompted } from '@/lib/reviewPrompt';
@@ -91,7 +91,7 @@ export default function GameScreen() {
       return;
     }
     loadSavedGame(difficulty).then(saved => {
-      if (saved) {
+      if (saved && Array.isArray(saved.board) && Array.isArray(saved.queue)) {
         clearSavedGame(difficulty);
         game.loadSaved(saved.board as any, saved.score, saved.queue as any, saved.runBestChain, saved.activePiece as any);
       } else {
@@ -144,7 +144,7 @@ export default function GameScreen() {
     return () => sub.remove();
   }, []);
 
-  const { adLoaded, showAd } = useRewardedAd(useCallback(() => {
+  const { showAdWithFallback } = useRewardedAd(useCallback(() => {
     // Ad rewarded — submit pre-continue score as unassisted (if no continue was used before)
     const pre = preContinueRef.current;
     if (pre && !pre.alreadyUsedContinue) {
@@ -210,7 +210,7 @@ export default function GameScreen() {
     game.rotate();
   }, [play, game.rotate]);
 
-  // Hard drop. Lock sound now plays on any lock (natural or hard drop).
+  // Hard drop. Lock sound plays on any lock (natural or hard drop).
   const hardDropWithSound = useCallback(() => {
     game.hardDrop();
   }, [game.hardDrop]);
@@ -231,12 +231,10 @@ export default function GameScreen() {
   }, [game.score, game.runBestChain, difficulty, freeContinueUsed, adContinueUsed, submitPreContinueRun, game.startCondense]);
 
   const handleContinue = useCallback(() => {
-    if (adLoaded) {
-      // Capture score NOW before the ad plays — the ad callback closure may be stale
-      preContinueRef.current = { score: game.score, chain: game.runBestChain, alreadyUsedContinue: freeContinueUsed || adContinueUsed };
-      showAd();
-    }
-  }, [adLoaded, showAd, game.score, game.runBestChain, freeContinueUsed, adContinueUsed]);
+    // Capture score NOW before the ad plays — the ad callback closure may be stale
+    preContinueRef.current = { score: game.score, chain: game.runBestChain, alreadyUsedContinue: freeContinueUsed || adContinueUsed };
+    showAdWithFallback();
+  }, [showAdWithFallback, game.score, game.runBestChain, freeContinueUsed, adContinueUsed]);
 
   const handleNewGame = useCallback(() => {
     setPaused(false);
@@ -278,13 +276,35 @@ export default function GameScreen() {
     if (condenseRanRef.current) return;
     condenseRanRef.current = true;
 
-    play('condense');
     const snapshot = game.board;
-    const t = setTimeout(() => {
-      const { finalBoard, scoreGained } = runEmergencyCondense(snapshot);
-      game.finishCondense(finalBoard, scoreGained);
-    }, 900); // brief hold so the "Condensing…" overlay is visible
-    return () => clearTimeout(t);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    // Phase 1: merge until stable (instant, no sound)
+    const { stableBoard, scoreGained: mergeScore } = runMergePhase(snapshot);
+    game.updateCondenseBoard(stableBoard, mergeScore);
+
+    // Phase 2: clear rows one at a time, playing merge1→merge6 sequentially
+    const steps = computeClearSteps(stableBoard);
+    const STEP_MS = 280;
+
+    steps.forEach((step, i) => {
+      const t = setTimeout(() => {
+        const mergeSounds = ['merge1', 'merge2', 'merge3', 'merge4', 'merge5', 'merge6'] as const;
+        play(mergeSounds[Math.min(i, mergeSounds.length - 1)]);
+        game.updateCondenseBoard(step.board, step.scoreGained);
+      }, (i + 1) * STEP_MS);
+      timers.push(t);
+    });
+
+    // Finish after all steps complete
+    const finalDelay = (steps.length + 1) * STEP_MS;
+    const tEnd = setTimeout(() => {
+      const lastBoard = steps.length > 0 ? steps[steps.length - 1].board : stableBoard;
+      game.finishCondense(lastBoard, 0);
+    }, finalDelay);
+    timers.push(tEnd);
+
+    return () => timers.forEach(clearTimeout);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.phase]);
 
@@ -466,7 +486,6 @@ export default function GameScreen() {
         bestScore={bestScore}
         prevBest={prevBest}
         freeContinueAvailable={freeContinueAvailable}
-        adLoaded={adLoaded}
         onFreeContinue={handleFreeContinue}
         onContinue={handleContinue}
         onNewGame={handleNewGame}

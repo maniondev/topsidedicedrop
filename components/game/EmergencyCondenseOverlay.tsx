@@ -30,7 +30,7 @@ export default function EmergencyCondenseOverlay({ visible }: Props) {
     <Animated.View style={[styles.overlay, { opacity }]} pointerEvents="none">
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.accent }]}>
         <Text style={[styles.title, { color: colors.accent, fontFamily: 'Rubik_700Bold' }]}>
-          ⚡ Condensing…
+          Condensing…
         </Text>
         <Text style={[styles.sub, { color: colors.textSecondary }]}>
           Compressing the board
