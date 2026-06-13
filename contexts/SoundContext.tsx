@@ -236,7 +236,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
 
   // Reload sound pool when pack changes
   useEffect(() => {
-    Sound.setCategory('Ambient', true);
+    Sound.setCategory('Playback', true);
     Sound.setActive(true);
 
     let cancelled = false;
@@ -310,7 +310,16 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     try {
       if (rate !== 1) { try { snd.setSpeed(rate); } catch {} }
       else { try { snd.setSpeed(1); } catch {} }
-      snd.play(() => { try { snd.setCurrentTime(0); } catch {} });
+      snd.play((success) => {
+        try { snd.setCurrentTime(0); } catch {}
+        if (!success) {
+          // Audio session was interrupted (call, Siri, notification) — re-activate and replay once.
+          restoreGameAudioSession(0);
+          setTimeout(() => {
+            try { snd.play(() => { try { snd.setCurrentTime(0); } catch {} }); } catch {}
+          }, 250);
+        }
+      });
     } catch {}
   }, []);
 
