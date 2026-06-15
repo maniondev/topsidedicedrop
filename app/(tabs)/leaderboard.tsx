@@ -50,7 +50,7 @@ function RunRow({ rank, run }: { rank: number; run: RunRecord }) {
         <View style={styles.runTopRow}>
           <Text style={[styles.runScore, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>{formatScore(run.score)}</Text>
         </View>
-        {!run.usedContinue && <Text style={[styles.unassistedLabel, { color: colors.accent }]}>unassisted</Text>}
+        <Text style={[styles.unassistedLabel, { color: colors.accent, opacity: run.usedContinue ? 0 : 1 }]}>unassisted</Text>
       </View>
     </View>
   );
@@ -114,14 +114,17 @@ export default function LeaderboardScreen() {
 
   // Local stat derivations
   const isUnassisted = filterType === 'unassisted';
-  const typeForLifetime = 'overall'; // run type doesn't apply to lifetime
   const diffs: Difficulty[] = ['easy', 'medium', 'hard'];
 
   const filteredRuns = stats.recentRuns.filter(r => {
     const diffMatch = filterDifficulty === 'all' || r.difficulty === filterDifficulty;
-    const typeMatch = !isUnassisted || !r.usedContinue;
+    // In unassisted mode: include unassisted runs AND continued runs that have a pre-continue score
+    const typeMatch = !isUnassisted || !r.usedContinue || (r.usedContinue && !!r.preContinueScore);
     return diffMatch && typeMatch;
-  });
+  }).map(r => (isUnassisted && r.usedContinue && r.preContinueScore)
+    ? { ...r, score: r.preContinueScore, usedContinue: false }
+    : r
+  );
   const overallRuns = stats.recentRuns.filter(r => filterDifficulty === 'all' || r.difficulty === filterDifficulty);
 
   const weekAgo  = Date.now() - 7  * 24 * 60 * 60 * 1000;
@@ -135,14 +138,16 @@ export default function LeaderboardScreen() {
     ? Math.max(0, ...diffs.map(d => isUnassisted ? stats.byDifficulty[d].bestUnassisted : stats.byDifficulty[d].bestScore))
     : isUnassisted ? stats.byDifficulty[filterDifficulty].bestUnassisted : stats.byDifficulty[filterDifficulty].bestScore;
 
-  const lifetimeScore = filterDifficulty === 'all'
-    ? diffs.reduce((sum, d) => sum + stats.byDifficulty[d].lifetimeScore, 0)
-    : stats.byDifficulty[filterDifficulty].lifetimeScore;
+  const lifetimeScore = isUnassisted
+    ? filteredRuns.reduce((sum, r) => sum + r.score, 0)
+    : filterDifficulty === 'all'
+      ? diffs.reduce((sum, d) => sum + stats.byDifficulty[d].lifetimeScore, 0)
+      : stats.byDifficulty[filterDifficulty].lifetimeScore;
 
   const bestThisWeek  = Math.max(0, ...filteredRuns.filter(r => r.date >= weekAgo).map(r => r.score));
   const bestThisMonth = Math.max(0, ...filteredRuns.filter(r => r.date >= monthAgo).map(r => r.score));
-  const averageScore = overallRuns.length > 0
-    ? Math.round(overallRuns.reduce((a, r) => a + r.score, 0) / overallRuns.length) : 0;
+  const averageScore = filteredRuns.length > 0
+    ? Math.round(filteredRuns.reduce((a, r) => a + r.score, 0) / filteredRuns.length) : 0;
   const totalRuns = filterDifficulty === 'all'
     ? diffs.reduce((sum, d) => sum + stats.byDifficulty[d].totalRuns, 0)
     : stats.byDifficulty[filterDifficulty].totalRuns;
@@ -180,7 +185,7 @@ export default function LeaderboardScreen() {
           }),
           supabase.rpc('get_leaderboard_lifetime', {
             p_difficulty: diff, p_time_period: filterTime,
-            p_limit: 100, p_follower_id: followerParam,
+            p_limit: 100, p_follower_id: followerParam, p_unassisted: unassisted,
           }),
         ]),
         fetchTimeout,
@@ -208,7 +213,7 @@ export default function LeaderboardScreen() {
           }),
           supabase.rpc('get_lifetime_rank_and_percentile', {
             p_lifetime: lifetimeForRank, p_difficulty: diff,
-            p_time_period: filterTime, p_follower_id: followerParam,
+            p_time_period: filterTime, p_follower_id: followerParam, p_unassisted: unassisted,
           }),
         ]);
         const bestRankData     = Array.isArray(bestRankRes.data)     ? bestRankRes.data[0]     : bestRankRes.data;
@@ -247,8 +252,7 @@ export default function LeaderboardScreen() {
     }
   }, [fetchLeaderboard, playerId]);
 
-  // When lifetime mode is active, force run type to overall
-  const effectiveFilterType = lbMode === 'lifetime' ? 'overall' : filterType;
+  const effectiveFilterType = filterType;
 
   function FilterDropdown({ label, value, options, onChange, disabled }: {
     label: string;
@@ -397,7 +401,6 @@ export default function LeaderboardScreen() {
               { label: 'Unassisted', value: 'unassisted' },
             ]}
             onChange={setFilterType}
-            disabled={activeTab === 'leaderboard' && lbMode === 'lifetime'}
           />
           {activeTab === 'leaderboard' && (
             <>
@@ -556,7 +559,7 @@ export default function LeaderboardScreen() {
                             <View style={styles.runTopRow}>
                               <Text style={[styles.runScore, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>{formatScore(entry.score)}</Text>
                             </View>
-                            {!entry.used_continue && <Text style={[styles.unassistedLabel, { color: colors.accent }]}>unassisted</Text>}
+                            <Text style={[styles.unassistedLabel, { color: colors.accent, opacity: entry.used_continue ? 0 : 1 }]}>unassisted</Text>
                           </View>
                         </View>
                       );

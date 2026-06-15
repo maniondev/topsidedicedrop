@@ -66,6 +66,21 @@ export async function submitScoreForCurrentPlayer(params: {
   }
 }
 
+export async function updateBestUnassistedForCurrentPlayer(params: {
+  p_score: number;
+  p_difficulty: string;
+}): Promise<void> {
+  try {
+    const { playerId, displayName } = await getPlayerIdentity();
+    await withTimeout(supabase.rpc('update_best_unassisted', {
+      p_player_id:    playerId,
+      p_display_name: displayName,
+      p_score:        params.p_score,
+      p_difficulty:   params.p_difficulty,
+    }));
+  } catch {}
+}
+
 export async function clearRemoteScores(playerId: string): Promise<void> {
   await AsyncStorage.removeItem(QUEUE_KEY);
   await withTimeout(supabase.rpc('reset_player_scores', { p_player_id: playerId }));

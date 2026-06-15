@@ -9,6 +9,7 @@ export interface RunRecord {
   bestChain: number;
   difficulty: Difficulty;
   usedContinue: boolean;
+  preContinueScore?: number; // score at the moment continue was used (unassisted leg)
 }
 
 export interface DiffStats {
@@ -136,6 +137,7 @@ export interface PendingRun {
   chain: number;
   difficulty: Difficulty;
   continueUsed: boolean;
+  preContinueScore?: number;
   savedAt: number;
 }
 
@@ -161,6 +163,7 @@ export async function recordRun(
   bestChain: number,
   difficulty: Difficulty,
   usedContinue: boolean,
+  preContinueScore?: number,
 ): Promise<Stats> {
   const stats = await loadStats();
   const d = stats.byDifficulty[difficulty];
@@ -170,10 +173,11 @@ export async function recordRun(
   // Only update bestUnassisted if no continues were used
   if (!usedContinue && score > d.bestUnassisted) d.bestUnassisted = score;
   if (bestChain > d.bestChain) d.bestChain = bestChain;
-  stats.recentRuns = [
-    { score, date: Date.now(), bestChain, difficulty, usedContinue },
-    ...stats.recentRuns,
-  ].slice(0, 100);
+  const record: RunRecord = { score, date: Date.now(), bestChain, difficulty, usedContinue };
+  if (usedContinue && preContinueScore && preContinueScore > 0) {
+    record.preContinueScore = preContinueScore;
+  }
+  stats.recentRuns = [record, ...stats.recentRuns].slice(0, 100);
   await saveStats(stats);
   return stats;
 }

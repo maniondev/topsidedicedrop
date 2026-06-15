@@ -48,8 +48,13 @@ function chooseDest(
   // Among tiles in that row, prefer the trigger tile, then closest to center.
   const maxRow = Math.max(...group.map(([r]) => r));
   const bottom = group.filter(([r]) => r === maxRow);
-  const triggered = bottom.find(([r, c]) => triggers.has(`${r},${c}`));
-  if (triggered) return triggered;
+  const triggeredBottom = bottom.filter(([r, c]) => triggers.has(`${r},${c}`));
+  if (triggeredBottom.length >= 3) {
+    // 3-tile piece: pick the median column — always the center tile of the piece.
+    const sorted = [...triggeredBottom].sort((a, b) => a[1] - b[1]);
+    return sorted[Math.floor(sorted.length / 2)];
+  }
+  if (triggeredBottom.length > 0) return triggeredBottom[0];
   const center = Math.floor(COLS / 2);
   return bottom.reduce((best, cur) =>
     Math.abs(cur[1] - center) < Math.abs(best[1] - center) ? cur : best

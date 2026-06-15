@@ -284,7 +284,8 @@ export default function SettingsScreen() {
 
         {/* About */}
         <Section label="About" styles={styles}>
-          <RowItem label="Rate Dice Drop ★" colors={colors} styles={styles} onPress={openNativeReview} />
+          <RowItem label="Rate Topside: Dice Drop ★" colors={colors} styles={styles} onPress={openNativeReview} />
+          <RowItem label="More Games by Topside" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games')} />
           <RowItem label="Privacy Policy" colors={colors} styles={styles} onPress={() => Linking.openURL('https://sites.google.com/view/topsideapp/home')} />
           <RowItem label="Version" value={Constants.expoConfig?.version ?? '—'} colors={colors} styles={styles} />
         </Section>

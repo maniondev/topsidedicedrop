@@ -16,7 +16,7 @@ const EMPTY: Stats = {
 interface StatsCtxType {
   stats: Stats;
   statsFor: (d: Difficulty) => DiffStats;
-  submitRun: (score: number, bestChain: number, difficulty: Difficulty, usedContinue: boolean) => Promise<void>;
+  submitRun: (score: number, bestChain: number, difficulty: Difficulty, usedContinue: boolean, preContinueScore?: number) => Promise<void>;
   submitPreContinueRun: (score: number, bestChain: number, difficulty: Difficulty) => Promise<void>;
   refresh: () => Promise<void>;
   resetStats: () => Promise<void>;
@@ -42,7 +42,7 @@ export function StatsProvider({ children }: { children: ReactNode }) {
       if (!pending) return;
       const age = Date.now() - pending.savedAt;
       if (pending.score > 0 && age < 24 * 60 * 60 * 1000) {
-        const updated = await recordRun(pending.score, pending.chain, pending.difficulty, pending.continueUsed);
+        const updated = await recordRun(pending.score, pending.chain, pending.difficulty, pending.continueUsed, pending.preContinueScore);
         setStats(updated);
         submitScoreForCurrentPlayer({ p_score: pending.score, p_best_chain: pending.chain, p_difficulty: pending.difficulty, p_used_continue: pending.continueUsed });
       }
@@ -55,8 +55,9 @@ export function StatsProvider({ children }: { children: ReactNode }) {
     bestChain: number,
     difficulty: Difficulty,
     usedContinue: boolean,
+    preContinueScore?: number,
   ) => {
-    const updated = await recordRun(score, bestChain, difficulty, usedContinue);
+    const updated = await recordRun(score, bestChain, difficulty, usedContinue, preContinueScore);
     setStats(updated);
   }, []);
 

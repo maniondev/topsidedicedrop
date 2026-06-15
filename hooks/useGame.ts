@@ -83,7 +83,8 @@ function isLegal(board: Board, p: ActivePiece): boolean {
   for (const t of p.tiles) {
     const r = p.anchorRow + t.dr;
     const c = p.anchorCol + t.dc;
-    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return false;
+    if (r < 0) continue; // above the board is always empty
+    if (r >= ROWS || c < 0 || c >= COLS) return false;
     if (board[r][c] !== null) return false;
   }
   return true;
@@ -151,15 +152,19 @@ function spawnPiece(queued: QueuedPiece, board: Board): ActivePiece | null {
   const defaultCol = spineDc !== null
     ? gridCenter - spineDc
     : Math.floor((COLS - (Math.max(...queued.tiles.map(t => t.dc)) + 1)) / 2);
-  for (const offset of [0, -1, 1, -2, 2]) {
-    const p: ActivePiece = {
-      shapeId: queued.shapeId,
-      rotation: queued.rotation,
-      anchorRow: 0,
-      anchorCol: defaultCol + offset,
-      tiles: queued.tiles,
-    };
-    if (isLegal(board, p)) return p;
+  for (const anchorRow of [0, -1]) {
+    // For anchorRow < 0, skip if no tile would reach the board — nothing would be placed.
+    if (anchorRow < 0 && !queued.tiles.some(t => anchorRow + t.dr >= 0)) continue;
+    for (const offset of [0, -1, 1, -2, 2]) {
+      const p: ActivePiece = {
+        shapeId: queued.shapeId,
+        rotation: queued.rotation,
+        anchorRow,
+        anchorCol: defaultCol + offset,
+        tiles: queued.tiles,
+      };
+      if (isLegal(board, p)) return p;
+    }
   }
   return null;
 }
