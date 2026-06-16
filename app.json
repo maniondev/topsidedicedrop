@@ -72,8 +72,7 @@
           "iosAppId": "ca-app-pub-5499315559222720~1669872133"
         }
       ],
-      "expo-tracking-transparency",
-      "expo-build-properties"
+      "expo-tracking-transparency"
     ],
     "experiments": {
       "typedRoutes": true
