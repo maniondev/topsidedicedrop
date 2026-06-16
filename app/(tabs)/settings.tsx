@@ -656,7 +656,7 @@ function makeStyles(c: ThemeColors) {
     screenTitle: {
       fontSize: 28,
       fontWeight: '800',
-      color: c.text,
+      color: c.titleColor ?? c.text,
       letterSpacing: -0.5,
       marginBottom: 24,
     },

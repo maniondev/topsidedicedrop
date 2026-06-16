@@ -75,6 +75,8 @@ export type ThemeColors = {
   darkenFaceColors?: FaceColorName[];
   // Explicit dot/border color to use for each darkened face (falls back to rgba dark if omitted)
   darkenFaceColorsDot?: Partial<Record<FaceColorName, string>>;
+  // Optional color for the "Topside" wordmark on the home screen (falls back to text)
+  titleColor?: string;
 };
 
 export type ThemeId = 'dice' | 'light' | 'dark' | 'pastel' | 'grayscale' | 'neon' | 'sunset' | 'ocean' | 'forest';
@@ -123,6 +125,7 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     statSolvedColor:  '#F08A2C',
     statPerfectColor: '#E53848',
     statNumColor:  '#5A4830',
+    titleColor:    '#4A3020',
     iconBg:        '#F3EEDF',
     adBg:          '#F2EAD8',
     adBorder:      '#E0CCA8',

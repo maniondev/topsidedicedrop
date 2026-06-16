@@ -107,8 +107,8 @@ export default function LobbyScreen() {
           <AppLogo size={62} />
           <View style={styles.titleTextBlock}>
             <Text style={styles.titleText} numberOfLines={1} adjustsFontSizeToFit includeFontPadding={false}>
-              <Text style={[styles.titleTopside, { color: colors.text }]}>Topside</Text>
-              <Text style={[styles.titleColon, { color: colors.text }]}>: </Text>
+              <Text style={[styles.titleTopside, { color: colors.titleColor ?? colors.text }]}>Topside</Text>
+              <Text style={[styles.titleColon, { color: colors.titleColor ?? colors.text }]}>: </Text>
               <Text style={[styles.titleDiceDrop, { color: colors.accent }]}>Dice Drop</Text>
             </Text>
             <Text style={[styles.subtitleText, { color: colors.textSecondary }]}>

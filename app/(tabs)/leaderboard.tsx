@@ -368,7 +368,7 @@ export default function LeaderboardScreen() {
   return (
     <View style={[styles.safe, { backgroundColor: colors.background, paddingTop: top }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>{activeTab === 'yours' ? 'Your Stats' : 'Leaderboard'}</Text>
+        <Text style={[styles.title, { color: colors.titleColor ?? colors.text }]}>{activeTab === 'yours' ? 'Your Stats' : 'Leaderboard'}</Text>
       </View>
 
       {/* Username card */}
