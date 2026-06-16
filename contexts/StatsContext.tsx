@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { loadStats, saveStats, recordRun, recordPreContinueRun, clearStats, loadPendingRun, clearPendingRun, Stats, DiffStats } from '@/lib/storage';
+import { loadStats, saveStats, recordRun, recordPreContinueRun, clearStats, loadPendingRun, clearPendingRun, wasStatsReset, Stats, DiffStats } from '@/lib/storage';
 import { Difficulty } from '@/contexts/DifficultyContext';
 import { clearRemoteScores, submitScoreForCurrentPlayer } from '@/lib/scoreQueue';
 import { getPlayerIdentity } from '@/lib/playerIdentity';
@@ -36,11 +36,16 @@ export function StatsProvider({ children }: { children: ReactNode }) {
   const [stats, setStats] = useState<Stats>(EMPTY);
 
   useEffect(() => {
-    loadStats().then(async (loaded) => {
+    (async () => {
+      // Load stats first, then handle pending run — sequential to prevent a stale
+      // loadStats resolve from overwriting the pending-run recovery update.
+      const loaded = await loadStats().catch(() => EMPTY);
       setStats(loaded);
-      // On a fresh install (all zeros), try to seed from Supabase leaderboard.
+
+      // On a fresh install (all zeros, and no explicit reset), seed from Supabase.
       const isEmpty = Object.values(loaded.byDifficulty).every(d => d.totalRuns === 0);
-      if (isEmpty) {
+      const resetFlag = await wasStatsReset().catch(() => false);
+      if (isEmpty && !resetFlag) {
         try {
           const { playerId } = await getPlayerIdentity();
           const { data } = await supabase
@@ -62,7 +67,6 @@ export function StatsProvider({ children }: { children: ReactNode }) {
               }
             }
             // Also restore recent runs (up to 35 days — Supabase retention window).
-            // Restores lastRun, day streak, and this-week/this-month personal views.
             const { data: runsData } = await supabase
               .from('runs')
               .select('score, unassisted_score, best_chain, difficulty, used_continue, played_at')
@@ -84,19 +88,20 @@ export function StatsProvider({ children }: { children: ReactNode }) {
           }
         } catch {}
       }
-    }).catch(() => {});
-    // If the app was killed while a game-over was pending (player never tapped New Game
-    // or Continue), recover and commit that run now.
-    loadPendingRun().then(async (pending) => {
-      if (!pending) return;
-      const age = Date.now() - pending.savedAt;
-      if (pending.score > 0 && age < 24 * 60 * 60 * 1000) {
-        const updated = await recordRun(pending.score, pending.chain, pending.difficulty, pending.continueUsed, pending.preContinueScore);
-        setStats(updated);
-        submitScoreForCurrentPlayer({ p_score: pending.score, p_best_chain: pending.chain, p_difficulty: pending.difficulty, p_used_continue: pending.continueUsed, p_pre_continue_score: pending.preContinueScore ?? 0 });
+
+      // If the app was killed while a game-over was pending (player never tapped New Game
+      // or Continue), recover and commit that run now.
+      const pending = await loadPendingRun().catch(() => null);
+      if (pending) {
+        const age = Date.now() - pending.savedAt;
+        if (pending.score > 0 && age < 24 * 60 * 60 * 1000) {
+          const updated = await recordRun(pending.score, pending.chain, pending.difficulty, pending.continueUsed, pending.preContinueScore);
+          setStats(updated);
+          submitScoreForCurrentPlayer({ p_score: pending.score, p_best_chain: pending.chain, p_difficulty: pending.difficulty, p_used_continue: pending.continueUsed, p_pre_continue_score: pending.preContinueScore ?? 0 });
+        }
+        await clearPendingRun();
       }
-      await clearPendingRun();
-    }).catch(() => {});
+    })();
   }, []);
 
   const submitRun = useCallback(async (

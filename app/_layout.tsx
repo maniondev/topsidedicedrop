@@ -40,11 +40,11 @@ function AppShell() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({ PlayfairDisplay_700Bold, Fredoka_600SemiBold, Fredoka_700Bold, Rubik_700Bold });
+  const [fontsLoaded, fontError] = useFonts({ PlayfairDisplay_700Bold, Fredoka_600SemiBold, Fredoka_700Bold, Rubik_700Bold });
 
   useEffect(() => {
-    if (fontsLoaded) SplashScreen.hideAsync();
-  }, [fontsLoaded]);
+    if (fontsLoaded || fontError) SplashScreen.hideAsync();
+  }, [fontsLoaded, fontError]);
 
   useEffect(() => {
     let initialActive = true; // skip the first 'active' event which fires on cold launch
@@ -84,7 +84,7 @@ export default function RootLayout() {
     })();
   }, []);
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <GestureHandlerRootView style={styles.root}>

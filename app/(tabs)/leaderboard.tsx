@@ -201,8 +201,33 @@ export default function LeaderboardScreen() {
         // reflects what's genuinely on the leaderboard, not unsubmitted local bests.
         const myBest     = (bestRes.data     as BestEntry[]    )?.find(e => e.player_id === playerId);
         const myLifetime = (lifetimeRes.data as LifetimeEntry[])?.find(e => e.player_id === playerId);
-        const scoreForRank    = myBest?.score           ?? 0;
-        const lifetimeForRank = myLifetime?.lifetime_score ?? 0;
+        let scoreForRank    = myBest?.score           ?? 0;
+        let lifetimeForRank = myLifetime?.lifetime_score ?? 0;
+
+        // If not in the top-100 list, query the leaderboard table directly so rank
+        // and percentile show correctly for players outside the top 100.
+        if (scoreForRank === 0 || lifetimeForRank === 0) {
+          try {
+            const diff = filterDifficulty === 'all' ? null : filterDifficulty;
+            let playerQuery = supabase
+              .from('leaderboard')
+              .select('difficulty, best_score, best_unassisted, lifetime_score')
+              .eq('player_id', playerId);
+            if (diff) playerQuery = (playerQuery as any).eq('difficulty', diff);
+            const { data: playerRows } = await playerQuery;
+            if (playerRows && playerRows.length > 0) {
+              if (scoreForRank === 0) {
+                scoreForRank = Math.max(0, ...playerRows.map((r: any) =>
+                  unassisted ? r.best_unassisted : r.best_score
+                ));
+              }
+              if (lifetimeForRank === 0) {
+                lifetimeForRank = playerRows.reduce((sum: number, r: any) => sum + r.lifetime_score, 0);
+              }
+            }
+          } catch {}
+        }
+
         setDbBestScore(scoreForRank);
         setDbLifetimeScore(lifetimeForRank);
 

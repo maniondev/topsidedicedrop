@@ -97,8 +97,8 @@ export async function updateBestUnassistedForCurrentPlayer(params: {
 }
 
 export async function clearRemoteScores(playerId: string): Promise<void> {
-  await AsyncStorage.removeItem(QUEUE_KEY);
   await withTimeout(supabase.rpc('reset_player_scores', { p_player_id: playerId }));
+  await AsyncStorage.removeItem(QUEUE_KEY);
 }
 
 export async function replayQueue(): Promise<void> {
@@ -143,5 +143,9 @@ export async function replayQueue(): Promise<void> {
     }
   }
 
-  await saveQueue(failed);
+  // Merge failed entries with any new entries added to the queue while replay was running.
+  const currentQueue = await loadQueue();
+  const triedKeys = new Set(queue.map(e => e.p_idempotency_key));
+  const newEntries = currentQueue.filter(e => !triedKeys.has(e.p_idempotency_key));
+  await saveQueue([...failed, ...newEntries]);
 }

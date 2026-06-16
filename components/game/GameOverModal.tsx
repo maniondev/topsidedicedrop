@@ -7,6 +7,7 @@ interface Props {
   score: number;
   bestScore: number;
   prevBest: number;
+  continueUsed: boolean;
   // free continue: premium gets 1 free per run (no ad)
   freeContinueAvailable: boolean;
   onFreeContinue: () => void;
@@ -16,7 +17,7 @@ interface Props {
 
 export default function GameOverModal({
   visible, score, bestScore, prevBest,
-  freeContinueAvailable,
+  continueUsed, freeContinueAvailable,
   onFreeContinue, onContinue, onNewGame,
 }: Props) {
   const { colors } = useTheme();
@@ -41,7 +42,7 @@ export default function GameOverModal({
               : `Best: ${bestScore.toLocaleString()}`}
           </Text>
 
-          {freeContinueAvailable && (
+          {!continueUsed && freeContinueAvailable && (
             <TouchableOpacity
               style={[styles.continueBtn, { backgroundColor: colors.accent }]}
               onPress={onFreeContinue}
@@ -52,7 +53,7 @@ export default function GameOverModal({
           )}
 
           {/* Ad continue — always tappable; shows ad if ready, grants reward after 1.5s fallback if not */}
-          {!freeContinueAvailable && (
+          {!continueUsed && !freeContinueAvailable && (
             <TouchableOpacity
               style={[styles.continueBtn, { backgroundColor: colors.accent }]}
               onPress={onContinue}

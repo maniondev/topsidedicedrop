@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
   title:     { fontSize: 22, textAlign: 'center' },
   rules:     { gap: 10 },
   rule:      { gap: 2 },
-  ruleTitle: { fontSize: 13, fontWeight: '700' },
+  ruleTitle: { fontSize: 16, fontWeight: '700' },
   ruleBody:  { fontSize: 13, lineHeight: 19 },
   verb:      { fontWeight: '700' },
   btn:       { paddingVertical: 13, borderRadius: 12, alignItems: 'center' },

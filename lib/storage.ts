@@ -34,7 +34,8 @@ const emptyStats = (): Stats => {
   };
 };
 
-const STATS_KEY      = `${PREFIX}stats`;
+const STATS_KEY         = `${PREFIX}stats`;
+const STATS_RESET_KEY   = `${PREFIX}stats_reset`;
 // Saved games are keyed PER DIFFICULTY so an easy run can't be resumed and
 // credited as hard (and vice-versa). One save slot per difficulty.
 const SAVED_GAME_PREFIX = `${PREFIX}saved_game_`;
@@ -110,7 +111,12 @@ export async function saveStats(stats: Stats): Promise<void> {
 export async function clearStats(): Promise<Stats> {
   const empty = emptyStats();
   await saveStats(empty);
+  try { await AsyncStorage.setItem(STATS_RESET_KEY, '1'); } catch {}
   return empty;
+}
+
+export async function wasStatsReset(): Promise<boolean> {
+  try { return (await AsyncStorage.getItem(STATS_RESET_KEY)) === '1'; } catch { return false; }
 }
 
 // Records the pre-continue score for bestUnassisted tracking only.

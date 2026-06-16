@@ -80,6 +80,7 @@ export default function GameScreen() {
 
   const [freeContinueUsed,  setFreeContinueUsed]  = useState(false);
   const [adContinueUsed,   setAdContinueUsed]    = useState(false);
+  const prevBestLockedRef = useRef(false);
   // Captures game state at the moment the player taps "Continue" (before the ad plays),
   // so the ad callback has the correct pre-continue values even with stale closure.
   const preContinueRef = useRef<{ score: number; chain: number; alreadyUsedContinue: boolean } | null>(null);
@@ -168,7 +169,12 @@ export default function GameScreen() {
   useEffect(() => {
     if (game.phase !== 'gameOver') return;
     play('gameover');
-    setPrevBest(bestScore);
+    // Only capture prevBest on the first game-over of the run; a continue + second death
+    // must not overwrite it (bestScore is stale until submitRun is called on New Game).
+    if (!prevBestLockedRef.current) {
+      setPrevBest(bestScore);
+      prevBestLockedRef.current = true;
+    }
     // Persist to AsyncStorage so a score is never lost if the app is killed before
     // the player taps New Game. Consumed on next launch by StatsContext.
     savePendingRun({
@@ -268,6 +274,7 @@ export default function GameScreen() {
 
     setFreeContinueUsed(false);
     setAdContinueUsed(false);
+    prevBestLockedRef.current = false;
     game.resetGame();
   }, [game.score, game.runBestChain, difficulty, freeContinueUsed, adContinueUsed, submitRun, statsFor, game.resetGame]);
 
@@ -335,12 +342,12 @@ export default function GameScreen() {
 
   // Quit without saving — commit the run right now, then leave.
   const handleQuitAndLog = useCallback(async () => {
-    const continueUsed = freeContinueUsed || adContinueUsed;
-    await submitRun(game.score, game.runBestChain, difficulty, continueUsed, preContinueScoreRef.current || undefined);
-    await clearSavedGame(difficulty);
     if (game.score > 0) {
+      const continueUsed = freeContinueUsed || adContinueUsed;
+      await submitRun(game.score, game.runBestChain, difficulty, continueUsed, preContinueScoreRef.current || undefined);
       submitScoreForCurrentPlayer({ p_score: game.score, p_best_chain: game.runBestChain, p_difficulty: difficulty, p_used_continue: continueUsed, p_pre_continue_score: preContinueScoreRef.current || 0 });
     }
+    await clearSavedGame(difficulty);
     clearPendingRun();
     preContinueScoreRef.current = 0;
     router.back();
@@ -500,6 +507,7 @@ export default function GameScreen() {
         score={game.score}
         bestScore={bestScore}
         prevBest={prevBest}
+        continueUsed={freeContinueUsed || adContinueUsed}
         freeContinueAvailable={freeContinueAvailable}
         onFreeContinue={handleFreeContinue}
         onContinue={handleContinue}
