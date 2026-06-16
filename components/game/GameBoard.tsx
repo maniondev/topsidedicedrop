@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useRef, useState, useCallback } from 'react';
-import { Canvas, RoundedRect, Circle, Group, BlurMask, Rect, Line, RadialGradient, vec, rrect, rect } from '@shopify/react-native-skia';
+import { Canvas, RoundedRect, Circle, Group, BlurMask, Rect, Line, RadialGradient, vec, rrect, rect, Path, Skia } from '@shopify/react-native-skia';
 import {
   useSharedValue, useDerivedValue,
   withTiming, withSequence, withDelay, withSpring,
@@ -911,16 +911,18 @@ const GameBoard = React.memo(function GameBoard({ board, activePiece, ghostAncho
 
   // ── Render layers ──────────────────────────────────────────────────────────
   const gridLines = useMemo(() => {
-    const lines: React.ReactNode[] = [];
+    const path = Skia.Path.Make();
     for (let r = 0; r <= ROWS; r++) {
-      const y = r === ROWS ? boardH - 1 : r * cs;
-      lines.push(<RoundedRect key={`hr${r}`} x={0} y={y} width={boardW} height={1} r={0} color={gridColor} />);
+      const y = r === ROWS ? boardH - 0.5 : r * cs + 0.5;
+      path.moveTo(0, y);
+      path.lineTo(boardW, y);
     }
     for (let c = 0; c <= COLS; c++) {
-      const x = c === COLS ? boardW - 1 : c * cs;
-      lines.push(<RoundedRect key={`vc${c}`} x={x} y={0} width={1} height={boardH} r={0} color={gridColor} />);
+      const x = c === COLS ? boardW - 0.5 : c * cs + 0.5;
+      path.moveTo(x, 0);
+      path.lineTo(x, boardH);
     }
-    return lines;
+    return <Path path={path} style="stroke" strokeWidth={1} color={gridColor} />;
   }, [cs, boardW, boardH, gridColor]);
 
   const boardTiles = useMemo(() => {
