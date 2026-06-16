@@ -29,6 +29,16 @@ const ADJECTIVES = [
   'Indigo','Ivory','Lunar','Marble','Misty','Murky','Onyx','Opal','Scarlet','Silver',
   'Slate','Teal','Velvet','Warped','Hollow','Humble','Lawless','Obscure','Spectral','Subtle',
   'Umbral','Veiled','Worthy','Zealous','Frosted','Weary','Viral','Ragged','Rustic','Mossy','Ashen',
+  // confident/swagger
+  'Clutch','Dapper','Primo','Snappy','Zippy','Plucky','Crafty','Canny','Dashing','Spry','Nifty','Spiffy','Chipper','Frisky',
+  // whimsical/food-adjacent
+  'Toasty','Minty','Caramel','Pickled','Buttery','Crispy','Tangy','Zesty','Mellow','Malty','Glazed','Candied',
+  // nature/texture
+  'Briny','Petal','Ferny','Velvety','Thorny','Stony','Waxy','Silky','Grassy','Leafy','Pebbly','Flinty',
+  // retro/fun
+  'Groovy','Funky','Retro','Kitschy','Jazzy','Punky','Snazzy','Ritzy','Glitzy','Swanky','Dandy',
+  // moody/atmospheric
+  'Eerie','Dusky','Dreamy','Broody','Wispy','Foggy','Blustery','Hazy',
 ];
 
 const NOUNS = [
@@ -50,6 +60,20 @@ const NOUNS = [
   'Turret','Vector','Vertex','Warp','Wedge','Whirl','Wing','Wraith','Zenith','Quartz',
   'Totem','Trinket','Vortex','Fractal','Stream','Stride','Synth','Siren','Fleck','Ledge',
   'Plume','Specter','Splinter','Ember','Mote','Nook','Perch','Shard',
+  // animals
+  'Fox','Hawk','Moth','Raven','Otter','Lynx','Finch','Gecko','Newt','Vole','Stoat','Mink','Wren','Kite','Pika','Dingo','Quail',
+  // food/cozy
+  'Waffle','Pretzel','Biscuit','Truffle','Dumpling','Crumpet','Muffin','Cobbler','Toffee','Nougat','Praline','Scone','Brioche','Fritter','Taffy',
+  // game-feel
+  'Flick','Nudge','Juggle','Volley','Ricochet','Lunge','Feint','Parry','Juke','Lob','Swerve','Jab','Fling',
+  // personality/misc
+  'Rascal','Gadget','Gizmo','Widget','Sprocket','Bobbin','Thimble','Donut','Bauble','Gremlin',
+  // more animals
+  'Badger','Ferret','Magpie','Pelican','Capybara','Axolotl','Narwhal','Pangolin','Salamander','Puffin','Jackal','Marmot',
+  // objects with personality
+  'Lantern','Hammock','Kettle','Canteen','Compass','Locket','Sundial','Periscope','Almanac','Satchel',
+  // whimsical/fun words
+  'Jamboree','Rumpus','Ruckus','Fandango','Shenanigan','Brouhaha','Hullabaloo',
 ];
 
 function generateName(): string {
