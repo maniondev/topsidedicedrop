@@ -12,14 +12,23 @@ function withTimeout<T>(promise: Promise<T>, ms: number = TIMEOUT_MS): Promise<T
   ]);
 }
 
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
 interface QueuedScore {
-  p_player_id:     string;
-  p_display_name:  string;
-  p_score:         number;
-  p_best_chain:    number;
-  p_difficulty:    string;
-  p_used_continue: boolean;
-  queued_at:       number;
+  p_player_id:          string;
+  p_display_name:       string;
+  p_score:              number;
+  p_best_chain:         number;
+  p_difficulty:         string;
+  p_used_continue:      boolean;
+  p_pre_continue_score: number;
+  p_idempotency_key:    string;
+  queued_at:            number;
 }
 
 async function loadQueue(): Promise<QueuedScore[]> {
@@ -50,18 +59,24 @@ export async function submitScore(params: Omit<QueuedScore, 'queued_at'>): Promi
 
 /** Fetches player identity then submits. Guarantees queuing even if identity fetch fails. */
 export async function submitScoreForCurrentPlayer(params: {
-  p_score: number;
-  p_best_chain: number;
-  p_difficulty: string;
-  p_used_continue: boolean;
+  p_score:              number;
+  p_best_chain:         number;
+  p_difficulty:         string;
+  p_used_continue:      boolean;
+  p_pre_continue_score?: number;
 }): Promise<void> {
+  const normalized = {
+    ...params,
+    p_pre_continue_score: params.p_pre_continue_score ?? 0,
+    p_idempotency_key:    generateUUID(),
+  };
   try {
     const { playerId, displayName } = await getPlayerIdentity();
-    await submitScore({ p_player_id: playerId, p_display_name: displayName, ...params });
+    await submitScore({ p_player_id: playerId, p_display_name: displayName, ...normalized });
   } catch {
     // Identity fetch failed — queue with a placeholder; replayQueue will resolve it next launch.
     const queue = await loadQueue();
-    queue.push({ p_player_id: 'unknown', p_display_name: 'unknown', ...params, queued_at: Date.now() });
+    queue.push({ p_player_id: 'unknown', p_display_name: 'unknown', ...normalized, queued_at: Date.now() });
     await saveQueue(queue);
   }
 }
@@ -113,12 +128,14 @@ export async function replayQueue(): Promise<void> {
 
     try {
       const { error } = await withTimeout(supabase.rpc('submit_score', {
-        p_player_id:     resolved.p_player_id,
-        p_display_name:  resolved.p_display_name,
-        p_score:         resolved.p_score,
-        p_best_chain:    resolved.p_best_chain,
-        p_difficulty:    resolved.p_difficulty,
-        p_used_continue: resolved.p_used_continue,
+        p_player_id:          resolved.p_player_id,
+        p_display_name:       resolved.p_display_name,
+        p_score:              resolved.p_score,
+        p_best_chain:         resolved.p_best_chain,
+        p_difficulty:         resolved.p_difficulty,
+        p_used_continue:      resolved.p_used_continue,
+        p_pre_continue_score: resolved.p_pre_continue_score ?? 0,
+        p_idempotency_key:    resolved.p_idempotency_key,
       }));
       if (error) throw error;
     } catch {

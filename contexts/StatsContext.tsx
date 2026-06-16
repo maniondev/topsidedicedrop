@@ -44,7 +44,7 @@ export function StatsProvider({ children }: { children: ReactNode }) {
       if (pending.score > 0 && age < 24 * 60 * 60 * 1000) {
         const updated = await recordRun(pending.score, pending.chain, pending.difficulty, pending.continueUsed, pending.preContinueScore);
         setStats(updated);
-        submitScoreForCurrentPlayer({ p_score: pending.score, p_best_chain: pending.chain, p_difficulty: pending.difficulty, p_used_continue: pending.continueUsed });
+        submitScoreForCurrentPlayer({ p_score: pending.score, p_best_chain: pending.chain, p_difficulty: pending.difficulty, p_used_continue: pending.continueUsed, p_pre_continue_score: pending.preContinueScore ?? 0 });
       }
       await clearPendingRun();
     }).catch(() => {});

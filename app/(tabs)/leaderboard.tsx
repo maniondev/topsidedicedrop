@@ -16,7 +16,7 @@ type BestEntry     = { player_id: string; display_name: string; score: number; b
 type LifetimeEntry = { player_id: string; display_name: string; lifetime_score: number; run_count: number };
 type RankInfo      = { rank: number; percentile: number } | null;
 type LbMode        = 'best' | 'lifetime';
-type TimePeriod    = 'all' | 'week' | 'month';
+type TimePeriod    = 'all' | 'day' | 'week' | 'month';
 
 function formatDate(ts: number): string {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -171,7 +171,7 @@ export default function LeaderboardScreen() {
     setDbLifetimeScore(0);
     try {
       const diff          = filterDifficulty === 'all' ? null : filterDifficulty;
-      const unassisted    = effectiveFilterType === 'unassisted';
+      const unassisted    = filterType === 'unassisted';
       const followerParam = lbScope === 'following' ? playerId : null;
 
       const fetchTimeout = new Promise<never>((_, reject) =>
@@ -226,7 +226,7 @@ export default function LeaderboardScreen() {
     } finally {
       setLbLoading(false);
     }
-  }, [filterDifficulty, filterType, filterTime, playerId, bestRun, lifetimeScore, lbScope]);
+  }, [filterDifficulty, filterType, filterTime, playerId, lbScope]);
 
   useFocusEffect(useCallback(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
@@ -251,8 +251,6 @@ export default function LeaderboardScreen() {
       setRenaming(false);
     }
   }, [fetchLeaderboard, playerId]);
-
-  const effectiveFilterType = filterType;
 
   function FilterDropdown({ label, value, options, onChange, disabled }: {
     label: string;
@@ -369,7 +367,7 @@ export default function LeaderboardScreen() {
           >
             {/* Sliding pill behind the labels */}
             <Animated.View style={[styles.segPill, { backgroundColor: colors.accent }, pillStyle]} />
-            <TouchableOpacity style={styles.segBtn} onPress={() => setActiveTab('yours')} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.segBtn} onPress={() => { setActiveTab('yours'); setFilterTime('all'); }} activeOpacity={0.8}>
               <Animated.Text style={[styles.segBtnText, leftTextStyle]}>Your Stats</Animated.Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.segBtn} onPress={() => setActiveTab('leaderboard')} activeOpacity={0.8}>
@@ -395,7 +393,7 @@ export default function LeaderboardScreen() {
           />
           <FilterDropdown
             label="Type"
-            value={effectiveFilterType}
+            value={filterType}
             options={[
               { label: 'Overall', value: 'overall' },
               { label: 'Unassisted', value: 'unassisted' },
@@ -411,6 +409,7 @@ export default function LeaderboardScreen() {
                   { label: 'All Time', value: 'all' },
                   { label: 'This Month', value: 'month' },
                   { label: 'This Week', value: 'week' },
+                  { label: 'Today', value: 'day' },
                 ]}
                 onChange={setFilterTime}
               />

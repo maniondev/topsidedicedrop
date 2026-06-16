@@ -249,7 +249,7 @@ export default function GameScreen() {
     const continueUsed = freeContinueUsed || adContinueUsed;
     submitRun(game.score, game.runBestChain, difficulty, continueUsed, preContinueScoreRef.current || undefined);
     if (game.score > 0) {
-      submitScoreForCurrentPlayer({ p_score: game.score, p_best_chain: game.runBestChain, p_difficulty: difficulty, p_used_continue: continueUsed });
+      submitScoreForCurrentPlayer({ p_score: game.score, p_best_chain: game.runBestChain, p_difficulty: difficulty, p_used_continue: continueUsed, p_pre_continue_score: preContinueScoreRef.current || 0 });
     }
     clearPendingRun();
     preContinueScoreRef.current = 0;
@@ -339,7 +339,7 @@ export default function GameScreen() {
     await submitRun(game.score, game.runBestChain, difficulty, continueUsed, preContinueScoreRef.current || undefined);
     await clearSavedGame(difficulty);
     if (game.score > 0) {
-      submitScoreForCurrentPlayer({ p_score: game.score, p_best_chain: game.runBestChain, p_difficulty: difficulty, p_used_continue: continueUsed });
+      submitScoreForCurrentPlayer({ p_score: game.score, p_best_chain: game.runBestChain, p_difficulty: difficulty, p_used_continue: continueUsed, p_pre_continue_score: preContinueScoreRef.current || 0 });
     }
     clearPendingRun();
     preContinueScoreRef.current = 0;

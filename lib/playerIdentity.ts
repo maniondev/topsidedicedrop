@@ -1,12 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { supabase } from './supabase';
 
-function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.random() * 16 | 0;
-    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-  });
-}
+// Keychain keys — survive app deletion/reinstall on iOS (same device + Apple ID).
+const KC_REFRESH_TOKEN = 'td_refresh_token';
+const KC_PLAYER_ID     = 'td_kc_player_id';
 
 const PLAYER_ID_KEY    = 'td_player_id';
 const DISPLAY_NAME_KEY = 'td_display_name';
@@ -64,8 +62,37 @@ function generateName(): string {
 let _playerId:    string | null = null;
 let _displayName: string | null = null;
 
+async function getOrRestoreSession() {
+  // 1. Try the in-memory Supabase client cache (fast path, no network).
+  const { data: { session: cached } } = await supabase.auth.getSession();
+  if (cached) return cached;
+
+  // 2. Try restoring from Keychain (survives app deletion on iOS).
+  try {
+    const storedRefresh = await SecureStore.getItemAsync(KC_REFRESH_TOKEN);
+    if (storedRefresh) {
+      const { data, error } = await supabase.auth.refreshSession({ refresh_token: storedRefresh });
+      if (!error && data.session) return data.session;
+    }
+  } catch {}
+
+  // 3. First launch (or Keychain cleared) — create a new anonymous session.
+  const { data, error } = await supabase.auth.signInAnonymously();
+  if (error) throw error;
+  return data.session!;
+}
+
 export async function getPlayerIdentity(): Promise<{ playerId: string; displayName: string }> {
   if (_playerId && _displayName) return { playerId: _playerId, displayName: _displayName };
+
+  const session = await getOrRestoreSession();
+  const authUid = session.user.id;
+
+  // Persist refresh token to Keychain so reinstalls on the same device can recover.
+  if (session.refresh_token) {
+    try { await SecureStore.setItemAsync(KC_REFRESH_TOKEN, session.refresh_token); } catch {}
+    try { await SecureStore.setItemAsync(KC_PLAYER_ID,     authUid); } catch {}
+  }
 
   const [storedId, storedName, isRegistered] = await Promise.all([
     AsyncStorage.getItem(PLAYER_ID_KEY),
@@ -73,13 +100,29 @@ export async function getPlayerIdentity(): Promise<{ playerId: string; displayNa
     AsyncStorage.getItem(REGISTERED_KEY),
   ]);
 
-  let playerId    = storedId   ?? generateUUID();
-  let displayName = storedName ?? generateName();
+  const playerId    = authUid;
+  let   displayName = storedName ?? generateName();
 
-  if (!storedId)   await AsyncStorage.setItem(PLAYER_ID_KEY,    playerId);
   if (!storedName) await AsyncStorage.setItem(DISPLAY_NAME_KEY, displayName);
 
-  // Register with Supabase once to claim a unique name in the players table
+  // Migration: existing install had a random UUID — move all DB rows to the auth UID.
+  // Only update AsyncStorage to the new ID after a successful migration, so a network
+  // failure on first launch doesn't permanently orphan the old data.
+  if (storedId && storedId !== authUid) {
+    try {
+      await supabase.rpc('migrate_player_id', {
+        p_old_player_id: storedId,
+        p_new_player_id: authUid,
+      });
+      await AsyncStorage.setItem(PLAYER_ID_KEY, authUid);
+    } catch {
+      // Migration failed (offline?) — keep storedId so we retry next launch.
+    }
+  } else {
+    await AsyncStorage.setItem(PLAYER_ID_KEY, authUid);
+  }
+
+  // Register with Supabase once to claim a unique display name.
   if (!isRegistered) {
     try {
       const { data, error } = await supabase.rpc('register_player', {
