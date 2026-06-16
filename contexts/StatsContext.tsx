@@ -61,6 +61,24 @@ export function StatsProvider({ children }: { children: ReactNode }) {
                 };
               }
             }
+            // Also restore recent runs (up to 35 days — Supabase retention window).
+            // Restores lastRun, day streak, and this-week/this-month personal views.
+            const { data: runsData } = await supabase
+              .from('runs')
+              .select('score, unassisted_score, best_chain, difficulty, used_continue, played_at')
+              .eq('player_id', playerId)
+              .order('played_at', { ascending: false })
+              .limit(100);
+            if (runsData && runsData.length > 0) {
+              seeded.recentRuns = runsData.map(r => ({
+                score:            r.score,
+                date:             new Date(r.played_at).getTime(),
+                bestChain:        r.best_chain,
+                difficulty:       r.difficulty as Difficulty,
+                usedContinue:     r.used_continue,
+                preContinueScore: r.used_continue ? r.unassisted_score : undefined,
+              }));
+            }
             await saveStats(seeded);
             setStats(seeded);
           }
