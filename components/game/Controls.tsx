@@ -65,7 +65,7 @@ function DropButton({ onSoftDrop, onHardDrop, size }: { onSoftDrop: () => void; 
   );
 }
 
-export default function Controls({ onLeft, onRight, onRotate, onSoftDrop, onHardDrop, onPause, disabled, boardW }: Props) {
+const Controls = React.memo(function Controls({ onLeft, onRight, onRotate, onSoftDrop, onHardDrop, onPause, disabled, boardW }: Props) {
   const { colors } = useTheme();
   // All 5 buttons equal size; space-between aligns outer edges with board edges.
   const btnSize = Math.max(36, Math.floor((boardW - GAP * 4) / 5));
@@ -95,7 +95,9 @@ export default function Controls({ onLeft, onRight, onRotate, onSoftDrop, onHard
       <DropButton onSoftDrop={onSoftDrop} onHardDrop={onHardDrop} size={btnSize} />
     </View>
   );
-}
+});
+
+export default Controls;
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' },

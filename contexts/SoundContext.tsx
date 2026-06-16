@@ -247,12 +247,14 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       Object.values(poolsRef.current).forEach(arr => arr?.forEach(s => { try { s.stop(); s.release(); } catch {} }));
       poolsRef.current = {};
 
+      // Download all assets in parallel instead of sequentially
+      const assets = SOUND_NAMES.map(name => ({ name, asset: Asset.fromModule(sources[name]) }));
+      await Promise.allSettled(assets.map(({ asset }) => asset.downloadAsync()));
+
+      if (cancelled) return;
+
       const pools: Partial<Record<SoundName, Sound[]>> = {};
-      for (const name of SOUND_NAMES) {
-        const src = sources[name];
-        if (!src) continue;
-        const asset = Asset.fromModule(src);
-        try { await asset.downloadAsync(); } catch {}
+      for (const { name, asset } of assets) {
         const uri = asset.localUri || asset.uri;
         const arr: Sound[] = [];
         const vol = PACK_VOLUME[soundPack]?.[name] ?? VOLUME[name] ?? 1;

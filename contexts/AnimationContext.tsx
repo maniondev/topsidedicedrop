@@ -18,23 +18,30 @@ export const AnimPackMeta: Record<AnimPackId, { label: string; description: stri
 };
 
 const ANIM_PACK_KEY = 'tm_anim_pack';
+const PERF_MODE_KEY = 'tm_perf_mode';
 
 interface AnimCtxType {
   animPack: AnimPackId;
   setAnimPack: (p: AnimPackId) => void;
+  performanceMode: boolean;
+  setPerformanceMode: (v: boolean) => void;
 }
 
 const AnimCtx = createContext<AnimCtxType>({
   animPack: 'classic',
   setAnimPack: () => {},
+  performanceMode: false,
+  setPerformanceMode: () => {},
 });
 
 export function AnimationProvider({ children }: { children: ReactNode }) {
   const [animPack, setAnimPackState] = useState<AnimPackId>('classic');
+  const [performanceMode, setPerfModeState] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(ANIM_PACK_KEY).then(v => {
-      if (v && ANIM_PACK_IDS.includes(v as AnimPackId)) setAnimPackState(v as AnimPackId);
+    AsyncStorage.multiGet([ANIM_PACK_KEY, PERF_MODE_KEY]).then(([[, pack], [, perf]]) => {
+      if (pack && ANIM_PACK_IDS.includes(pack as AnimPackId)) setAnimPackState(pack as AnimPackId);
+      if (perf !== null) setPerfModeState(perf === 'true');
     }).catch(() => {});
   }, []);
 
@@ -43,7 +50,15 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(ANIM_PACK_KEY, p).catch(() => {});
   }, []);
 
-  const value = useMemo(() => ({ animPack, setAnimPack }), [animPack, setAnimPack]);
+  const setPerformanceMode = useCallback((v: boolean) => {
+    setPerfModeState(v);
+    AsyncStorage.setItem(PERF_MODE_KEY, v ? 'true' : 'false').catch(() => {});
+  }, []);
+
+  const value = useMemo(
+    () => ({ animPack, setAnimPack, performanceMode, setPerformanceMode }),
+    [animPack, setAnimPack, performanceMode, setPerformanceMode],
+  );
   return <AnimCtx.Provider value={value}>{children}</AnimCtx.Provider>;
 }
 

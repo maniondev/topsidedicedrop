@@ -76,7 +76,7 @@ export default function GameScreen() {
 
   const game = useGame(gravityMs, paused);
 
-
+  const handlePause = useCallback(() => setPaused(true), []);
 
   const [freeContinueUsed,  setFreeContinueUsed]  = useState(false);
   const [adContinueUsed,   setAdContinueUsed]    = useState(false);
@@ -450,7 +450,7 @@ export default function GameScreen() {
             score={game.score}
             bestScore={(freeContinueUsed || adContinueUsed) ? bestScore : bestUnassisted}
             nextPiece={game.queue[0]}
-            onLogoPress={() => setPaused(true)}
+            onLogoPress={handlePause}
           />
         </View>
 
@@ -479,7 +479,7 @@ export default function GameScreen() {
             onRotate={rotateWithSound}
             onSoftDrop={game.softDrop}
             onHardDrop={hardDropWithSound}
-            onPause={() => setPaused(true)}
+            onPause={handlePause}
             disabled={controlsDisabled}
             boardW={boardW}
           />

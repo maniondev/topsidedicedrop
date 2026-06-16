@@ -108,6 +108,14 @@ const ANIM_CONFIGS: Record<AnimPackId, AnimConfig> = {
   },
 };
 
+const PERF_CONFIG: AnimConfig = {
+  popScale: 0, popDuration: 0, popEasing: Easing.linear, squash: false, twist: false, flip: false, glitch: false,
+  showFlash: false, flashPeak: 0,
+  showGlow: false, glowPeakMult: 0, glowStrokeMult: 0,
+  burstVariant: 'none', burstDuration: 0,
+  mergeParticles: 'none', landWiggle: false,
+};
+
 // ─── Dot positions ─────────────────────────────────────────────────────────────
 const DOT_POSITIONS: Record<number, Array<[number, number]>> = {
   1: [[0.50, 0.50]],
@@ -207,8 +215,8 @@ function PixelDie({ x, y, cs, value, faceColor, dotColor }: {
   );
 }
 
-function NeonDie({ x, y, cs, value, faceColor, dotColor }: {
-  x: number; y: number; cs: number; value: CellValue; faceColor: string; dotColor: string;
+function NeonDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
+  x: number; y: number; cs: number; value: CellValue; faceColor: string; dotColor: string; perfMode?: boolean;
 }) {
   const pad = 2;
   const rw = cs - pad * 2;
@@ -221,14 +229,14 @@ function NeonDie({ x, y, cs, value, faceColor, dotColor }: {
       <RoundedRect x={rx} y={ry} width={rw} height={rw} r={8} color="rgba(6,3,16,0.93)" />
       {/* Outer glow border */}
       <RoundedRect x={rx} y={ry} width={rw} height={rw} r={8} color={faceColor} style="stroke" strokeWidth={2.5}>
-        <BlurMask blur={4} style="solid" />
+        {!perfMode && <BlurMask blur={4} style="solid" />}
       </RoundedRect>
       {/* Inner crisp border ring */}
       <RoundedRect x={rx + 1} y={ry + 1} width={rw - 2} height={rw - 2} r={7} color={faceColor} style="stroke" strokeWidth={0.8} />
       {/* Glowing pips */}
       {dots.map(([xf, yf], i) => (
         <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR} color={faceColor}>
-          <BlurMask blur={2.5} style="solid" />
+          {!perfMode && <BlurMask blur={2.5} style="solid" />}
         </Circle>
       ))}
       {/* Solid pip core on top */}
@@ -239,8 +247,8 @@ function NeonDie({ x, y, cs, value, faceColor, dotColor }: {
   );
 }
 
-function RaisedDie({ x, y, cs, value, faceColor, dotColor }: {
-  x: number; y: number; cs: number; value: CellValue; faceColor: string; dotColor: string;
+function RaisedDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
+  x: number; y: number; cs: number; value: CellValue; faceColor: string; dotColor: string; perfMode?: boolean;
 }) {
   const pad = 2;
   const rw = cs - pad * 2;
@@ -256,13 +264,13 @@ function RaisedDie({ x, y, cs, value, faceColor, dotColor }: {
         {/* Base face */}
         <Rect x={rx} y={ry} width={rw} height={rw} color={faceColor} />
         {/* Top-left ambient light — radial gradient from corner */}
-        <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
+        {!perfMode && <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
           <RadialGradient c={vec(rx, ry)} r={rw * 1.5} colors={['rgba(255,255,255,0.38)', 'rgba(255,255,255,0)']} />
-        </Rect>
+        </Rect>}
         {/* Bottom-right shadow — radial from opposite corner */}
-        <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
+        {!perfMode && <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
           <RadialGradient c={vec(rx + rw, ry + rw)} r={rw * 1.5} colors={['rgba(0,0,0,0.42)', 'rgba(0,0,0,0)']} />
-        </Rect>
+        </Rect>}
         {/* Top bevel highlight */}
         <Rect x={rx} y={ry} width={rw} height={bevel} color="rgba(255,255,255,0.48)" />
         {/* Left bevel highlight */}
@@ -284,37 +292,37 @@ function RaisedDie({ x, y, cs, value, faceColor, dotColor }: {
 }
 
 
-function DiceFace({ x, y, cs, value, faceColor, dotColor, diceStyle }: {
+const DiceFace = React.memo(function DiceFace({ x, y, cs, value, faceColor, dotColor, diceStyle, perfMode }: {
   x: number; y: number; cs: number; value: CellValue;
-  faceColor: string; dotColor: string; diceStyle: DiceStyleId;
+  faceColor: string; dotColor: string; diceStyle: DiceStyleId; perfMode?: boolean;
 }) {
   switch (diceStyle) {
     case 'sketch':  return <SketchDie  x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;
     case 'round':   return <RoundDie   x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;
     case 'pixel':   return <PixelDie   x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;
-    case 'neon':    return <NeonDie    x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;
-    case 'raised':  return <RaisedDie  x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;
+    case 'neon':    return <NeonDie    x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} perfMode={perfMode} />;
+    case 'raised':  return <RaisedDie  x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} perfMode={perfMode} />;
     default:        return <ClassicDie x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;
   }
-}
+});
 
-function StaticTile({ x, y, cs, value, faceColor, dotColor, opacity = 1, diceStyle }: {
+const StaticTile = React.memo(function StaticTile({ x, y, cs, value, faceColor, dotColor, opacity = 1, diceStyle, perfMode }: {
   x: number; y: number; cs: number; value: CellValue; faceColor: string; dotColor: string;
-  opacity?: number; diceStyle: DiceStyleId;
+  opacity?: number; diceStyle: DiceStyleId; perfMode?: boolean;
 }) {
   return (
     <Group opacity={opacity}>
-      <DiceFace x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} diceStyle={diceStyle} />
+      <DiceFace x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} diceStyle={diceStyle} perfMode={perfMode} />
     </Group>
   );
-}
+});
 
 // ─── PopTile ──────────────────────────────────────────────────────────────────
 // Normal packs: uniform scale pop.
 // Juicy: squash-and-stretch with spring physics for a jelly/blob feel.
-function PopTile({ x, y, cs, value, faceColor, dotColor, cfg, diceStyle }: {
+function PopTile({ x, y, cs, value, faceColor, dotColor, cfg, diceStyle, perfMode }: {
   x: number; y: number; cs: number; value: CellValue; faceColor: string; dotColor: string;
-  cfg: AnimConfig; diceStyle: DiceStyleId;
+  cfg: AnimConfig; diceStyle: DiceStyleId; perfMode?: boolean;
 }) {
   const pad = 2;
   const cx = x + cs / 2, cy = y + cs / 2;
@@ -413,7 +421,7 @@ function PopTile({ x, y, cs, value, faceColor, dotColor, cfg, diceStyle }: {
 
   return (
     <Group origin={{ x: cx, y: cy }} transform={transform}>
-      <DiceFace x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} diceStyle={diceStyle} />
+      <DiceFace x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} diceStyle={diceStyle} perfMode={perfMode} />
       {cfg.showFlash && (
         <RoundedRect
           x={x + pad} y={y + pad} width={cs - pad * 2} height={cs - pad * 2} r={8}
@@ -425,9 +433,9 @@ function PopTile({ x, y, cs, value, faceColor, dotColor, cfg, diceStyle }: {
 }
 
 // ─── WiggleTile — jiggles left-right on landing (Juicy only) ─────────────────
-function WiggleTile({ x, y, cs, value, faceColor, dotColor, diceStyle }: {
+function WiggleTile({ x, y, cs, value, faceColor, dotColor, diceStyle, perfMode }: {
   x: number; y: number; cs: number; value: CellValue; faceColor: string; dotColor: string;
-  diceStyle: DiceStyleId;
+  diceStyle: DiceStyleId; perfMode?: boolean;
 }) {
   const tx = useSharedValue(0);
   useEffect(() => {
@@ -441,7 +449,7 @@ function WiggleTile({ x, y, cs, value, faceColor, dotColor, diceStyle }: {
   const transform = useDerivedValue(() => { 'worklet'; return [{ translateX: tx.value }]; });
   return (
     <Group transform={transform}>
-      <DiceFace x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} diceStyle={diceStyle} />
+      <DiceFace x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} diceStyle={diceStyle} perfMode={perfMode} />
     </Group>
   );
 }
@@ -790,12 +798,12 @@ interface Props {
 
 interface MergeBurst { id: string; cx: number; cy: number; color: string }
 
-export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize, chainPass, mergeEvents }: Props) {
+const GameBoard = React.memo(function GameBoard({ board, activePiece, ghostAnchorRow, cellSize, chainPass, mergeEvents }: Props) {
   const { colors } = useTheme();
   const { faceColor, dotColor } = useDieColors();
-  const { animPack } = useAnimation();
+  const { animPack, performanceMode } = useAnimation();
   const { diceStyle } = useDiceStyle();
-  const cfg = ANIM_CONFIGS[animPack];
+  const cfg = performanceMode ? PERF_CONFIG : ANIM_CONFIGS[animPack];
   const cs = cellSize;
   const boardW = cs * COLS;
   const boardH = cs * ROWS;
@@ -862,10 +870,10 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
     seenIds.current = current;
 
     if (freshMerged.length > 0) {
-      setPopCells(new Set(freshMerged));
+      if (!performanceMode) setPopCells(new Set(freshMerged));
 
       // Per-merge particle effects
-      if (cfg.mergeParticles !== 'none') {
+      if (!performanceMode && cfg.mergeParticles !== 'none') {
         const newBursts: MergeBurst[] = freshMerged.map(key => {
           const [r, c] = key.split(',').map(Number);
           const cell = board[r]?.[c];
@@ -924,7 +932,7 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
         if (popCells.has(`${r},${c}`)) continue;
         tiles.push(
           <StaticTile key={cell.id} x={c * cs} y={r * cs} cs={cs} value={cell.value}
-            faceColor={faceColor(cell.value)} dotColor={dotColor(cell.value)} diceStyle={diceStyle} />
+            faceColor={faceColor(cell.value)} dotColor={dotColor(cell.value)} diceStyle={diceStyle} perfMode={performanceMode} />
         );
       }
     }
@@ -940,7 +948,7 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
       if (!cell) return;
       out.push(
         <PopTile key={cell.id} x={c * cs} y={r * cs} cs={cs} value={cell.value}
-          faceColor={faceColor(cell.value)} dotColor={dotColor(cell.value)} cfg={cfg} diceStyle={diceStyle} />
+          faceColor={faceColor(cell.value)} dotColor={dotColor(cell.value)} cfg={cfg} diceStyle={diceStyle} perfMode={performanceMode} />
       );
     });
     return out;
@@ -954,7 +962,7 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
       if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return null;
       return (
         <StaticTile key={`ghost_${i}`} x={c * cs} y={r * cs} cs={cs} value={t.value}
-          faceColor={faceColor(t.value)} dotColor={dotColor(t.value)} opacity={0.18} diceStyle={diceStyle} />
+          faceColor={faceColor(t.value)} dotColor={dotColor(t.value)} opacity={0.18} diceStyle={diceStyle} perfMode={performanceMode} />
       );
     });
   }, [activePiece, ghostAnchorRow, cs, faceColor, dotColor, diceStyle]);
@@ -969,9 +977,9 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
       const x = c * cs, y = r * cs;
       return wiggling
         ? <WiggleTile key={`active_${i}`} x={x} y={y} cs={cs} value={t.value}
-            faceColor={faceColor(t.value)} dotColor={dotColor(t.value)} diceStyle={diceStyle} />
+            faceColor={faceColor(t.value)} dotColor={dotColor(t.value)} diceStyle={diceStyle} perfMode={performanceMode} />
         : <StaticTile key={`active_${i}`} x={x} y={y} cs={cs} value={t.value}
-            faceColor={faceColor(t.value)} dotColor={dotColor(t.value)} diceStyle={diceStyle} />;
+            faceColor={faceColor(t.value)} dotColor={dotColor(t.value)} diceStyle={diceStyle} perfMode={performanceMode} />;
     });
   }, [activePiece, cs, faceColor, dotColor, cfg.landWiggle, activePieceLanding, diceStyle]);
 
@@ -1012,4 +1020,6 @@ export default function GameBoard({ board, activePiece, ghostAnchorRow, cellSize
       )}
     </Canvas>
   );
-}
+});
+
+export default GameBoard;

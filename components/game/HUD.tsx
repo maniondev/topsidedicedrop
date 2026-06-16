@@ -171,7 +171,7 @@ function valueFontSize(n: number): number {
   return 18;
 }
 
-export default function HUD({ score, bestScore, nextPiece, onLogoPress }: Props) {
+function HUD({ score, bestScore, nextPiece, onLogoPress }: Props) {
   const { colors } = useTheme();
   const { faceColor, dotColor } = useDieColors();
   const { diceStyle } = useDiceStyle();
@@ -225,6 +225,8 @@ export default function HUD({ score, bestScore, nextPiece, onLogoPress }: Props)
     </View>
   );
 }
+
+export default React.memo(HUD);
 
 const styles = StyleSheet.create({
   row:       { flexDirection: 'row', alignItems: 'center', width: '100%', paddingHorizontal: 10 },

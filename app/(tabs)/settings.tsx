@@ -29,7 +29,7 @@ export default function SettingsScreen() {
   const { colors, themeId, setTheme } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { soundEnabled, setSoundEnabled, soundPack, setSoundPack, play } = useSound();
-  const { animPack, setAnimPack } = useAnimation();
+  const { animPack, setAnimPack, performanceMode, setPerformanceMode } = useAnimation();
   const { diceStyle, setDiceStyle } = useDiceStyle();
   const { isPremium, upgrade, restorePurchases, devToggle } = usePremium();
   const { resetStats, refresh } = useStats();
@@ -275,6 +275,22 @@ export default function SettingsScreen() {
             colors={colors}
             styles={styles}
           />
+        </Section>
+
+        {/* Performance */}
+        <Section label="Performance" styles={styles}>
+          <ToggleRow
+            label="Performance Mode"
+            value={performanceMode}
+            onValueChange={setPerformanceMode}
+            colors={colors}
+            styles={styles}
+          />
+          <View style={styles.row}>
+            <Text style={[styles.rowLabel, { fontSize: 12, color: colors.textMuted }]}>
+              Reduces visual effects for smoother gameplay on older devices. On by default for Android.
+            </Text>
+          </View>
         </Section>
 
         {/* Stats */}

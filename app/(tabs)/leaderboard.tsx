@@ -512,16 +512,16 @@ export default function LeaderboardScreen() {
             {lbScope === 'following' && (
               <View style={styles.filterRow}>
                 <TouchableOpacity
-                  style={[styles.filterBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+                  style={[styles.filterBtn, { backgroundColor: colors.accent, borderColor: colors.accent }]}
                   onPress={() => setFollowingModalVisible(true)}
                 >
-                  <Text style={[styles.filterBtnText, { color: colors.textSecondary }]}>View Following</Text>
+                  <Text style={[styles.filterBtnText, { color: colors.accentText }]}>View Following</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.filterBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+                  style={[styles.filterBtn, { backgroundColor: colors.accent, borderColor: colors.accent }]}
                   onPress={() => setFindPlayerVisible(true)}
                 >
-                  <Text style={[styles.filterBtnText, { color: colors.textSecondary }]}>Find Players</Text>
+                  <Text style={[styles.filterBtnText, { color: colors.accentText }]}>Find Players</Text>
                 </TouchableOpacity>
               </View>
             )}
