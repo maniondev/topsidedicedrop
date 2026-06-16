@@ -407,7 +407,7 @@ function reducer(state: GameState, action: Action): GameState {
     }
 
     case 'START_CONDENSE': {
-      if (state.phase !== 'gameOver' || state.continueUsed) return state;
+      if (state.phase !== 'gameOver') return state;
       return { ...state, phase: 'condensing', continueUsed: true };
     }
 

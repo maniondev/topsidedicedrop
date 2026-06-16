@@ -507,7 +507,6 @@ export default function GameScreen() {
         score={game.score}
         bestScore={bestScore}
         prevBest={prevBest}
-        continueUsed={freeContinueUsed || adContinueUsed}
         freeContinueAvailable={freeContinueAvailable}
         onFreeContinue={handleFreeContinue}
         onContinue={handleContinue}
