@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Canvas, RoundedRect, Circle, Rect, Group, BlurMask, Line, RadialGradient, vec, rrect, rect } from '@shopify/react-native-skia';
 import { QueuedPiece } from '@/hooks/useGame';
@@ -123,10 +123,10 @@ function PreviewDie({ x, y, cs, value, faceColor, dotColor, diceStyle }: {
   }
 }
 
-function PiecePreview({ piece, diceStyle }: { piece: QueuedPiece; diceStyle: DiceStyleId }) {
+const PiecePreview = React.memo(function PiecePreview({ piece, diceStyle }: { piece: QueuedPiece; diceStyle: DiceStyleId }) {
   const { faceColor, dotColor: getDotColor } = useDieColors();
-  const maxDr = Math.max(...piece.tiles.map(t => t.dr));
-  const maxDc = Math.max(...piece.tiles.map(t => t.dc));
+  const maxDr = useMemo(() => Math.max(...piece.tiles.map(t => t.dr)), [piece]);
+  const maxDc = useMemo(() => Math.max(...piece.tiles.map(t => t.dc)), [piece]);
   const canvasW = (maxDc + 1) * PREVIEW_CS + 4;
   const canvasH = (maxDr + 1) * PREVIEW_CS + 4;
 
@@ -148,13 +148,13 @@ function PiecePreview({ piece, diceStyle }: { piece: QueuedPiece; diceStyle: Dic
       })}
     </Canvas>
   );
-}
+}, (prev, next) => prev.piece === next.piece && prev.diceStyle === next.diceStyle);
 
 interface Props {
   queue: QueuedPiece[];
 }
 
-export default function NextQueue({ queue }: Props) {
+function NextQueue({ queue }: Props) {
   const { colors } = useTheme();
   const { diceStyle } = useDiceStyle();
   const next = queue[0];
@@ -169,6 +169,12 @@ export default function NextQueue({ queue }: Props) {
     </View>
   );
 }
+
+export default React.memo(NextQueue, (prev, next) => {
+  const p = prev.queue[0];
+  const n = next.queue[0];
+  return p?.shapeId === n?.shapeId && p?.rotation === n?.rotation;
+});
 
 const styles = StyleSheet.create({
   container: { alignItems: 'center', gap: 4 },

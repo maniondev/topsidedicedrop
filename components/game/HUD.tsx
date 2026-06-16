@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Canvas, RoundedRect, Circle, Rect, Group, BlurMask, Line, RadialGradient, vec, rrect, rect } from '@shopify/react-native-skia';
 import { useTheme, useDieColors } from '@/contexts/ThemeContext';
@@ -126,14 +126,14 @@ function PreviewDie({ x, y, cs, value, faceColor, dotColor, diceStyle }: {
   }
 }
 
-function InlinePiece({ piece, faceColor, dotColor, diceStyle }: {
+const InlinePiece = React.memo(function InlinePiece({ piece, faceColor, dotColor, diceStyle }: {
   piece: QueuedPiece;
   faceColor: (v: number) => string;
   dotColor: (v: number) => string;
   diceStyle: DiceStyleId;
 }) {
-  const maxDr = Math.max(...piece.tiles.map(t => t.dr));
-  const maxDc = Math.max(...piece.tiles.map(t => t.dc));
+  const maxDr = useMemo(() => Math.max(...piece.tiles.map(t => t.dr)), [piece]);
+  const maxDc = useMemo(() => Math.max(...piece.tiles.map(t => t.dc)), [piece]);
   const w = (maxDc + 1) * CS + 2;
   const h = (maxDr + 1) * CS + 2;
   return (
@@ -154,7 +154,7 @@ function InlinePiece({ piece, faceColor, dotColor, diceStyle }: {
       })}
     </Canvas>
   );
-}
+}, (prev, next) => prev.piece === next.piece && prev.diceStyle === next.diceStyle);
 
 interface Props {
   score: number;

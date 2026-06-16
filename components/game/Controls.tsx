@@ -17,7 +17,7 @@ interface Props {
   boardW: number;
 }
 
-function CtrlBtn({ onPress, children, size }: {
+const CtrlBtn = React.memo(function CtrlBtn({ onPress, children, size }: {
   onPress: () => void;
   children: React.ReactNode;
   size: number;
@@ -32,7 +32,7 @@ function CtrlBtn({ onPress, children, size }: {
       {children}
     </TouchableOpacity>
   );
-}
+});
 
 // Tap = soft drop one cell. Hold 300ms = hard drop (snap to bottom).
 function DropButton({ onSoftDrop, onHardDrop, size }: { onSoftDrop: () => void; onHardDrop: () => void; size: number }) {
