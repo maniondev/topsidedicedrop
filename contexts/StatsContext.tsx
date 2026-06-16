@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { loadStats, recordRun, recordPreContinueRun, clearStats, loadPendingRun, clearPendingRun, Stats, DiffStats } from '@/lib/storage';
+import { loadStats, saveStats, recordRun, recordPreContinueRun, clearStats, loadPendingRun, clearPendingRun, Stats, DiffStats } from '@/lib/storage';
 import { Difficulty } from '@/contexts/DifficultyContext';
 import { clearRemoteScores, submitScoreForCurrentPlayer } from '@/lib/scoreQueue';
 import { getPlayerIdentity } from '@/lib/playerIdentity';
+import { supabase } from '@/lib/supabase';
 
 const EMPTY: Stats = {
   byDifficulty: {
@@ -35,7 +36,37 @@ export function StatsProvider({ children }: { children: ReactNode }) {
   const [stats, setStats] = useState<Stats>(EMPTY);
 
   useEffect(() => {
-    loadStats().then(setStats).catch(() => {});
+    loadStats().then(async (loaded) => {
+      setStats(loaded);
+      // On a fresh install (all zeros), try to seed from Supabase leaderboard.
+      const isEmpty = Object.values(loaded.byDifficulty).every(d => d.totalRuns === 0);
+      if (isEmpty) {
+        try {
+          const { playerId } = await getPlayerIdentity();
+          const { data } = await supabase
+            .from('leaderboard')
+            .select('difficulty, best_score, best_unassisted, best_chain, lifetime_score, run_count')
+            .eq('player_id', playerId);
+          if (data && data.length > 0) {
+            const seeded: Stats = { ...loaded, byDifficulty: { ...loaded.byDifficulty } };
+            for (const row of data) {
+              const d = row.difficulty as Difficulty;
+              if (seeded.byDifficulty[d]) {
+                seeded.byDifficulty[d] = {
+                  bestScore:      row.best_score,
+                  bestUnassisted: row.best_unassisted,
+                  bestChain:      row.best_chain,
+                  lifetimeScore:  row.lifetime_score,
+                  totalRuns:      row.run_count,
+                };
+              }
+            }
+            await saveStats(seeded);
+            setStats(seeded);
+          }
+        } catch {}
+      }
+    }).catch(() => {});
     // If the app was killed while a game-over was pending (player never tapped New Game
     // or Continue), recover and commit that run now.
     loadPendingRun().then(async (pending) => {

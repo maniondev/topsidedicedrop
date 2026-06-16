@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState, useRef } from 'react';
+import React, { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Platform, BackHandler, AppState, LayoutChangeEvent,
 } from 'react-native';
@@ -373,68 +373,74 @@ export default function GameScreen() {
   const H_FIRST  = cellSize * 0.32; // smaller threshold for FIRST horizontal move (responsive initial swipe)
   const V_STEP   = cellSize * 0.80; // vertical distance per soft-drop (deliberate)
 
-  const boardGesture = Gesture.Race(
-    Gesture.Tap()
-      .maxDuration(250)
-      .onEnd(() => { runOnJS(rotateWithSound)(); }),
-    Gesture.Pan()
-      .minDistance(4)
-      .onStart(() => {
-        axis.current = 'none';
-        accX.current = 0; accY.current = 0;
-        prevX.current = 0; prevY.current = 0;
-        hMovedRef.current = false;
-      })
-      .onUpdate(e => {
-        const dx = e.translationX - prevX.current;
-        const dy = e.translationY - prevY.current;
-        prevX.current = e.translationX;
-        prevY.current = e.translationY;
+  const boardGesture = useMemo(() => {
+    const deadzone = cellSize * 0.22;
+    const hStep    = cellSize * 0.42;
+    const hFirst   = cellSize * 0.32;
+    const vStep    = cellSize * 0.80;
+    return Gesture.Race(
+      Gesture.Tap()
+        .maxDuration(250)
+        .onEnd(() => { runOnJS(rotateWithSound)(); }),
+      Gesture.Pan()
+        .minDistance(4)
+        .onStart(() => {
+          axis.current = 'none';
+          accX.current = 0; accY.current = 0;
+          prevX.current = 0; prevY.current = 0;
+          hMovedRef.current = false;
+        })
+        .onUpdate(e => {
+          const dx = e.translationX - prevX.current;
+          const dy = e.translationY - prevY.current;
+          prevX.current = e.translationX;
+          prevY.current = e.translationY;
 
-        // Choose the axis once the swipe clears the (small) deadzone. Seed the
-        // accumulator with the travel so far so the FIRST move fires promptly.
-        if (axis.current === 'none') {
-          if (Math.abs(e.translationX) > DEADZONE || Math.abs(e.translationY) > DEADZONE) {
-            if (Math.abs(e.translationX) >= Math.abs(e.translationY)) {
-              axis.current = 'h';
-              accX.current = e.translationX;
+          // Choose the axis once the swipe clears the (small) deadzone. Seed the
+          // accumulator with the travel so far so the FIRST move fires promptly.
+          if (axis.current === 'none') {
+            if (Math.abs(e.translationX) > deadzone || Math.abs(e.translationY) > deadzone) {
+              if (Math.abs(e.translationX) >= Math.abs(e.translationY)) {
+                axis.current = 'h';
+                accX.current = e.translationX;
+              } else {
+                axis.current = 'v';
+                accY.current = e.translationY;
+              }
             } else {
-              axis.current = 'v';
-              accY.current = e.translationY;
+              return;
+            }
+          } else if (axis.current === 'h') {
+            accX.current += dx;
+          } else {
+            accY.current += dy;
+          }
+
+          if (axis.current === 'h') {
+            // Use hFirst for first move, hStep for subsequent moves
+            const threshold = hMovedRef.current ? hStep : hFirst;
+            while (Math.abs(accX.current) >= threshold) {
+              if (accX.current > 0) runOnJS(game.moveRight)();
+              else runOnJS(game.moveLeft)();
+              hMovedRef.current = true;
+              accX.current += accX.current > 0 ? -hStep : hStep;
             }
           } else {
-            return;
+            // Vertical lock — soft drop step by step (downward only)
+            while (accY.current >= vStep) {
+              runOnJS(game.softDrop)();
+              accY.current -= vStep;
+            }
           }
-        } else if (axis.current === 'h') {
-          accX.current += dx;
-        } else {
-          accY.current += dy;
-        }
-
-        if (axis.current === 'h') {
-          // Use H_FIRST for first move, H_STEP for subsequent moves
-          const threshold = hMovedRef.current ? H_STEP : H_FIRST;
-          while (Math.abs(accX.current) >= threshold) {
-            if (accX.current > 0) runOnJS(game.moveRight)();
-            else runOnJS(game.moveLeft)();
-            hMovedRef.current = true;
-            accX.current += accX.current > 0 ? -H_STEP : H_STEP;
+        })
+        .onEnd(e => {
+          // A quick downward flick (vertical-locked) hard-drops — easy "send it down"
+          if (axis.current === 'v' && e.velocityY > 900 && e.translationY > cellSize) {
+            runOnJS(hardDropWithSound)();
           }
-        } else {
-          // Vertical lock — soft drop step by step (downward only)
-          while (accY.current >= V_STEP) {
-            runOnJS(game.softDrop)();
-            accY.current -= V_STEP;
-          }
-        }
-      })
-      .onEnd(e => {
-        // A quick downward flick (vertical-locked) hard-drops — easy "send it down"
-        if (axis.current === 'v' && e.velocityY > 900 && e.translationY > cellSize) {
-          runOnJS(hardDropWithSound)();
-        }
-      }),
-  );
+        }),
+    );
+  }, [rotateWithSound, hardDropWithSound, game.moveLeft, game.moveRight, game.softDrop, cellSize]);
 
   const freeContinueAvailable = isPremium && !freeContinueUsed;
 
