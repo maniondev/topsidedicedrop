@@ -326,14 +326,14 @@ const styles = StyleSheet.create({
 
   diffSection:    { height: ROW_H },
   diffRow:        { flexDirection: 'row', gap: 10, height: '100%' },
-  diffBtn:        { flex: 1, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  diffBtn:        { flex: 1, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   diffLabel:      { fontSize: 15 },
 
   btnRow:         { flexDirection: 'row', gap: 10 },
   btnSingle:      { gap: 0 },
   playBtn:        { height: ROW_H, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   playBtnText:    { fontSize: 24 },
-  newGameBtn:     { height: ROW_H, borderRadius: 14, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  newGameBtn:     { height: ROW_H, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   newGameText:    { fontSize: 15 },
 
   bottomRow:      { flexDirection: 'row', gap: 10 },
