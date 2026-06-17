@@ -150,7 +150,7 @@ The `used_continue` badge shown on leaderboard entries is derived, not stored: i
 `get_best_rank_and_percentile` and `get_lifetime_rank_and_percentile` compute:
 
 - `rank` = (count of players with a higher score) + 1
-- `percentile` = percentage of players the user beats = `(total - better - 1) / total * 100`
+- `percentile` = percentage of *other* players the user beats = `(total - better - 1) / (total - 1) * 100`; returns 100 when only one player exists (division by zero guard via `NULLIF`)
 
 Both functions accept the same filter parameters (difficulty, time period, scope) as the corresponding leaderboard functions, so rank is always computed against the same population shown in the list.
 
