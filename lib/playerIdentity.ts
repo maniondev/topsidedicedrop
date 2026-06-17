@@ -5,6 +5,8 @@ import { supabase } from './supabase';
 // Keychain keys — survive app deletion/reinstall on iOS (same device + Apple ID).
 const KC_REFRESH_TOKEN = 'td_refresh_token';
 const KC_PLAYER_ID     = 'td_kc_player_id';
+const KC_DISPLAY_NAME  = 'td_kc_display_name';
+const KC_REGISTERED    = 'td_kc_registered';
 
 const PLAYER_ID_KEY    = 'td_player_id';
 const DISPLAY_NAME_KEY = 'td_display_name';
@@ -118,14 +120,17 @@ export async function getPlayerIdentity(): Promise<{ playerId: string; displayNa
     try { await SecureStore.setItemAsync(KC_PLAYER_ID,     authUid); } catch {}
   }
 
-  const [storedId, storedName, isRegistered] = await Promise.all([
+  const [storedId, storedName, isRegistered, kcName, kcRegistered] = await Promise.all([
     AsyncStorage.getItem(PLAYER_ID_KEY),
     AsyncStorage.getItem(DISPLAY_NAME_KEY),
     AsyncStorage.getItem(REGISTERED_KEY),
+    SecureStore.getItemAsync(KC_DISPLAY_NAME).catch(() => null),
+    SecureStore.getItemAsync(KC_REGISTERED).catch(() => null),
   ]);
 
   const playerId    = authUid;
-  let   displayName = storedName ?? generateName();
+  // Keychain name survives reinstall; AsyncStorage name survives normal launches.
+  let   displayName = storedName ?? kcName ?? generateName();
 
   if (!storedName) await AsyncStorage.setItem(DISPLAY_NAME_KEY, displayName);
 
@@ -147,7 +152,8 @@ export async function getPlayerIdentity(): Promise<{ playerId: string; displayNa
   }
 
   // Register with Supabase once to claim a unique display name.
-  if (!isRegistered) {
+  const alreadyRegistered = isRegistered ?? kcRegistered;
+  if (!alreadyRegistered) {
     try {
       const { data, error } = await supabase.rpc('register_player', {
         p_player_id:      playerId,
@@ -158,9 +164,14 @@ export async function getPlayerIdentity(): Promise<{ playerId: string; displayNa
         await Promise.all([
           AsyncStorage.setItem(DISPLAY_NAME_KEY, displayName),
           AsyncStorage.setItem(REGISTERED_KEY,   '1'),
+          SecureStore.setItemAsync(KC_DISPLAY_NAME, displayName).catch(() => {}),
+          SecureStore.setItemAsync(KC_REGISTERED,   '1').catch(() => {}),
         ]);
       }
     } catch {}
+  } else if (!kcName || kcName !== displayName) {
+    // Keep Keychain in sync if name was set before Keychain support was added.
+    SecureStore.setItemAsync(KC_DISPLAY_NAME, displayName).catch(() => {});
   }
 
   _playerId    = playerId;
@@ -181,6 +192,7 @@ export async function regenerateName(): Promise<string> {
     if (!error) {
       _displayName = candidate;
       await AsyncStorage.setItem(DISPLAY_NAME_KEY, candidate);
+      SecureStore.setItemAsync(KC_DISPLAY_NAME, candidate).catch(() => {});
       return candidate;
     }
     if (!error.message?.includes('Name already taken')) {

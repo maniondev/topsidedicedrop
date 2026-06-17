@@ -26,8 +26,8 @@ Registered players. Created on first app launch via `register_player`.
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `player_id` | text PK | UUID generated client-side, stored in AsyncStorage |
-| `display_name` | text UNIQUE | Random adjective+noun+number (e.g. SpookySnap635) |
+| `player_id` | text PK | Supabase anonymous auth UID; stored in Keychain (survives reinstall) |
+| `display_name` | text UNIQUE | Random adjective+noun+number (e.g. SpookySnap635); stored in Keychain (survives reinstall) |
 | `created_at` | timestamptz | |
 
 ### `leaderboard`
@@ -211,7 +211,7 @@ AND player_id IN (
 
 ## Data Lifecycle
 
-- **Registration**: `register_player` is called on first app launch. A `players` row is created with a unique display name. No `leaderboard` row exists yet.
+- **Registration**: `register_player` is called on first app launch (or after reinstall if `td_kc_registered` Keychain key is absent). A `players` row is created with a unique display name. No `leaderboard` row exists yet.
 - **Score submission**: `submit_score` upserts both `leaderboard` (all-time) and `runs` (period). The player appears in leaderboards only after their first submission.
 - **Continue**: `update_best_unassisted` optimistically updates `best_unassisted` in the leaderboard (best-effort, safe to fail). At game end, `submit_score` is the authoritative write: it sets `unassisted_score = p_pre_continue_score` in `runs` and increments `unassisted_lifetime_score` in `leaderboard`.
 - **Reset**: `reset_player_scores` wipes `leaderboard` and `runs` for the player. The `players` row (name) is preserved. The player disappears from leaderboards until their next game.
@@ -272,6 +272,17 @@ FROM analytics_daily GROUP BY 1 ORDER BY 1;
 ```
 
 Run `SELECT public.record_daily_analytics()` manually in the Supabase SQL editor to backfill or re-run any day. `ON CONFLICT DO UPDATE` makes it safe to run multiple times.
+
+---
+
+## Operational Notes
+
+### Wiping leaderboard data
+To reset all scores without disrupting active users, truncate only `leaderboard` and `runs`:
+```sql
+TRUNCATE leaderboard, runs;
+```
+**Do NOT truncate `players`.** Deleting `players` rows breaks score submission for any user whose app still has `td_kc_registered = '1'` in Keychain — their `submit_score` calls will fail (FK violation) and queue indefinitely. The only recovery is a reinstall, which re-runs `register_player` and re-creates the `players` row.
 
 ---
 
