@@ -107,7 +107,7 @@ game/                      # (empty — reserved)
 
 - **Project**: Topside: Dice Drop (separate from Topside Classic)
 - **iOS key**: `appl_bEfjghrErvdIBhSvAvrEMXEAInP`
-- **Android key**: `goog_eyVRQLwacLpBhQjOGF0VqesoYMT`
+- **Android key**: `goog_eyVRQLwacLpBhQjOGFOVqesoYMT`
 - **Entitlement**: `Topside: Dice Drop Premium`
 - **Product ID**: `com.topside.dicedrop.premium` (non-consumable, $4.99)
 - Packages fetched dynamically via `Purchases.getOfferings()` — no hardcoded product IDs

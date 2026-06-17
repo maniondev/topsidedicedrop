@@ -3,7 +3,7 @@ import { Platform, Alert } from 'react-native';
 import Purchases, { LOG_LEVEL, CustomerInfo } from 'react-native-purchases';
 
 const RC_IOS_KEY     = 'appl_bEfjghrErvdIBhSvAvrEMXEAInP';
-const RC_ANDROID_KEY = 'goog_eyVRQLwacLpBhQjOGF0VqesoYMT';
+const RC_ANDROID_KEY = 'goog_eyVRQLwacLpBhQjOGFOVqesoYMT';
 const ENTITLEMENT_ID = 'Topside: Dice Drop Premium';
 
 interface PremiumCtxType {

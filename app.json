@@ -59,7 +59,7 @@
             "imageWidth": 400
           },
           "android": {
-            "image": "./assets/images/splash-logo.png",
+            "image": "./assets/images/splash-logo-android.png",
             "imageWidth": 280
           }
         }
