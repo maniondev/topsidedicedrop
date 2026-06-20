@@ -1,10 +1,20 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo, ReactNode } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import Sound from 'react-native-sound';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { restoreGameAudioSession } from '@/lib/audioSession';
 import { SOUND_KEY } from '@/lib/storage';
+
+function loadSound(uri: string, vol: number): Promise<Sound | null> {
+  return new Promise(resolve => {
+    const snd = new Sound(uri, '', error => {
+      if (error) { resolve(null); return; }
+      try { snd.setVolume(vol); } catch {}
+      resolve(snd);
+    });
+  });
+}
 
 export type SoundPackId = 'topside' | 'splash' | 'dig' | 'marimba' | 'bubbles' | 'snow' | 'fight' | 'coins' | 'metal' | 'rubber';
 export const SOUND_PACK_IDS: SoundPackId[] = ['topside', 'splash', 'dig', 'marimba', 'bubbles', 'snow', 'fight', 'coins', 'metal', 'rubber'];
@@ -223,10 +233,13 @@ const SoundCtx = createContext<SoundCtxType>({
 export function SoundProvider({ children }: { children: ReactNode }) {
   const [soundEnabled, setSoundEnabledState] = useState(true);
   const [soundPack, setSoundPackState] = useState<SoundPackId>('topside');
-  const enabledRef = useRef(true);
+  const enabledRef   = useRef(true);
   enabledRef.current = soundEnabled;
-  const poolsRef = useRef<Partial<Record<SoundName, Sound[]>>>({});
-  const idxRef = useRef<Partial<Record<SoundName, number>>>({});
+  const soundPackRef = useRef<SoundPackId>('topside');
+  soundPackRef.current = soundPack;
+  const poolsRef    = useRef<Partial<Record<SoundName, Sound[]>>>({});
+  const idxRef      = useRef<Partial<Record<SoundName, number>>>({});
+  const loadingRef  = useRef(false);
 
   // Load persisted settings
   useEffect(() => {
@@ -234,47 +247,45 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     AsyncStorage.getItem(SOUND_PACK_KEY).then(v => { if (v && v in SOUND_PACKS) setSoundPackState(v as SoundPackId); }).catch(() => {});
   }, []);
 
-  // Reload sound pool when pack changes
-  useEffect(() => {
-    Sound.setCategory('Playback', true);
-    Sound.setActive(true);
+  async function buildPool(pack: SoundPackId, cancelled: () => boolean) {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    try {
+      Sound.setCategory('Playback', true);
+      Sound.setActive(true);
 
-    let cancelled = false;
-    const sources = SOUND_PACKS[soundPack];
-
-    (async () => {
-      // Release old pool
-      Object.values(poolsRef.current).forEach(arr => arr?.forEach(s => { try { s.stop(); s.release(); } catch {} }));
-      poolsRef.current = {};
-
-      // Download all assets in parallel instead of sequentially
-      const assets = SOUND_NAMES.map(name => ({ name, asset: Asset.fromModule(sources[name]) }));
+      const sources = SOUND_PACKS[pack];
+      const assets  = SOUND_NAMES.map(name => ({ name, asset: Asset.fromModule(sources[name]) }));
       await Promise.allSettled(assets.map(({ asset }) => asset.downloadAsync()));
-
-      if (cancelled) return;
+      if (cancelled()) return;
 
       const pools: Partial<Record<SoundName, Sound[]>> = {};
-      for (const { name, asset } of assets) {
+      await Promise.all(assets.map(async ({ name, asset }) => {
         const uri = asset.localUri || asset.uri;
-        const arr: Sound[] = [];
-        const vol = PACK_VOLUME[soundPack]?.[name] ?? VOLUME[name] ?? 1;
-        for (let i = 0; i < (POOL_SIZE[name] ?? 1); i++) {
-          const snd = new Sound(uri, '', () => { try { snd.setVolume(vol); } catch {} });
-          arr.push(snd);
-        }
-        pools[name] = arr;
+        const vol = PACK_VOLUME[pack]?.[name] ?? VOLUME[name] ?? 1;
+        const results = await Promise.all(
+          Array.from({ length: POOL_SIZE[name] ?? 1 }, () => loadSound(uri, vol))
+        );
+        pools[name] = results.filter((s): s is Sound => s !== null);
         idxRef.current[name] = 0;
-      }
-      if (cancelled) {
+      }));
+      if (cancelled()) {
         Object.values(pools).forEach(arr => arr?.forEach(s => { try { s.release(); } catch {} }));
         return;
       }
+      // Release old pool then swap in new one atomically
+      Object.values(poolsRef.current).forEach(arr => arr?.forEach(s => { try { s.stop(); s.release(); } catch {} }));
       poolsRef.current = pools;
-    })();
+    } finally {
+      loadingRef.current = false;
+    }
+  }
 
-    return () => {
-      cancelled = true;
-    };
+  // Reload sound pool when pack changes
+  useEffect(() => {
+    let cancelled = false;
+    buildPool(soundPack, () => cancelled);
+    return () => { cancelled = true; };
   }, [soundPack]);
 
   useEffect(() => {
@@ -287,7 +298,15 @@ export function SoundProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', state => {
-      if (state === 'active') restoreGameAudioSession(0);
+      if (state !== 'active') return;
+      if (Platform.OS === 'ios') {
+        restoreGameAudioSession(0);
+      } else {
+        // Android: setCategory/setActive are no-ops — reload the pool to recover
+        // from audio focus loss after backgrounding. Assets are cached locally so
+        // this completes in ~500ms without blocking the UI.
+        buildPool(soundPackRef.current, () => false);
+      }
     });
     return () => sub.remove();
   }, []);

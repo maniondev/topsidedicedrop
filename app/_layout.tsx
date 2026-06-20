@@ -12,6 +12,7 @@ import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import mobileAds, { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
 import { preloadAllAds } from '@/lib/adManager';
 import { replayQueue } from '@/lib/scoreQueue';
+import { initAppsFlyer } from '@/lib/appsflyer';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { PremiumProvider } from '@/contexts/PremiumContext';
 import { SoundProvider } from '@/contexts/SoundContext';
@@ -77,6 +78,8 @@ export default function RootLayout() {
         await new Promise<void>(resolve => setTimeout(resolve, 500));
         await requestTrackingPermissionsAsync();
       }
+
+      initAppsFlyer();
 
       await mobileAds().initialize();
       preloadAllAds();

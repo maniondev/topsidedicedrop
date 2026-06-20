@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { Platform, Alert } from 'react-native';
 import Purchases, { LOG_LEVEL, CustomerInfo } from 'react-native-purchases';
+import { logPurchaseEvent } from '@/lib/appsflyer';
 
 const RC_IOS_KEY     = 'appl_bEfjghrErvdIBhSvAvrEMXEAInP';
 const RC_ANDROID_KEY = 'goog_eyVRQLwacLpBhQjOGFOVqesoYMT';
@@ -57,6 +58,9 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
       const pkg = offerings.current?.availablePackages[0];
       if (!pkg) { Alert.alert('Error', 'No package found. Try again later.'); return; }
       const { customerInfo } = await Purchases.purchasePackage(pkg);
+      if (hasEntitlement(customerInfo)) {
+        logPurchaseEvent(pkg.product.price, pkg.product.currencyCode ?? 'USD');
+      }
       setIsPremium(hasEntitlement(customerInfo));
     } catch (e: any) {
       if (!e.userCancelled) Alert.alert('Purchase failed', e.message ?? 'Something went wrong.');

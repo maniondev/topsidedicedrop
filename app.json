@@ -15,9 +15,14 @@
       "infoPlist": {
         "NSUserTrackingUsageDescription": "This helps us show you relevant ads.",
         "SKAdNetworkItems": [
-          {
-            "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
-          }
+          { "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork" },
+          { "SKAdNetworkIdentifier": "v9wttpbfk9.skadnetwork" },
+          { "SKAdNetworkIdentifier": "n38lu8286q.skadnetwork" },
+          { "SKAdNetworkIdentifier": "2u9pt9hc89.skadnetwork" },
+          { "SKAdNetworkIdentifier": "yclnxrl5pm.skadnetwork" },
+          { "SKAdNetworkIdentifier": "4fzdc2evr5.skadnetwork" },
+          { "SKAdNetworkIdentifier": "4pfyvq9l8r.skadnetwork" },
+          { "SKAdNetworkIdentifier": "ludvb6z4gh.skadnetwork" }
         ],
         "ITSAppUsesNonExemptEncryption": false
       }
