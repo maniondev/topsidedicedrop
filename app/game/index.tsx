@@ -74,7 +74,7 @@ export default function GameScreen() {
   const cellSize      = Math.max(Math.min(csH, csW), 32);
   const boardW        = cellSize * COLS;
 
-  const game = useGame(gravityMs, paused);
+  const game = useGame(gravityMs, paused || reviewPromptVisible);
 
   const handlePause = useCallback(() => setPaused(true), []);
 
@@ -360,7 +360,7 @@ export default function GameScreen() {
   }, [difficulty]);
 
   const controlsDisabled =
-    paused ||
+    paused || reviewPromptVisible ||
     game.phase === 'resolving' || game.phase === 'spawning' ||
     game.phase === 'condensing' || game.phase === 'idle';
 
