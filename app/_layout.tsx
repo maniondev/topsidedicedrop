@@ -62,6 +62,11 @@ export default function RootLayout() {
 
   useEffect(() => {
     (async () => {
+      if (Platform.OS === 'ios') {
+        await new Promise<void>(resolve => setTimeout(resolve, 500));
+        await requestTrackingPermissionsAsync();
+      }
+
       try {
         const consentInfo = await AdsConsent.requestInfoUpdate();
         if (
@@ -72,11 +77,6 @@ export default function RootLayout() {
         }
       } catch (e) {
         console.warn('UMP consent error:', e);
-      }
-
-      if (Platform.OS === 'ios') {
-        await new Promise<void>(resolve => setTimeout(resolve, 500));
-        await requestTrackingPermissionsAsync();
       }
 
       initAppsFlyer();
