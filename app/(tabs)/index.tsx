@@ -43,7 +43,8 @@ export default function LobbyScreen() {
   const [newGameConfirmOpen, setNewGameConfirmOpen] = useState(false);
   const [premiumModalVisible, setPremiumModalVisible] = useState(false);
 
-  const { width } = useWindowDimensions();
+  const { width: rawWidth } = useWindowDimensions();
+  const width = Platform.isPad ? 390 : rawWidth;
   // Exact pixel widths so Continue/NewGame align with Medium/Hard edges.
   // Content = width - 40 (paddingH:20 each side), diff row gap:10 × 2 = 20 → each button = (width-60)/3.
   const diffBtnW  = (width - 60) / 3;

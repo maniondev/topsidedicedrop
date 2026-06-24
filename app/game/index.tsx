@@ -45,7 +45,8 @@ export default function GameScreen() {
   const { gravityMs, difficulty } = useDifficulty();
   const bestScore = statsFor(difficulty).bestScore;
   const bestUnassisted = statsFor(difficulty).bestUnassisted;
-  const { width, height } = useWindowDimensions();
+  const { width: rawWidth, height } = useWindowDimensions();
+  const width = Platform.isPad ? 390 : rawWidth;
   const { top: safeTop, bottom: safeBottom } = useSafeAreaInsets();
 
   const [paused, setPaused] = useState(false);
