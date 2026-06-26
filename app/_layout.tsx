@@ -2,8 +2,8 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet, Platform, AppState, View } from 'react-native';
-import { ReactNode, useEffect } from 'react';
+import { StyleSheet, Platform, AppState } from 'react-native';
+import { useEffect } from 'react';
 import { useFonts, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
 import { Fredoka_600SemiBold, Fredoka_700Bold } from '@expo-google-fonts/fredoka';
 import { Rubik_700Bold } from '@expo-google-fonts/rubik';
@@ -23,16 +23,6 @@ import { AnimationProvider } from '@/contexts/AnimationContext';
 import { DiceStyleProvider } from '@/contexts/DiceStyleContext';
 
 SplashScreen.preventAutoHideAsync();
-
-function IpadConstraint({ children }: { children: ReactNode }) {
-  const { colors } = useTheme();
-  if (!Platform.isPad) return <>{children}</>;
-  return (
-    <View style={[styles.ipadOuter, { backgroundColor: colors.background }]}>
-      <View style={styles.ipadInner}>{children}</View>
-    </View>
-  );
-}
 
 function AppShell() {
   const { colors } = useTheme();
@@ -102,23 +92,21 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <ThemeProvider>
-        <IpadConstraint>
-          <PremiumProvider>
-            <StatsProvider>
-              <DifficultyProvider>
-                <GameStatusProvider>
-                  <SoundProvider>
-                    <AnimationProvider>
-                      <DiceStyleProvider>
-                        <AppShell />
-                      </DiceStyleProvider>
-                    </AnimationProvider>
-                  </SoundProvider>
-                </GameStatusProvider>
-              </DifficultyProvider>
-            </StatsProvider>
-          </PremiumProvider>
-        </IpadConstraint>
+        <PremiumProvider>
+          <StatsProvider>
+            <DifficultyProvider>
+              <GameStatusProvider>
+                <SoundProvider>
+                  <AnimationProvider>
+                    <DiceStyleProvider>
+                      <AppShell />
+                    </DiceStyleProvider>
+                  </AnimationProvider>
+                </SoundProvider>
+              </GameStatusProvider>
+            </DifficultyProvider>
+          </StatsProvider>
+        </PremiumProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );
@@ -126,6 +114,4 @@ export default function RootLayout() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  ipadOuter: { flex: 1, backgroundColor: '#EDE8DF', alignItems: 'center' },
-  ipadInner: { flex: 1, width: 390 },
 });

@@ -34,7 +34,7 @@ const HUD_H    = 96;
 const BANNER_H = 60; // matches BANNER_RESERVED_H in AdBanner
 const CTRL_GAP = 6;  // must match GAP in Controls.tsx
 const S1       = 8;  // HUD → board (fixed px — board resizes, gaps don't)
-const S2       = 12; // board → controls, controls → ad
+const S2       = 12; // board → controls, controls → ad (scaled per-instance in component)
 
 export default function GameScreen() {
   const { fresh } = useLocalSearchParams<{ fresh?: string }>();
@@ -46,7 +46,9 @@ export default function GameScreen() {
   const bestScore = statsFor(difficulty).bestScore;
   const bestUnassisted = statsFor(difficulty).bestUnassisted;
   const { width: rawWidth, height } = useWindowDimensions();
-  const width = Platform.isPad ? 390 : rawWidth;
+  const isLargeScreen = Platform.isPad || rawWidth >= 600;
+  const width = isLargeScreen ? Math.min(rawWidth, 520) : rawWidth;
+  const s2 = isLargeScreen ? 24 : S2;
   const { top: safeTop, bottom: safeBottom } = useSafeAreaInsets();
 
   const [paused, setPaused] = useState(false);
@@ -65,7 +67,7 @@ export default function GameScreen() {
   }, []);
 
   const bannerH       = isPremium ? 0 : BANNER_H;
-  const spacingH      = S1 + S2 + (isPremium ? 0 : S2); // fixed gaps between sections
+  const spacingH      = S1 + s2 + (isPremium ? 0 : s2); // fixed gaps between sections
   const csW           = Math.floor((width - 32) / COLS);
   const approxBtnSize = Math.max(36, Math.floor((csW * COLS - CTRL_GAP * 4) / 5));
   // Use measured container height when available; fall back to dimension-based estimate for first frame.
@@ -484,7 +486,7 @@ export default function GameScreen() {
           </View>
         </GestureDetector>
 
-        <View style={{ height: S2 }} />
+        <View style={{ height: s2 }} />
 
         <View style={{ width: boardW }}>
           <Controls
@@ -499,7 +501,7 @@ export default function GameScreen() {
           />
         </View>
 
-        {!isPremium && <View style={{ height: S2 }} />}
+        {!isPremium && <View style={{ height: s2 }} />}
         {!isPremium && <AdBanner />}
       </View>
 

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Topside: Dice Drop",
+    "name": "Dice Drop",
     "slug": "topside-merge",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,7 +8,7 @@
     "scheme": "topside-dicedrop",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "com.topside.dicedrop",
       "buildNumber": "1",
       "minimumOsVersion": "16.0",

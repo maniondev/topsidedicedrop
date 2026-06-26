@@ -1,7 +1,9 @@
 import React, { useMemo, useState, useRef, useCallback, useImperativeHandle, forwardRef } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, Alert, Linking,
+  View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, Alert, Linking, Platform, Dimensions,
 } from 'react-native';
+
+const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring, withSequence, Easing,
 } from 'react-native-reanimated';
@@ -106,7 +108,7 @@ export default function SettingsScreen() {
               onPress={handleUpgrade}
               activeOpacity={0.85}
             >
-              <Ionicons name="star" size={16} color="#fff" />
+              <Ionicons name="star" size={IS_LARGE ? 20 : 16} color="#fff" />
               <Text style={[styles.upgradeBtnText, { color: '#fff' }]}>Unlock Premium</Text>
             </TouchableOpacity>
           )}
@@ -654,7 +656,7 @@ function makeStyles(c: ThemeColors) {
     content:        { paddingHorizontal: 20, paddingTop: 16 },
 
     screenTitle: {
-      fontSize: 28,
+      fontSize: IS_LARGE ? 36 : 28,
       fontWeight: '800',
       color: c.titleColor ?? c.text,
       letterSpacing: -0.5,
@@ -710,19 +712,19 @@ function makeStyles(c: ThemeColors) {
       flexDirection: 'row',
       alignItems: 'center',
       paddingHorizontal: 16,
-      paddingVertical: 14,
+      paddingVertical: IS_LARGE ? 18 : 14,
       borderBottomWidth: 1,
       borderBottomColor: c.separator,
       gap: 12,
     },
     rowLabel: {
       flex: 1,
-      fontSize: 15,
+      fontSize: IS_LARGE ? 18 : 15,
       color: c.text,
       fontWeight: '500',
     },
     rowValue: {
-      fontSize: 14,
+      fontSize: IS_LARGE ? 17 : 14,
       color: c.textSecondary,
       fontWeight: '600',
     },
@@ -751,7 +753,7 @@ function makeStyles(c: ThemeColors) {
       alignItems: 'center',
       gap: 8,
       borderRadius: 12,
-      paddingVertical: 11,
+      paddingVertical: IS_LARGE ? 16 : 11,
       paddingHorizontal: 20,
       marginHorizontal: 12,
       marginTop: 12,
@@ -759,7 +761,7 @@ function makeStyles(c: ThemeColors) {
       justifyContent: 'center',
     },
     upgradeBtnText: {
-      fontSize: 13,
+      fontSize: IS_LARGE ? 17 : 13,
       fontWeight: '700',
       letterSpacing: 0.2,
     },

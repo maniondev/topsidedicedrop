@@ -107,7 +107,7 @@ export default function PauseModal({ visible, onResume, onContinueLater, onQuitA
 
 const styles = StyleSheet.create({
   overlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center', padding: 40 },
-  card:       { width: '100%', borderRadius: 20, borderWidth: 1, padding: 28, alignItems: 'center', gap: 12, position: 'relative' },
+  card:       { width: '100%', maxWidth: 440, borderRadius: 20, borderWidth: 1, padding: 28, alignItems: 'center', gap: 12, position: 'relative' },
   muteBtn:    { position: 'absolute', top: 14, right: 14, width: 34, height: 34, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   title:      { fontSize: 28, marginBottom: 4 },
   subtitle:   { fontSize: 13, textAlign: 'center', lineHeight: 18, marginBottom: 4 },

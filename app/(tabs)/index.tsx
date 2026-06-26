@@ -43,12 +43,20 @@ export default function LobbyScreen() {
   const [newGameConfirmOpen, setNewGameConfirmOpen] = useState(false);
   const [premiumModalVisible, setPremiumModalVisible] = useState(false);
 
-  const { width: rawWidth } = useWindowDimensions();
-  const width = Platform.isPad ? 390 : rawWidth;
-  // Exact pixel widths so Continue/NewGame align with Medium/Hard edges.
-  // Content = width - 40 (paddingH:20 each side), diff row gap:10 × 2 = 20 → each button = (width-60)/3.
-  const diffBtnW  = (width - 60) / 3;
-  const continueW = Math.round(diffBtnW * 2 + 10);
+  const { width } = useWindowDimensions();
+  // Scale UI relative to a 390-pt baseline, capped at 1.4× for large screens (iPad / Android tablet).
+  const scale = Math.min(width / 390, 1.4);
+  const ph    = Math.round(20 * scale);   // paddingHorizontal
+  const gap   = Math.round(10 * scale);   // standard gap between siblings
+  const rowH  = Math.round((Platform.OS === 'android' ? 50 : 60) * scale);
+  const r14   = Math.round(14 * scale);
+  const r16   = Math.round(16 * scale);
+  const r12   = Math.round(12 * scale);
+  const f     = (n: number) => Math.round(n * scale);
+
+  // Button widths: content = width - 2*ph, 3 slots with 2 gaps between them
+  const diffBtnW  = (width - ph * 2 - gap * 2) / 3;
+  const continueW = Math.round(diffBtnW * 2 + gap);
   const newGameW  = Math.round(diffBtnW);
 
   const dstats = statsFor(difficulty);
@@ -100,26 +108,26 @@ export default function LobbyScreen() {
   }, []);
 
   return (
-    <View style={[styles.safe, { backgroundColor: colors.background, paddingTop: top }]}>
+    <View style={[styles.safe, { backgroundColor: colors.background, paddingTop: top, paddingHorizontal: ph }]}>
 
       {/* TOP — logo, difficulty, play */}
-      <View style={styles.topBlock}>
-        <View style={styles.titleRow}>
-          <AppLogo size={62} />
-          <View style={styles.titleTextBlock}>
-            <Text style={styles.titleText} numberOfLines={1} adjustsFontSizeToFit includeFontPadding={false}>
-              <Text style={[styles.titleTopside, { color: colors.titleColor ?? colors.text }]}>Topside</Text>
-              <Text style={[styles.titleColon, { color: colors.titleColor ?? colors.text }]}>: </Text>
-              <Text style={[styles.titleDiceDrop, { color: colors.accent }]}>Dice Drop</Text>
+      <View style={[styles.topBlock, { paddingTop: f(16), gap: f(12) }]}>
+        <View style={[styles.titleRow, { marginLeft: -f(8) }]}>
+          <AppLogo size={f(62)} />
+          <View style={[styles.titleTextBlock, { marginLeft: f(4) }]}>
+            <Text style={[styles.titleText, { fontSize: f(30), lineHeight: f(34) }]} numberOfLines={1} adjustsFontSizeToFit includeFontPadding={false}>
+              <Text style={[styles.titleTopside, { color: colors.titleColor ?? colors.text, fontSize: f(30) }]}>Topside</Text>
+              <Text style={[styles.titleColon, { color: colors.titleColor ?? colors.text, fontSize: f(30) }]}>: </Text>
+              <Text style={[styles.titleDiceDrop, { color: colors.accent, fontSize: f(28) }]}>Dice Drop</Text>
             </Text>
-            <Text style={[styles.subtitleText, { color: colors.textSecondary }]}>
+            <Text style={[styles.subtitleText, { color: colors.textSecondary, fontSize: f(13), marginTop: Platform.OS === 'android' ? 1 : f(3) }]}>
               A drop and merge game.
             </Text>
           </View>
         </View>
 
-        <View style={styles.diffSection}>
-          <View style={styles.diffRow}>
+        <View style={[styles.diffSection, { height: rowH }]}>
+          <View style={[styles.diffRow, { gap }]}>
             {DIFFICULTIES.map(d => {
               const active = d.id === difficulty;
               return (
@@ -127,6 +135,7 @@ export default function LobbyScreen() {
                   key={d.id}
                   style={[
                     styles.diffBtn,
+                    { flex: 1, borderRadius: r14 },
                     active
                       ? { backgroundColor: colors.accent, borderColor: colors.accent }
                       : { backgroundColor: colors.card, borderColor: colors.border },
@@ -135,7 +144,7 @@ export default function LobbyScreen() {
                 >
                   <Text style={[
                     styles.diffLabel,
-                    { color: active ? colors.accentText : colors.textSecondary, fontWeight: active ? '700' : '400' },
+                    { fontSize: f(15), color: active ? colors.accentText : colors.textSecondary, fontWeight: active ? '700' : '400' },
                   ]}>
                     {d.label}
                   </Text>
@@ -145,30 +154,30 @@ export default function LobbyScreen() {
           </View>
         </View>
 
-        <View style={hasSavedGame ? styles.btnRow : styles.btnSingle}>
+        <View style={hasSavedGame ? [styles.btnRow, { gap }] : styles.btnSingle}>
           {hasSavedGame ? (
             <>
               <TouchableOpacity
-                style={[styles.playBtn, { width: continueW, backgroundColor: colors.accent }]}
+                style={[styles.playBtn, { width: continueW, height: rowH, borderRadius: r14, backgroundColor: colors.accent }]}
                 onPress={handleContinue}
               >
-                <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'Rubik_700Bold' }]}>
+                <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'Rubik_700Bold', fontSize: f(24) }]}>
                   Continue
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.diffBtn, { width: newGameW, backgroundColor: colors.card, borderColor: colors.border }]}
+                style={[styles.diffBtn, { width: newGameW, height: rowH, borderRadius: r14, backgroundColor: colors.card, borderColor: colors.border }]}
                 onPress={handleNewGame}
               >
-                <Text style={[styles.diffLabel, { color: colors.textSecondary, fontWeight: '400' }]}>New Game</Text>
+                <Text style={[styles.diffLabel, { fontSize: f(15), color: colors.textSecondary, fontWeight: '400' }]}>New Game</Text>
               </TouchableOpacity>
             </>
           ) : (
             <TouchableOpacity
-              style={[styles.playBtn, { backgroundColor: colors.accent }]}
+              style={[styles.playBtn, { height: rowH, borderRadius: r14, backgroundColor: colors.accent }]}
               onPress={handleNewGame}
             >
-              <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'Rubik_700Bold' }]}>
+              <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'Rubik_700Bold', fontSize: f(24) }]}>
                 Play
               </Text>
             </TouchableOpacity>
@@ -177,71 +186,71 @@ export default function LobbyScreen() {
       </View>
 
       {/* SPACER 1 — flexible, divider centered within */}
-      <View style={styles.spacer}>
+      <View style={[styles.spacer, { maxHeight: f(40) }]}>
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
       </View>
 
       {/* MIDDLE — 2x2 stat grid */}
-      <View style={styles.statsGrid}>
-        <View style={styles.statsRow}>
-          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Ionicons name="trophy-outline" size={22} color={colors.accent} style={styles.heroIcon} />
-            <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'Rubik_700Bold' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+      <View style={[styles.statsGrid, { gap: f(12) }]}>
+        <View style={[styles.statsRow, { gap: f(12) }]}>
+          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
+            <Ionicons name="trophy-outline" size={f(22)} color={colors.accent} />
+            <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
               {dstats.bestScore > 0 ? dstats.bestScore.toLocaleString() : '—'}
             </Text>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>BEST OVERALL</Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>BEST OVERALL</Text>
           </View>
-          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Ionicons name="star-outline" size={22} color={colors.accent} style={styles.heroIcon} />
-            <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'Rubik_700Bold' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
+            <Ionicons name="star-outline" size={f(22)} color={colors.accent} />
+            <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
               {dstats.bestUnassisted > 0 ? dstats.bestUnassisted.toLocaleString() : '—'}
             </Text>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>BEST UNASSISTED</Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>BEST UNASSISTED</Text>
           </View>
         </View>
-        <View style={styles.statsRow}>
-          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Ionicons name="timer-outline" size={22} color={colors.textSecondary} style={styles.heroIcon} />
-            <Text style={[styles.heroValue, { color: colors.textSecondary, fontFamily: 'Rubik_700Bold' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+        <View style={[styles.statsRow, { gap: f(12) }]}>
+          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
+            <Ionicons name="timer-outline" size={f(22)} color={colors.textSecondary} />
+            <Text style={[styles.heroValue, { color: colors.textSecondary, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
               {lastRunScore > 0 ? lastRunScore.toLocaleString() : '—'}
             </Text>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>LAST RUN</Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>LAST RUN</Text>
           </View>
-          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Ionicons name="flame-outline" size={22} color={colors.textSecondary} style={styles.heroIcon} />
-            <Text style={[styles.heroValue, { color: colors.textSecondary, fontFamily: 'Rubik_700Bold' }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
+            <Ionicons name="flame-outline" size={f(22)} color={colors.textSecondary} />
+            <Text style={[styles.heroValue, { color: colors.textSecondary, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
               {currentStreak > 0 ? currentStreak.toLocaleString() : '—'}
             </Text>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary }]}>DAY STREAK</Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>DAY STREAK</Text>
           </View>
         </View>
       </View>
 
       {/* SPACER 2 — flexible, divider centered within */}
-      <View style={styles.spacer}>
+      <View style={[styles.spacer, { maxHeight: f(40) }]}>
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
       </View>
 
       {/* BOTTOM — how to play + sound toggle + premium */}
-      <View style={styles.bottomBlock}>
-        <View style={styles.bottomRow}>
+      <View style={[styles.bottomBlock, { paddingBottom: f(20), gap: f(12) }]}>
+        <View style={[styles.bottomRow, { gap }]}>
           <TouchableOpacity
-            style={[styles.howToPlayBtn, { flex: 1, backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+            style={[styles.rowBtn, { flex: 1, height: rowH, borderRadius: r14, paddingHorizontal: f(16), gap: f(8), backgroundColor: colors.card, borderColor: colors.cardBorder }]}
             onPress={() => setHowToOpen(true)}
           >
-            <Ionicons name="book-outline" size={18} color={colors.accent} />
-            <Text style={[styles.howToPlayText, { color: colors.textSecondary }]}>How to Play</Text>
+            <Ionicons name="book-outline" size={f(18)} color={colors.accent} />
+            <Text style={[styles.rowBtnText, { color: colors.textSecondary, fontSize: f(15) }]}>How to Play</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.soundBtn, { flex: 1, backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+            style={[styles.rowBtn, { flex: 1, height: rowH, borderRadius: r14, paddingHorizontal: f(16), gap: f(8), backgroundColor: colors.card, borderColor: colors.cardBorder }]}
             onPress={() => setSoundEnabled(!soundEnabled)}
           >
             <Ionicons
               name={soundEnabled ? 'volume-high' : 'volume-mute'}
-              size={20}
+              size={f(20)}
               color={soundEnabled ? colors.accent : colors.textMuted}
             />
-            <Text style={[styles.soundBtnText, { color: colors.textSecondary }]}>
+            <Text style={[styles.rowBtnText, { color: colors.textSecondary, fontSize: f(15), width: f(76) }]}>
               {soundEnabled ? 'Sound On' : 'Sound Off'}
             </Text>
           </TouchableOpacity>
@@ -249,12 +258,12 @@ export default function LobbyScreen() {
 
         {!isPremium && (
           <TouchableOpacity
-            style={[styles.unlockBanner, { backgroundColor: colors.premiumGold }]}
+            style={[styles.unlockBanner, { backgroundColor: colors.premiumGold, borderRadius: r12, paddingVertical: f(11), paddingHorizontal: f(16), gap: f(7) }]}
             onPress={() => setPremiumModalVisible(true)}
             activeOpacity={0.85}
           >
-            <Ionicons name="star" size={14} color={colors.accentText} />
-            <Text style={[styles.unlockBannerText, { color: colors.accentText }]}>
+            <Ionicons name="star" size={f(14)} color={colors.accentText} />
+            <Text style={[styles.unlockBannerText, { color: colors.accentText, fontSize: f(13) }]}>
               Unlock Sound Packs, Themes, and More
             </Text>
           </TouchableOpacity>
@@ -299,52 +308,43 @@ export default function LobbyScreen() {
   );
 }
 
-const ROW_H = Platform.OS === 'android' ? 50 : 60;
-
 const styles = StyleSheet.create({
-  safe:           { flex: 1, paddingHorizontal: 20 },
+  safe:         { flex: 1 },
+  topBlock:     {},
+  spacer:       { flex: 1, justifyContent: 'center' },
+  divider:      { height: 1 },
+  statsGrid:    { flex: 1 },
+  statsRow:     { flex: 1, flexDirection: 'row' },
+  bottomBlock:  {},
 
-  topBlock:       { paddingTop: 16, gap: 12 },
-  spacer:         { flex: 1, maxHeight: 40, justifyContent: 'center' },
-  divider:        { height: 1 },
-  statsGrid:      { flex: 1, gap: 12 },
-  statsRow:       { flex: 1, flexDirection: 'row', gap: 12 },
-  bottomBlock:    { paddingBottom: 20, gap: 12 },
+  titleRow:       { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
+  titleTextBlock: { flex: 1 },
+  titleText:      {},
+  titleTopside:   { fontFamily: 'PlayfairDisplay_700Bold', letterSpacing: 0.5 },
+  titleColon:     { fontFamily: 'PlayfairDisplay_700Bold' },
+  titleDiceDrop:  { fontFamily: 'Rubik_700Bold', letterSpacing: 0.5 },
+  subtitleText:   { fontWeight: '600', letterSpacing: 0.3, marginLeft: 2 },
 
-  titleRow:       { flexDirection: 'row', alignItems: 'center', marginBottom: 2, marginLeft: -8 },
-  titleTextBlock: { flex: 1, marginLeft: 4 },
-  titleText:      { fontSize: 30, lineHeight: 34 },
-  titleTopside:   { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 30, letterSpacing: 0.5 },
-  titleColon:     { fontFamily: 'PlayfairDisplay_700Bold', fontSize: 30 },
-  titleDiceDrop:  { fontFamily: 'Rubik_700Bold', fontSize: 28, letterSpacing: 0.5 },
-  subtitleText:   { fontSize: 13, fontWeight: '600', letterSpacing: 0.3, marginTop: Platform.OS === 'android' ? 1 : 3, marginLeft: 2 },
+  heroLabel:      { fontWeight: '700', letterSpacing: 1.5, textAlign: 'center' },
+  heroValue:      {},
+  bestScoreCard:  { flex: 1, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
 
-  heroIcon:       {},
-  heroLabel:      { fontSize: 10, fontWeight: '700', letterSpacing: 1.5, textAlign: 'center' },
-  heroValue:      { fontSize: 36, lineHeight: 38 },
-  bestScoreCard:  { flex: 1, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center', gap: 6 },
+  diffSection:  {},
+  diffRow:      { flexDirection: 'row', height: '100%' },
+  diffBtn:      { borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  diffLabel:    {},
 
+  btnRow:       { flexDirection: 'row' },
+  btnSingle:    {},
+  playBtn:      { alignItems: 'center', justifyContent: 'center' },
+  playBtnText:  {},
 
-  diffSection:    { height: ROW_H },
-  diffRow:        { flexDirection: 'row', gap: 10, height: '100%' },
-  diffBtn:        { flex: 1, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  diffLabel:      { fontSize: 15 },
+  bottomRow:    { flexDirection: 'row' },
+  rowBtn:       { borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  rowBtnText:   { fontWeight: '500' },
 
-  btnRow:         { flexDirection: 'row', gap: 10 },
-  btnSingle:      { gap: 0 },
-  playBtn:        { height: ROW_H, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  playBtnText:    { fontSize: 24 },
-  newGameBtn:     { height: ROW_H, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  newGameText:    { fontSize: 15 },
-
-  bottomRow:      { flexDirection: 'row', gap: 10 },
-  howToPlayBtn:   { height: ROW_H, borderRadius: 14, borderWidth: 1, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  howToPlayText:  { fontSize: 15, fontWeight: '500' },
-  soundBtn:       { height: ROW_H, borderRadius: 14, borderWidth: 1, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  soundBtnText:   { fontSize: 15, fontWeight: '500', width: 76 },
-
-  unlockBanner:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderRadius: 12, paddingVertical: 11, paddingHorizontal: 16 },
-  unlockBannerText: { fontSize: 13, fontWeight: '700' },
+  unlockBanner:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+  unlockBannerText: { fontWeight: '700' },
 
   modalOverlay:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center', padding: 40 },
   modalCard:        { width: '100%', borderRadius: 20, borderWidth: 1, padding: 28, alignItems: 'center', gap: 12 },

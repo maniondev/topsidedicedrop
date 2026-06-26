@@ -1,5 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, Pressable, Platform, Dimensions } from 'react-native';
+
+const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
 import Animated, { useSharedValue, withTiming, Easing, useAnimatedStyle, interpolateColor } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
@@ -640,22 +642,22 @@ const styles = StyleSheet.create({
 
   segment:        { flexDirection: 'row', borderRadius: 12, borderWidth: 1, padding: 3, gap: 3 },
   segPill:        { position: 'absolute', top: 3, bottom: 3, left: 3, borderRadius: 9 },
-  segBtn:         { flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center', zIndex: 1 },
-  segBtnText:     { fontSize: 14 },
+  segBtn:         { flex: 1, paddingVertical: IS_LARGE ? 13 : 9, borderRadius: 9, alignItems: 'center', zIndex: 1 },
+  segBtnText:     { fontSize: IS_LARGE ? 17 : 14 },
 
   filterGrid:          { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  dropdown:            { width: '48.5%', borderRadius: 10, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 9 },
-  dropdownLabel:       { fontSize: 10, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 3 },
+  dropdown:            { width: '48.5%', borderRadius: 10, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: IS_LARGE ? 13 : 9 },
+  dropdownLabel:       { fontSize: IS_LARGE ? 12 : 10, fontWeight: '700', letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 3 },
   dropdownValue:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  dropdownValueText:   { fontSize: 14, fontWeight: '600' },
+  dropdownValueText:   { fontSize: IS_LARGE ? 17 : 14, fontWeight: '600' },
   dropdownOverlay:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 40 },
   dropdownMenu:        { width: '100%', borderRadius: 14, borderWidth: 1, overflow: 'hidden' },
   dropdownMenuTitle:   { fontSize: 11, fontWeight: '700', letterSpacing: 1, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6 },
   dropdownMenuItem:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1 },
   dropdownMenuItemText:{ fontSize: 16 },
 
-  nameCard:       { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, height: 44 },
-  nameText:       { flex: 1, fontSize: 15, fontWeight: '600' },
+  nameCard:       { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, height: IS_LARGE ? 56 : 44 },
+  nameText:       { flex: 1, fontSize: IS_LARGE ? 18 : 15, fontWeight: '600' },
   regenBtn:       { paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center' },
   regenText:      { fontSize: 12 },
 

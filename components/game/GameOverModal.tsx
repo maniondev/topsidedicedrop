@@ -76,7 +76,7 @@ export default function GameOverModal({
 
 const styles = StyleSheet.create({
   overlay:      { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 32 },
-  card:         { width: '100%', borderRadius: 20, borderWidth: 1, padding: 28, alignItems: 'center', gap: 12 },
+  card:         { width: '100%', maxWidth: 480, borderRadius: 20, borderWidth: 1, padding: 28, alignItems: 'center', gap: 12 },
   title:        { fontSize: 26 },
   newBest:      { fontSize: 15, fontWeight: '700', letterSpacing: 0.5 },
   score:        { fontSize: 52, lineHeight: 60 },

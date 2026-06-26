@@ -58,7 +58,7 @@ export default function HowToPlayModal({ visible, onClose }: Props) {
 
 const styles = StyleSheet.create({
   overlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 28 },
-  card:      { width: '100%', borderRadius: 20, borderWidth: 1, padding: 20, gap: 14 },
+  card:      { width: '100%', maxWidth: 440, borderRadius: 20, borderWidth: 1, padding: 20, gap: 14 },
   title:     { fontSize: 22, textAlign: 'center' },
   rules:     { gap: 10 },
   rule:      { gap: 2 },

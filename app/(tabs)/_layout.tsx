@@ -1,9 +1,11 @@
 import { Tabs } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Platform } from 'react-native';
+import { Dimensions, Platform } from 'react-native';
 import { HapticTab } from '@/components/haptic-tab';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
 
 export default function TabLayout() {
   const { colors } = useTheme();
@@ -22,18 +24,19 @@ export default function TabLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          paddingTop: 10,
+          paddingTop: IS_LARGE ? 14 : 10,
           paddingBottom: bottomPad,
-          height: 60 + bottomPad,
+          height: (IS_LARGE ? 72 : 60) + bottomPad,
         },
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textDim,
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: IS_LARGE ? 14 : 11,
           fontWeight: '600',
           letterSpacing: 0.3,
           marginTop: 2,
         },
+        tabBarIconStyle: IS_LARGE ? { transform: [{ scale: 1.3 }] } : undefined,
       }}
     >
       <Tabs.Screen
