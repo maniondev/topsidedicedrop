@@ -1,6 +1,8 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+
+const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
 
 interface Props {
   visible: boolean;
@@ -76,14 +78,14 @@ export default function GameOverModal({
 
 const styles = StyleSheet.create({
   overlay:      { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 32 },
-  card:         { width: '100%', maxWidth: 480, borderRadius: 20, borderWidth: 1, padding: 28, alignItems: 'center', gap: 12 },
-  title:        { fontSize: 26 },
-  newBest:      { fontSize: 15, fontWeight: '700', letterSpacing: 0.5 },
-  score:        { fontSize: 52, lineHeight: 60 },
-  bestLabel:    { fontSize: 14 },
-  continueBtn:  { width: '100%', paddingVertical: 14, borderRadius: 14, alignItems: 'center', gap: 2 },
-  continueBtnText: { fontSize: 16, fontWeight: '700' },
-  continueSub:  { fontSize: 12, opacity: 0.85 },
-  newGameBtn:   { width: '100%', paddingVertical: 13, borderRadius: 14, alignItems: 'center', borderWidth: 1 },
-  newGameText:  { fontSize: 16, fontWeight: '600' },
+  card:         { width: '100%', maxWidth: 440, borderRadius: 20, borderWidth: 1, padding: 28, alignItems: 'center', gap: IS_LARGE ? 16 : 12 },
+  title:        { fontSize: IS_LARGE ? 32 : 26 },
+  newBest:      { fontSize: IS_LARGE ? 19 : 15, fontWeight: '700', letterSpacing: 0.5 },
+  score:        { fontSize: IS_LARGE ? 68 : 52, lineHeight: IS_LARGE ? 78 : 60 },
+  bestLabel:    { fontSize: IS_LARGE ? 18 : 14 },
+  continueBtn:  { width: '100%', paddingVertical: IS_LARGE ? 20 : 14, borderRadius: 14, alignItems: 'center', gap: 2 },
+  continueBtnText: { fontSize: IS_LARGE ? 20 : 16, fontWeight: '700' },
+  continueSub:  { fontSize: IS_LARGE ? 15 : 12, opacity: 0.85 },
+  newGameBtn:   { width: '100%', paddingVertical: IS_LARGE ? 18 : 13, borderRadius: 14, alignItems: 'center', borderWidth: 1 },
+  newGameText:  { fontSize: IS_LARGE ? 20 : 16, fontWeight: '600' },
 });

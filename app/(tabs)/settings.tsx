@@ -68,7 +68,6 @@ export default function SettingsScreen() {
     stats.recentRuns = [...fakeRuns, ...stats.recentRuns].slice(0, 100);
     await saveStats(stats);
     await refresh();
-    await submitScoreForCurrentPlayer({ p_score: 12294, p_best_chain: 9, p_difficulty: 'medium', p_used_continue: false });
     Alert.alert('Done', 'Stats boosted for screenshots!');
   };
 
@@ -290,7 +289,7 @@ export default function SettingsScreen() {
           />
           <View style={styles.row}>
             <Text style={[styles.rowLabel, { fontSize: 12, color: colors.textMuted }]}>
-              Reduces visual effects for smoother gameplay on older devices. On by default for Android.
+              Reduces visual effects for smoother gameplay on older devices.
             </Text>
           </View>
         </Section>
@@ -665,7 +664,7 @@ function makeStyles(c: ThemeColors) {
 
     section:      { marginBottom: 24 },
     sectionLabel: {
-      fontSize: 12,
+      fontSize: IS_LARGE ? 15 : 12,
       fontWeight: '700',
       color: c.textSecondary,
       textTransform: 'uppercase',
@@ -689,7 +688,7 @@ function makeStyles(c: ThemeColors) {
       marginTop: 4,
     },
     customizeTitle: {
-      fontSize: 20,
+      fontSize: IS_LARGE ? 24 : 20,
       fontWeight: '800',
       color: c.text,
       letterSpacing: -0.3,
@@ -739,11 +738,11 @@ function makeStyles(c: ThemeColors) {
       borderBottomColor: c.separator,
     },
     premiumTitle: {
-      fontSize: 15,
+      fontSize: IS_LARGE ? 18 : 15,
       fontWeight: '700',
     },
     premiumSub: {
-      fontSize: 12,
+      fontSize: IS_LARGE ? 15 : 12,
       color: c.textSecondary,
       marginTop: 2,
     },
@@ -809,7 +808,7 @@ function makeStyles(c: ThemeColors) {
     },
 
     innerSectionLabel: {
-      fontSize: 11,
+      fontSize: IS_LARGE ? 14 : 11,
       fontWeight: '700',
       color: c.textSecondary,
       textTransform: 'uppercase',
@@ -846,12 +845,12 @@ function makeStyles(c: ThemeColors) {
       marginBottom: 2,
     },
     packCardLabel: {
-      fontSize: 12,
+      fontSize: IS_LARGE ? 14 : 12,
       fontWeight: '700',
     },
     packCardDesc: {
-      fontSize: 10,
-      lineHeight: 13,
+      fontSize: IS_LARGE ? 12 : 10,
+      lineHeight: IS_LARGE ? 16 : 13,
     },
   });
 }

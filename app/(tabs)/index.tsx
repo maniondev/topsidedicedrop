@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Modal, useWindowDimensions, Platform,
+  View, Text, TouchableOpacity, StyleSheet, Modal, useWindowDimensions, Platform, Dimensions,
 } from 'react-native';
+
+const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
@@ -347,11 +349,11 @@ const styles = StyleSheet.create({
   unlockBannerText: { fontWeight: '700' },
 
   modalOverlay:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center', padding: 40 },
-  modalCard:        { width: '100%', borderRadius: 20, borderWidth: 1, padding: 28, alignItems: 'center', gap: 12 },
-  modalTitle:       { fontSize: 28, marginBottom: 4 },
-  modalSubtitle:    { fontSize: 13, textAlign: 'center', lineHeight: 18, marginBottom: 4 },
-  modalBtn:         { width: '100%', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
-  modalBtnText:     { fontSize: 17, fontWeight: '700' },
-  modalOutlineBtn:  { width: '100%', paddingVertical: 12, borderRadius: 12, alignItems: 'center', borderWidth: 1.5 },
-  modalOutlineText: { fontSize: 16, fontWeight: '600' },
+  modalCard:        { width: '100%', maxWidth: 440, borderRadius: 20, borderWidth: 1, padding: 28, alignItems: 'center', gap: IS_LARGE ? 16 : 12 },
+  modalTitle:       { fontSize: IS_LARGE ? 32 : 28, marginBottom: 4 },
+  modalSubtitle:    { fontSize: IS_LARGE ? 17 : 13, textAlign: 'center', lineHeight: IS_LARGE ? 24 : 18, marginBottom: 4 },
+  modalBtn:         { width: '100%', paddingVertical: IS_LARGE ? 20 : 14, borderRadius: 12, alignItems: 'center' },
+  modalBtnText:     { fontSize: IS_LARGE ? 20 : 17, fontWeight: '700' },
+  modalOutlineBtn:  { width: '100%', paddingVertical: IS_LARGE ? 18 : 12, borderRadius: 12, alignItems: 'center', borderWidth: 1.5 },
+  modalOutlineText: { fontSize: IS_LARGE ? 19 : 16, fontWeight: '600' },
 });

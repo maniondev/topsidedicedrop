@@ -1,6 +1,8 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+
+const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
 
 interface Props {
   visible: boolean;
@@ -59,12 +61,12 @@ export default function HowToPlayModal({ visible, onClose }: Props) {
 const styles = StyleSheet.create({
   overlay:   { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 28 },
   card:      { width: '100%', maxWidth: 440, borderRadius: 20, borderWidth: 1, padding: 20, gap: 14 },
-  title:     { fontSize: 22, textAlign: 'center' },
-  rules:     { gap: 10 },
+  title:     { fontSize: IS_LARGE ? 32 : 22, textAlign: 'center' },
+  rules:     { gap: IS_LARGE ? 16 : 10 },
   rule:      { gap: 2 },
-  ruleTitle: { fontSize: 16, fontWeight: '700' },
-  ruleBody:  { fontSize: 13, lineHeight: 19 },
+  ruleTitle: { fontSize: IS_LARGE ? 23 : 16, fontWeight: '700' },
+  ruleBody:  { fontSize: IS_LARGE ? 19 : 13, lineHeight: IS_LARGE ? 27 : 19 },
   verb:      { fontWeight: '700' },
-  btn:       { paddingVertical: 13, borderRadius: 12, alignItems: 'center' },
-  btnText:   { fontSize: 16, fontWeight: '700' },
+  btn:       { paddingVertical: IS_LARGE ? 20 : 13, borderRadius: 12, alignItems: 'center' },
+  btnText:   { fontSize: IS_LARGE ? 22 : 16, fontWeight: '700' },
 });

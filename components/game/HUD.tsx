@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
 import { Canvas, RoundedRect, Circle, Rect, Group, BlurMask, Line, RadialGradient, vec, rrect, rect } from '@shopify/react-native-skia';
 import { useTheme, useDieColors } from '@/contexts/ThemeContext';
 import { useDiceStyle, DiceStyleId } from '@/contexts/DiceStyleContext';
@@ -15,9 +15,10 @@ const DOT_POSITIONS: Record<number, Array<[number, number]>> = {
   6: [[0.28, 0.22], [0.72, 0.22], [0.28, 0.50], [0.72, 0.50], [0.28, 0.78], [0.72, 0.78]],
 };
 
-const CS = 18;
-const NEXT_CANVAS_W = 64;
-const VALUE_AREA_H  = 56;
+const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
+const CS = IS_LARGE ? 26 : 18;
+const NEXT_CANVAS_W = IS_LARGE ? 90 : 64;
+const VALUE_AREA_H  = IS_LARGE ? 76 : 56;
 
 function PreviewDie({ x, y, cs, value, faceColor, dotColor, diceStyle }: {
   x: number; y: number; cs: number; value: number;
@@ -161,20 +162,28 @@ interface Props {
   bestScore: number;
   nextPiece?: QueuedPiece;
   onLogoPress?: () => void;
+  isLarge?: boolean;
 }
 
 function valueFontSize(n: number): number {
   const len = Math.round(n).toLocaleString().length;
+  if (IS_LARGE) {
+    if (len <= 5) return 38;
+    if (len === 6) return 32;
+    if (len === 7) return 27;
+    return 23;
+  }
   if (len <= 5) return 28;
   if (len === 6) return 24;
   if (len === 7) return 21;
   return 18;
 }
 
-function HUD({ score, bestScore, nextPiece, onLogoPress }: Props) {
+function HUD({ score, bestScore, nextPiece, onLogoPress, isLarge }: Props) {
   const { colors } = useTheme();
   const { faceColor, dotColor } = useDieColors();
   const { diceStyle } = useDiceStyle();
+  const logoSize = isLarge ? 76 : 58;
 
   return (
     <View style={styles.row}>
@@ -186,7 +195,7 @@ function HUD({ score, bestScore, nextPiece, onLogoPress }: Props) {
         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         activeOpacity={0.6}
       >
-        <AppLogo size={58} />
+        <AppLogo size={logoSize} />
       </TouchableOpacity>
 
       <View style={styles.columns}>
@@ -233,8 +242,8 @@ const styles = StyleSheet.create({
   logoBtn:   { marginLeft: 14, marginRight: -4 },
   columns:   { flex: 1, flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-around' },
   col:       { flex: 1, alignItems: 'center' },
-  label:     { fontSize: 11, fontWeight: '700', letterSpacing: 1.5 },
+  label:     { fontSize: IS_LARGE ? 14 : 11, fontWeight: '700', letterSpacing: 1.5 },
   valueArea: { height: VALUE_AREA_H, alignItems: 'center', justifyContent: 'center' },
   value:     { fontSize: 28 },
-  divider:   { width: 1, height: VALUE_AREA_H, marginTop: 16 },
+  divider:   { width: 1, height: VALUE_AREA_H, marginTop: IS_LARGE ? 20 : 16 },
 });

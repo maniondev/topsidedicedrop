@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
+const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSound } from '@/contexts/SoundContext';
 
@@ -110,10 +112,10 @@ const styles = StyleSheet.create({
   card:       { width: '100%', maxWidth: 440, borderRadius: 20, borderWidth: 1, padding: 28, alignItems: 'center', gap: 12, position: 'relative' },
   muteBtn:    { position: 'absolute', top: 14, right: 14, width: 34, height: 34, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   title:      { fontSize: 28, marginBottom: 4 },
-  subtitle:   { fontSize: 13, textAlign: 'center', lineHeight: 18, marginBottom: 4 },
-  btn:        { width: '100%', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
-  btnText:    { fontSize: 17, fontWeight: '700' },
-  outlineBtn: { width: '100%', paddingVertical: 12, borderRadius: 12, alignItems: 'center', borderWidth: 1.5, gap: 3 },
-  outlineText:{ fontSize: 16, fontWeight: '600' },
+  subtitle:   { fontSize: IS_LARGE ? 16 : 13, textAlign: 'center', lineHeight: IS_LARGE ? 22 : 18, marginBottom: 4 },
+  btn:        { width: '100%', paddingVertical: IS_LARGE ? 20 : 14, borderRadius: 12, alignItems: 'center' },
+  btnText:    { fontSize: IS_LARGE ? 20 : 17, fontWeight: '700' },
+  outlineBtn: { width: '100%', paddingVertical: IS_LARGE ? 18 : 12, borderRadius: 12, alignItems: 'center', borderWidth: 1.5, gap: 3 },
+  outlineText:{ fontSize: IS_LARGE ? 18 : 16, fontWeight: '600' },
   subText:    { fontSize: 11 },
 });

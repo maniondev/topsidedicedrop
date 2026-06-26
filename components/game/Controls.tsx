@@ -35,7 +35,7 @@ const CtrlBtn = React.memo(function CtrlBtn({ onPress, children, size }: {
 });
 
 // Tap = soft drop one cell. Hold 300ms = hard drop (snap to bottom).
-function DropButton({ onSoftDrop, onHardDrop, size }: { onSoftDrop: () => void; onHardDrop: () => void; size: number }) {
+function DropButton({ onSoftDrop, onHardDrop, size, iconSize }: { onSoftDrop: () => void; onHardDrop: () => void; size: number; iconSize: number }) {
   const { colors } = useTheme();
   const holdTimerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didHardDropRef = useRef(false);
@@ -60,7 +60,7 @@ function DropButton({ onSoftDrop, onHardDrop, size }: { onSoftDrop: () => void; 
       }}
       activeOpacity={0.65}
     >
-      <Ionicons name="arrow-down" size={22} color={colors.textSecondary} />
+      <Ionicons name="arrow-down" size={iconSize} color={colors.textSecondary} />
     </TouchableOpacity>
   );
 }
@@ -69,6 +69,7 @@ const Controls = React.memo(function Controls({ onLeft, onRight, onRotate, onSof
   const { colors } = useTheme();
   // All 5 buttons equal size; space-between aligns outer edges with board edges.
   const btnSize = Math.max(36, Math.floor((boardW - GAP * 4) / 5));
+  const iconSize = Math.max(20, Math.round(btnSize * 0.28));
 
   return (
     <View style={styles.row}>
@@ -77,22 +78,22 @@ const Controls = React.memo(function Controls({ onLeft, onRight, onRotate, onSof
         onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPause(); }}
         activeOpacity={0.65}
       >
-        <Ionicons name="pause" size={20} color={colors.textMuted} />
+        <Ionicons name="pause" size={iconSize} color={colors.textMuted} />
       </TouchableOpacity>
 
       <CtrlBtn onPress={onLeft} size={btnSize}>
-        <Ionicons name="arrow-back" size={22} color={colors.text} />
+        <Ionicons name="arrow-back" size={iconSize} color={colors.text} />
       </CtrlBtn>
 
       <CtrlBtn onPress={onRotate} size={btnSize}>
-        <MaterialCommunityIcons name="rotate-right" size={22} color={colors.accent} />
+        <MaterialCommunityIcons name="rotate-right" size={iconSize} color={colors.accent} />
       </CtrlBtn>
 
       <CtrlBtn onPress={onRight} size={btnSize}>
-        <Ionicons name="arrow-forward" size={22} color={colors.text} />
+        <Ionicons name="arrow-forward" size={iconSize} color={colors.text} />
       </CtrlBtn>
 
-      <DropButton onSoftDrop={onSoftDrop} onHardDrop={onHardDrop} size={btnSize} />
+      <DropButton onSoftDrop={onSoftDrop} onHardDrop={onHardDrop} size={btnSize} iconSize={iconSize} />
     </View>
   );
 });

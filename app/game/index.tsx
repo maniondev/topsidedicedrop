@@ -47,8 +47,9 @@ export default function GameScreen() {
   const bestUnassisted = statsFor(difficulty).bestUnassisted;
   const { width: rawWidth, height } = useWindowDimensions();
   const isLargeScreen = Platform.isPad || rawWidth >= 600;
-  const width = isLargeScreen ? Math.min(rawWidth, 520) : rawWidth;
+  const width = isLargeScreen ? Math.min(rawWidth, 620) : rawWidth;
   const s2 = isLargeScreen ? 24 : S2;
+  const hudH = isLargeScreen ? 120 : HUD_H;
   const { top: safeTop, bottom: safeBottom } = useSafeAreaInsets();
 
   const [paused, setPaused] = useState(false);
@@ -71,7 +72,7 @@ export default function GameScreen() {
   const csW           = Math.floor((width - 32) / COLS);
   const approxBtnSize = Math.max(36, Math.floor((csW * COLS - CTRL_GAP * 4) / 5));
   // Use measured container height when available; fall back to dimension-based estimate for first frame.
-  const nonBoardH     = HUD_H + approxBtnSize + bannerH + spacingH;
+  const nonBoardH     = hudH + approxBtnSize + bannerH + spacingH;
   const effectiveH    = gameAreaH > 0 ? gameAreaH : Math.max(0, height - safeTop - safeBottom);
   const csH           = Math.floor((effectiveH - nonBoardH) / ROWS);
   const cellSize      = Math.max(Math.min(csH, csW), 32);
@@ -461,12 +462,13 @@ export default function GameScreen() {
           between every section (HUD ↔ board ↔ controls ↔ ad). When the ad is
           absent (premium) the spacers grow and the board expands on tight screens. */}
       <View style={styles.gameArea} onLayout={onGameAreaLayout}>
-        <View style={[styles.hudRow, { height: HUD_H }]}>
+        <View style={[styles.hudRow, { height: hudH }]}>
           <HUD
             score={game.score}
             bestScore={(freeContinueUsed || adContinueUsed) ? bestScore : bestUnassisted}
             nextPiece={game.queue[0]}
             onLogoPress={handlePause}
+            isLarge={isLargeScreen}
           />
         </View>
 
