@@ -14,6 +14,8 @@ import { usePremium } from '@/contexts/PremiumContext';
 import { useDifficulty } from '@/contexts/DifficultyContext';
 import { useGame } from '@/hooks/useGame';
 import { useRewardedAd } from '@/hooks/useRewardedAd';
+import { useInterstitialAd } from '@/hooks/useInterstitialAd';
+import { isFirstRunOfSession, markFirstRunUsed } from '@/lib/sessionTracker';
 import GameBoard from '@/components/game/GameBoard';
 import HUD from '@/components/game/HUD';
 import Controls from '@/components/game/Controls';
@@ -26,7 +28,7 @@ import { saveGame, loadSavedGame, clearSavedGame, savePendingRun, clearPendingRu
 import { runMergePhase, computeClearSteps } from '@/lib/condense';
 import { COLS, ROWS } from '@/constants/game';
 import { submitScoreForCurrentPlayer, updateBestUnassistedForCurrentPlayer } from '@/lib/scoreQueue';
-import { getReviewOptedOut, setReviewOptedOut, isReviewMilestone, openNativeReview, getReviewLastPrompted, setReviewLastPrompted } from '@/lib/reviewPrompt';
+import { getReviewOptedOut, setReviewOptedOut, isReviewMilestone, openNativeReview, getReviewLastPrompted, setReviewLastPrompted, setHasRated } from '@/lib/reviewPrompt';
 import ReviewPromptModal from '@/components/ReviewPromptModal';
 
 // No tab bar in this screen — more space for the board
@@ -153,6 +155,7 @@ export default function GameScreen() {
     return () => sub.remove();
   }, []);
 
+  const { showInterstitial } = useInterstitialAd();
   const { showAdWithFallback } = useRewardedAd(useCallback(() => {
     // Ad rewarded — submit pre-continue score as unassisted (if no continue was used before)
     const pre = preContinueRef.current;
@@ -279,8 +282,31 @@ export default function GameScreen() {
     setFreeContinueUsed(false);
     setAdContinueUsed(false);
     prevBestLockedRef.current = false;
+
+    const isFirst = isFirstRunOfSession();
+    markFirstRunUsed();
+
+    if (!isPremium && !isFirst) {
+      showInterstitial(() => game.resetGame());
+    } else {
+      game.resetGame();
+    }
+  }, [game.score, game.runBestChain, difficulty, freeContinueUsed, adContinueUsed, submitRun, statsFor, game.resetGame, isPremium, showInterstitial]);
+
+  const handleGoHome = useCallback(() => {
+    const continueUsed = freeContinueUsed || adContinueUsed;
+    submitRun(game.score, game.runBestChain, difficulty, continueUsed, preContinueScoreRef.current || undefined);
+    if (game.score > 0) {
+      submitScoreForCurrentPlayer({ p_score: game.score, p_best_chain: game.runBestChain, p_difficulty: difficulty, p_used_continue: continueUsed, p_pre_continue_score: preContinueScoreRef.current || 0 });
+    }
+    clearPendingRun();
+    preContinueScoreRef.current = 0;
+    setFreeContinueUsed(false);
+    setAdContinueUsed(false);
+    prevBestLockedRef.current = false;
     game.resetGame();
-  }, [game.score, game.runBestChain, difficulty, freeContinueUsed, adContinueUsed, submitRun, statsFor, game.resetGame]);
+    router.back();
+  }, [game.score, game.runBestChain, difficulty, freeContinueUsed, adContinueUsed, submitRun, game.resetGame]);
 
   // Robust Emergency Condense: a single screen-level effect drives the board
   // compression and resume. Guarded by a ref so it runs exactly once per
@@ -453,7 +479,7 @@ export default function GameScreen() {
     );
   }, [rotateWithSound, hardDropWithSound, game.moveLeft, game.moveRight, game.softDrop, cellSize]);
 
-  const freeContinueAvailable = isPremium && !freeContinueUsed;
+  const freeContinueAvailable = isPremium;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
@@ -516,6 +542,8 @@ export default function GameScreen() {
         onFreeContinue={handleFreeContinue}
         onContinue={handleContinue}
         onNewGame={handleNewGame}
+        onHome={handleGoHome}
+        showAdNotice={!isPremium && !isFirstRunOfSession()}
       />
 
       <PauseModal
@@ -533,6 +561,7 @@ export default function GameScreen() {
           setReviewPromptVisible(false);
           reviewOptedOutRef.current = true;
           setReviewOptedOut();
+          setHasRated();
           openNativeReview();
         }}
         onLater={() => {

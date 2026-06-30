@@ -22,7 +22,7 @@ import { loadStats, saveStats } from '@/lib/storage';
 import { submitScoreForCurrentPlayer } from '@/lib/scoreQueue';
 import PremiumModal from '@/components/PremiumModal';
 import { ThemeColors, ThemeId, ThemeMeta, THEME_IDS, Themes } from '@/constants/theme';
-import { openNativeReview } from '@/lib/reviewPrompt';
+import { openNativeReview, getHasRated } from '@/lib/reviewPrompt';
 
 const FREE_THEMES: ThemeId[] = ['dice', 'light', 'dark'];
 
@@ -36,11 +36,13 @@ export default function SettingsScreen() {
   const { isPremium, upgrade, restorePurchases, devToggle } = usePremium();
   const { resetStats, refresh } = useStats();
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
+  const [hasRated, setHasRatedState] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const dieRefs = useRef<Partial<Record<AnimPackId, { play: () => void }>>>({});
 
   useFocusEffect(useCallback(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: false });
+    getHasRated().then(setHasRatedState);
   }, []));
 
   const handleUpgrade = () => setPremiumModalOpen(true);
@@ -96,10 +98,7 @@ export default function SettingsScreen() {
           {isPremium ? (
             <View style={styles.premiumActive}>
               <Ionicons name="star" size={20} color={colors.premiumGold} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.premiumTitle, { color: colors.premiumGold }]}>Premium Active</Text>
-                <Text style={styles.premiumSub}>No ads · 1 free continue/run · All themes, sounds, animations & dice styles</Text>
-              </View>
+              <Text style={[styles.premiumTitle, { color: colors.premiumGold }]}>Premium Active</Text>
             </View>
           ) : (
             <TouchableOpacity
@@ -301,7 +300,11 @@ export default function SettingsScreen() {
 
         {/* About */}
         <Section label="About" styles={styles}>
-          <RowItem label="Rate Topside: Dice Drop ★" colors={colors} styles={styles} onPress={openNativeReview} />
+          {hasRated ? (
+            <RowItem label="Rated — thank you! ★" colors={colors} styles={styles} />
+          ) : (
+            <RowItem label="Rate Topside: Dice Drop ★" colors={colors} styles={styles} onPress={openNativeReview} />
+          )}
           <RowItem label="More Games by Topside" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games')} />
           <RowItem label="Privacy Policy" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/dicedrop/privacy')} />
           <RowItem label="Version" value={Constants.expoConfig?.version ?? '—'} colors={colors} styles={styles} />

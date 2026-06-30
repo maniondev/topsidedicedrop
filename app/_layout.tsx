@@ -11,6 +11,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import mobileAds, { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
 import { preloadAllAds } from '@/lib/adManager';
+import { initSessionTracker } from '@/lib/sessionTracker';
 import { replayQueue } from '@/lib/scoreQueue';
 import { initAppsFlyer } from '@/lib/appsflyer';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
@@ -80,6 +81,7 @@ export default function RootLayout() {
       }
 
       initAppsFlyer();
+      initSessionTracker();
 
       await mobileAds().initialize();
       preloadAllAds();

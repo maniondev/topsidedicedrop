@@ -24,10 +24,10 @@ export default function PremiumModal({ visible, onClose }: Props) {
           </Text>
           <View style={styles.perks}>
             {[
-              'No banner ads',
-              '1 free continue per run',
-              'All themes, sounds & animations',
-              'All dice styles',
+              'No ads',
+              'Free continues',
+              'All themes & sound packs',
+              'All dice animations & styles',
             ].map(p => (
               <Text key={p} style={[styles.perk, { color: colors.textSecondary }]}>• {p}</Text>
             ))}

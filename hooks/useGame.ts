@@ -123,7 +123,8 @@ function rotatePiece(p: ActivePiece): ActivePiece {
     return { dr: offset.dr, dc: offset.dc, value: match?.value ?? p.tiles[0].value };
   });
 
-  return { ...p, rotation: nextRot, tiles: newTiles };
+  const anchorColDelta = shape.anchorColOffsets?.[nextRot] ?? 0;
+  return { ...p, rotation: nextRot, tiles: newTiles, anchorCol: p.anchorCol + anchorColDelta };
 }
 
 function tryRotate(board: Board, p: ActivePiece): ActivePiece | null {
@@ -151,7 +152,7 @@ function spawnPiece(queued: QueuedPiece, board: Board): ActivePiece | null {
   const gridCenter = Math.floor(COLS / 2);
   const defaultCol = spineDc !== null
     ? gridCenter - spineDc
-    : Math.floor((COLS - (Math.max(...queued.tiles.map(t => t.dc)) + 1)) / 2);
+    : Math.ceil((COLS - (Math.max(...queued.tiles.map(t => t.dc)) + 1)) / 2);
   for (const anchorRow of [0, -1]) {
     // For anchorRow < 0, skip if no tile would reach the board — nothing would be placed.
     if (anchorRow < 0 && !queued.tiles.some(t => anchorRow + t.dr >= 0)) continue;

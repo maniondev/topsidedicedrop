@@ -119,6 +119,7 @@ game/                      # (empty — reserved)
 | App ID | `ca-app-pub-5499315559222720~1669872133` | `ca-app-pub-5499315559222720~7457722144` |
 | Banner | `ca-app-pub-5499315559222720/3369427615` | `ca-app-pub-5499315559222720/3247014392` |
 | Rewarded | `ca-app-pub-5499315559222720/3518477137` | `ca-app-pub-5499315559222720/1933932727` |
+| Interstitial | `ca-app-pub-5499315559222720/5044311218` | `ca-app-pub-5499315559222720/8308768801` |
 
 - Banner ads shown to non-premium users only
 - Rewarded ads used for continues (every continue = one rewarded ad)

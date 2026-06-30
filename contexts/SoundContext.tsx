@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo, ReactNode } from 'react';
-import { AppState, Platform } from 'react-native';
+import { AppState } from 'react-native';
 import Sound from 'react-native-sound';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -252,7 +252,6 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     loadingRef.current = true;
     try {
       Sound.setCategory('Playback', true);
-      Sound.setActive(true);
 
       const sources = SOUND_PACKS[pack];
       const assets  = SOUND_NAMES.map(name => ({ name, asset: Asset.fromModule(sources[name]) }));
@@ -292,21 +291,16 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     return () => {
       Object.values(poolsRef.current).forEach(arr => arr?.forEach(s => { try { s.stop(); s.release(); } catch {} }));
       poolsRef.current = {};
-      try { Sound.setActive(false); } catch {};
     };
   }, []);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', state => {
       if (state !== 'active') return;
-      if (Platform.OS === 'ios') {
-        restoreGameAudioSession(0);
-      } else {
-        // Android: setCategory/setActive are no-ops — reload the pool to recover
-        // from audio focus loss after backgrounding. Assets are cached locally so
-        // this completes in ~500ms without blocking the UI.
-        buildPool(soundPackRef.current, () => false);
-      }
+      // Rebuild the pool on foreground — Sound objects become stale after audio
+      // session interruption (backgrounding, calls, Siri). Assets are cached
+      // locally so this completes in ~200-500ms without blocking gameplay.
+      buildPool(soundPackRef.current, () => false);
     });
     return () => sub.remove();
   }, []);

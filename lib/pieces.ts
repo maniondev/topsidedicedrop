@@ -8,6 +8,7 @@ export interface TileOffset {
 export interface PieceShape {
   id: string;
   rotations: TileOffset[][];
+  anchorColOffsets?: number[]; // col delta applied to anchor when entering each rotation index
 }
 
 // All pieces have exactly 4 rotation states (90° CW each tap).
@@ -57,6 +58,9 @@ export const PIECES: PieceShape[] = [
       [{ dr: 0, dc: 0 }, { dr: 0, dc: 1 }, { dr: 0, dc: 2 }], // 180° H
       [{ dr: 0, dc: 0 }, { dr: 1, dc: 0 }, { dr: 2, dc: 0 }], // 270° V
     ],
+    // Rotating H→V: anchor shifts +1 so the center tile's column is preserved.
+    // Rotating V→H: anchor shifts -1 to undo.
+    anchorColOffsets: [-1, +1, -1, +1],
   },
 ];
 

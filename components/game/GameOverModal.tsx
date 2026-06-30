@@ -9,17 +9,18 @@ interface Props {
   score: number;
   bestScore: number;
   prevBest: number;
-  // free continue: premium gets 1 free per run (no ad)
   freeContinueAvailable: boolean;
   onFreeContinue: () => void;
   onContinue: () => void;
   onNewGame: () => void;
+  onHome: () => void;
+  showAdNotice: boolean;
 }
 
 export default function GameOverModal({
   visible, score, bestScore, prevBest,
   freeContinueAvailable,
-  onFreeContinue, onContinue, onNewGame,
+  onFreeContinue, onContinue, onNewGame, onHome, showAdNotice,
 }: Props) {
   const { colors } = useTheme();
   const isNewBest = score > prevBest && score > 0;
@@ -60,7 +61,7 @@ export default function GameOverModal({
               onPress={onContinue}
             >
               <Text style={[styles.continueBtnText, { color: colors.accentText }]}>▶ Continue</Text>
-              <Text style={[styles.continueSub, { color: colors.accentText }]}>Watch a short ad</Text>
+              <Text style={[styles.continueSub, { color: colors.accentText }]}>With an ad</Text>
             </TouchableOpacity>
           )}
 
@@ -69,6 +70,13 @@ export default function GameOverModal({
             onPress={onNewGame}
           >
             <Text style={[styles.newGameText, { color: colors.text }]}>New Game</Text>
+            {showAdNotice && (
+              <Text style={[styles.continueSub, { color: colors.textMuted }]}>With a skippable ad</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.homeBtn} onPress={onHome}>
+            <Text style={[styles.homeBtnText, { color: colors.textDim }]}>← Home</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -86,6 +94,8 @@ const styles = StyleSheet.create({
   continueBtn:  { width: '100%', paddingVertical: IS_LARGE ? 20 : 14, borderRadius: 14, alignItems: 'center', gap: 2 },
   continueBtnText: { fontSize: IS_LARGE ? 20 : 16, fontWeight: '700' },
   continueSub:  { fontSize: IS_LARGE ? 15 : 12, opacity: 0.85 },
-  newGameBtn:   { width: '100%', paddingVertical: IS_LARGE ? 18 : 13, borderRadius: 14, alignItems: 'center', borderWidth: 1 },
+  newGameBtn:   { width: '100%', paddingVertical: IS_LARGE ? 18 : 13, borderRadius: 14, alignItems: 'center', borderWidth: 1, gap: 2 },
   newGameText:  { fontSize: IS_LARGE ? 20 : 16, fontWeight: '600' },
+  homeBtn:      { paddingVertical: IS_LARGE ? 12 : 8, alignItems: 'center' },
+  homeBtnText:  { fontSize: IS_LARGE ? 16 : 13 },
 });

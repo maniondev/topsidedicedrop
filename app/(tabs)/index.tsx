@@ -17,6 +17,8 @@ import AppLogo from '@/components/AppLogo';
 import HowToPlayModal from '@/components/HowToPlayModal';
 import PremiumModal from '@/components/PremiumModal';
 import { loadSavedGame } from '@/lib/storage';
+import { useInterstitialAd } from '@/hooks/useInterstitialAd';
+import { isFirstRunOfSession, markFirstRunUsed } from '@/lib/sessionTracker';
 
 const DIFFICULTIES: { id: Difficulty; label: string }[] = [
   { id: 'easy',   label: 'Easy'   },
@@ -33,6 +35,8 @@ export default function LobbyScreen() {
   const { top } = useSafeAreaInsets();
   const [hasSavedGame, setHasSavedGame] = useState(false);
   const [howToOpen, setHowToOpen] = useState(false);
+  const [isFirstRun, setIsFirstRun] = useState(true);
+  const { showInterstitial } = useInterstitialAd();
 
   useEffect(() => {
     AsyncStorage.getItem('tm_seen_how_to_play').then(v => {
@@ -90,6 +94,7 @@ export default function LobbyScreen() {
 
   useFocusEffect(useCallback(() => {
     loadSavedGame(difficulty).then(s => setHasSavedGame(!!s)).catch(() => {});
+    setIsFirstRun(isFirstRunOfSession());
   }, [difficulty]));
 
   const handleContinue = useCallback(() => {
@@ -100,12 +105,19 @@ export default function LobbyScreen() {
     if (hasSavedGame) {
       setNewGameConfirmOpen(true);
     } else {
-      router.push({ pathname: '/game', params: { fresh: '1' } });
+      const isFirst = isFirstRunOfSession();
+      markFirstRunUsed();
+      if (!isPremium && !isFirst) {
+        showInterstitial(() => router.push({ pathname: '/game', params: { fresh: '1' } }));
+      } else {
+        router.push({ pathname: '/game', params: { fresh: '1' } });
+      }
     }
-  }, [hasSavedGame]);
+  }, [hasSavedGame, isPremium, showInterstitial]);
 
   const handleNewGameConfirmed = useCallback(() => {
     setNewGameConfirmOpen(false);
+    markFirstRunUsed();
     router.push({ pathname: '/game', params: { fresh: '1' } });
   }, []);
 
@@ -182,6 +194,9 @@ export default function LobbyScreen() {
               <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'Rubik_700Bold', fontSize: f(24) }]}>
                 Play
               </Text>
+              {!isPremium && !isFirstRun && (
+                <Text style={[styles.adNotice, { color: colors.accentText, fontSize: f(11), opacity: 0.75 }]}>Watch a short ad</Text>
+              )}
             </TouchableOpacity>
           )}
         </View>
@@ -340,6 +355,7 @@ const styles = StyleSheet.create({
   btnSingle:    {},
   playBtn:      { alignItems: 'center', justifyContent: 'center' },
   playBtnText:  {},
+  adNotice:     { fontWeight: '500' },
 
   bottomRow:    { flexDirection: 'row' },
   rowBtn:       { borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
