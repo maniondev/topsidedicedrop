@@ -809,6 +809,7 @@ const GameBoard = React.memo(function GameBoard({ board, activePiece, ghostAncho
   const boardH = cs * ROWS;
   const gridColor = colors.gridLine ?? colors.separator;
 
+
   // ── 6-clear bursts ─────────────────────────────────────────────────────────
   const [bursts, setBursts] = useState<Array<{ id: string; r: number; c: number }>>([]);
   const burstSeq = useRef(0);
@@ -1020,6 +1021,7 @@ const GameBoard = React.memo(function GameBoard({ board, activePiece, ghostAncho
           <BlurMask blur={6} style="solid" />
         </RoundedRect>
       )}
+
     </Canvas>
   );
 });

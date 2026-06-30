@@ -22,6 +22,7 @@ import Controls from '@/components/game/Controls';
 import GameOverModal from '@/components/game/GameOverModal';
 import PauseModal from '@/components/game/PauseModal';
 import EmergencyCondenseOverlay from '@/components/game/EmergencyCondenseOverlay';
+import { FloatingLabelsOverlay, FloatingLabelData } from '@/components/game/FloatingLabels';
 import AdBanner from '@/components/AdBanner';
 import { onRunComplete } from '@/lib/adCounter';
 import { saveGame, loadSavedGame, clearSavedGame, savePendingRun, clearPendingRun } from '@/lib/storage';
@@ -56,6 +57,15 @@ export default function GameScreen() {
 
   const [paused, setPaused] = useState(false);
   const [prevBest, setPrevBest] = useState(0);
+  const [floatingLabels, setFloatingLabels] = useState<FloatingLabelData[]>([]);
+  const floatingLabelIdRef    = useRef(0);
+  const chainStartScoreRef    = useRef(0);
+  const lastMergePositionRef  = useRef<{ x: number; y: number } | null>(null);
+  const popupPrevPhaseRef     = useRef<string>('');
+  const [scoreGain, setScoreGain]       = useState<string | null>(null);
+  const [scoreGainActive, setScoreGainActive] = useState(false);
+  const scoreGainKeyRef                 = useRef(0);
+  const [scoreGainKey, setScoreGainKey] = useState(0);
   const [reviewPromptVisible, setReviewPromptVisible] = useState(false);
   const reviewOptedOutRef      = useRef(false);
   const reviewPendingRef       = useRef(false);
@@ -154,6 +164,69 @@ export default function GameScreen() {
     });
     return () => sub.remove();
   }, []);
+
+  // Floating chain/score popups ─────────────────────────────────────────────
+  const addFloatingLabel = useCallback((
+    type: 'chain' | 'score',
+    text: string, x: number, y: number, color: string, fontSize: number,
+    rotation: number, fontFamily?: string, travelY?: number, glowColor?: string,
+  ) => {
+    const id = String(floatingLabelIdRef.current++);
+    setFloatingLabels(prev => [
+      // Chain labels: only ever one on screen — replace any existing chain label
+      ...(type === 'chain' ? prev.filter(l => l.type !== 'chain') : prev),
+      { id, type, text, x, y, color, fontSize, rotation, fontFamily, travelY, glowColor },
+    ]);
+  }, []);
+
+  const removeFloatingLabel = useCallback((id: string) => {
+    setFloatingLabels(prev => prev.filter(l => l.id !== id));
+  }, []);
+
+  // Chain multiplier popup + running score gain: fires on each merge pass
+  useEffect(() => {
+    const events = game.lastMergeEvents;
+    if (events.length === 0) return;
+    const pass = game.chainPass;
+    const [destRow, destCol] = events[0].dest;
+    const x = destCol * cellSize + cellSize * 0.5;
+    const y = Math.max(destRow * cellSize - cellSize * 0.25, 4);
+    lastMergePositionRef.current = { x, y };
+    if (pass >= 2) {
+      const rot = (Math.random() - 0.5) * 40;
+      addFloatingLabel('chain', `${pass}×`, x, y, colors.accent, 42, rot, 'Rubik_700Bold', undefined, 'rgba(0,0,0,0.88)');
+    }
+    // Update running score gain (builds up each pass)
+    const gain = game.score - chainStartScoreRef.current;
+    if (gain > 0) {
+      setScoreGain(`+${gain.toLocaleString()}`);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.lastMergeEvents]);
+
+  // Score gain lifecycle: start on chain begin, fade on chain end
+  useEffect(() => {
+    const prev = popupPrevPhaseRef.current;
+    popupPrevPhaseRef.current = game.phase;
+    if (game.phase === 'resolving' && prev !== 'resolving') {
+      chainStartScoreRef.current = game.score;
+      scoreGainKeyRef.current += 1;
+      setScoreGainKey(scoreGainKeyRef.current);
+      setScoreGain(null);
+      setScoreGainActive(true);
+    }
+    if (prev === 'resolving' && game.phase === 'spawning') {
+      setScoreGainActive(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.phase]);
+
+  // Unmount score gain popup after fade completes
+  useEffect(() => {
+    if (scoreGainActive) return;
+    const t = setTimeout(() => setScoreGain(null), 350);
+    return () => clearTimeout(t);
+  }, [scoreGainActive]);
 
   const { showInterstitial } = useInterstitialAd();
   const { showAdWithFallback } = useRewardedAd(useCallback(() => {
@@ -495,6 +568,9 @@ export default function GameScreen() {
             nextPiece={game.queue[0]}
             onLogoPress={handlePause}
             isLarge={isLargeScreen}
+            scoreGain={scoreGain}
+            scoreGainKey={scoreGainKey}
+            scoreGainActive={scoreGainActive}
           />
         </View>
 
@@ -511,8 +587,13 @@ export default function GameScreen() {
               mergeEvents={game.lastMergeEvents}
             />
             <EmergencyCondenseOverlay visible={game.phase === 'condensing'} />
+            <FloatingLabelsOverlay
+              labels={floatingLabels.filter(l => l.type === 'chain')}
+              onRemove={removeFloatingLabel}
+            />
           </View>
         </GestureDetector>
+
 
         <View style={{ height: s2 }} />
 

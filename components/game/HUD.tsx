@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
 import { Canvas, RoundedRect, Circle, Rect, Group, BlurMask, Line, RadialGradient, vec, rrect, rect } from '@shopify/react-native-skia';
 import { useTheme, useDieColors } from '@/contexts/ThemeContext';
 import { useDiceStyle, DiceStyleId } from '@/contexts/DiceStyleContext';
@@ -157,12 +157,75 @@ const InlinePiece = React.memo(function InlinePiece({ piece, faceColor, dotColor
   );
 }, (prev, next) => prev.piece === next.piece && prev.diceStyle === next.diceStyle);
 
+function useCountingScore(target: number): string {
+  const animVal = useRef(new Animated.Value(target)).current;
+  const [display, setDisplay] = useState(() => target.toLocaleString());
+  const animRef = useRef<Animated.CompositeAnimation | null>(null);
+
+  useEffect(() => {
+    if (animRef.current) animRef.current.stop();
+    animRef.current = Animated.timing(animVal, {
+      toValue: target,
+      duration: 120,
+      useNativeDriver: false,
+    });
+    animRef.current.start();
+  }, [target]);
+
+  useEffect(() => {
+    const id = animVal.addListener(({ value }) => setDisplay(Math.round(value).toLocaleString()));
+    return () => animVal.removeListener(id);
+  }, []);
+
+  return display;
+}
+
+function ScoreGainPopup({ text, color, active }: { text: string; color: string; active: boolean }) {
+  const opacity  = useRef(new Animated.Value(0)).current;
+  const scale    = useRef(new Animated.Value(1.5)).current;
+  const prevText = useRef(text);
+
+  // Pop in on mount
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 70, useNativeDriver: true }),
+      Animated.spring(scale,   { toValue: 1, useNativeDriver: true, tension: 280, friction: 8 }),
+    ]).start();
+  }, []);
+
+  // Pulse on each text update
+  useEffect(() => {
+    if (text === prevText.current) return;
+    prevText.current = text;
+    Animated.sequence([
+      Animated.timing(scale, { toValue: 1.22, duration: 55, useNativeDriver: true }),
+      Animated.spring(scale, { toValue: 1,    useNativeDriver: true, tension: 320, friction: 8 }),
+    ]).start();
+  }, [text]);
+
+  // Fade out when chain ends
+  useEffect(() => {
+    if (!active) {
+      Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }).start();
+    }
+  }, [active]);
+
+  return (
+    <Animated.Text style={[styles.scoreGain, { color, opacity, transform: [{ scale }] }]}>
+      {text}
+    </Animated.Text>
+  );
+}
+
 interface Props {
   score: number;
   bestScore: number;
   nextPiece?: QueuedPiece;
   onLogoPress?: () => void;
   isLarge?: boolean;
+  scoreGain?: string | null;
+  scoreGainKey?: number;
+  scoreGainActive?: boolean;
 }
 
 function valueFontSize(n: number): number {
@@ -179,11 +242,12 @@ function valueFontSize(n: number): number {
   return 18;
 }
 
-function HUD({ score, bestScore, nextPiece, onLogoPress, isLarge }: Props) {
+function HUD({ score, bestScore, nextPiece, onLogoPress, isLarge, scoreGain, scoreGainKey, scoreGainActive = false }: Props) {
   const { colors } = useTheme();
   const { faceColor, dotColor } = useDieColors();
   const { diceStyle } = useDiceStyle();
   const logoSize = isLarge ? 76 : 58;
+  const displayScore = useCountingScore(score);
 
   return (
     <View style={styles.row}>
@@ -202,9 +266,16 @@ function HUD({ score, bestScore, nextPiece, onLogoPress, isLarge }: Props) {
         <View style={styles.col}>
           <Text style={[styles.label, { color: colors.textMuted }]}>SCORE</Text>
           <View style={styles.valueArea}>
-            <Text style={[styles.value, { color: colors.text, fontFamily: 'Rubik_700Bold', fontSize: valueFontSize(score) }]}>
-              {score.toLocaleString()}
-            </Text>
+            <View>
+              <Text style={[styles.value, { color: colors.text, fontFamily: 'Rubik_700Bold', fontSize: valueFontSize(score) }]}>
+                {displayScore}
+              </Text>
+              {scoreGain ? (
+                <View style={styles.scoreGainWrap} pointerEvents="none">
+                  <ScoreGainPopup key={scoreGainKey} text={scoreGain} color={colors.text} active={scoreGainActive} />
+                </View>
+              ) : null}
+            </View>
           </View>
         </View>
 
@@ -246,4 +317,6 @@ const styles = StyleSheet.create({
   valueArea: { height: VALUE_AREA_H, alignItems: 'center', justifyContent: 'center' },
   value:     { fontSize: 28 },
   divider:   { width: 1, height: VALUE_AREA_H, marginTop: IS_LARGE ? 20 : 16 },
+  scoreGainWrap: { position: 'absolute', top: '100%', left: 0, right: 0, alignItems: 'center', paddingTop: 2 },
+  scoreGain:     { fontFamily: 'Fredoka_600SemiBold', fontSize: IS_LARGE ? 18 : 15, textAlign: 'center' },
 });
