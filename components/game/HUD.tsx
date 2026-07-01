@@ -166,7 +166,7 @@ function useCountingScore(target: number): string {
     if (animRef.current) animRef.current.stop();
     animRef.current = Animated.timing(animVal, {
       toValue: target,
-      duration: 120,
+      duration: 350,
       useNativeDriver: false,
     });
     animRef.current.start();
@@ -203,10 +203,13 @@ function ScoreGainPopup({ text, color, active }: { text: string; color: string; 
     ]).start();
   }, [text]);
 
-  // Fade out when chain ends
+  // Fade out when chain ends — linger briefly so the final total is readable
   useEffect(() => {
     if (!active) {
-      Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }).start();
+      Animated.sequence([
+        Animated.delay(750),
+        Animated.timing(opacity, { toValue: 0, duration: 350, useNativeDriver: true }),
+      ]).start();
     }
   }, [active]);
 
@@ -267,12 +270,12 @@ function HUD({ score, bestScore, nextPiece, onLogoPress, isLarge, scoreGain, sco
           <Text style={[styles.label, { color: colors.textMuted }]}>SCORE</Text>
           <View style={styles.valueArea}>
             <View>
-              <Text style={[styles.value, { color: colors.text, fontFamily: 'Rubik_700Bold', fontSize: valueFontSize(score) }]}>
+              <Text style={[styles.value, { color: colors.titleColor ?? colors.text, fontFamily: 'Rubik_700Bold', fontSize: valueFontSize(score) }]}>
                 {displayScore}
               </Text>
               {scoreGain ? (
                 <View style={styles.scoreGainWrap} pointerEvents="none">
-                  <ScoreGainPopup key={scoreGainKey} text={scoreGain} color={colors.text} active={scoreGainActive} />
+                  <ScoreGainPopup key={scoreGainKey} text={scoreGain} color={colors.titleColor ?? colors.text} active={scoreGainActive} />
                 </View>
               ) : null}
             </View>
@@ -317,6 +320,6 @@ const styles = StyleSheet.create({
   valueArea: { height: VALUE_AREA_H, alignItems: 'center', justifyContent: 'center' },
   value:     { fontSize: 28 },
   divider:   { width: 1, height: VALUE_AREA_H, marginTop: IS_LARGE ? 20 : 16 },
-  scoreGainWrap: { position: 'absolute', top: '100%', left: 0, right: 0, alignItems: 'center', paddingTop: 2 },
-  scoreGain:     { fontFamily: 'Fredoka_600SemiBold', fontSize: IS_LARGE ? 18 : 15, textAlign: 'center' },
+  scoreGainWrap: { position: 'absolute', top: '100%', left: -60, right: -60, alignItems: 'center', paddingTop: 2 },
+  scoreGain:     { fontFamily: 'Fredoka_400Regular', fontSize: IS_LARGE ? 22 : 18, textAlign: 'center' },
 });

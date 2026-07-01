@@ -66,6 +66,7 @@ export default function GameScreen() {
   const [scoreGainActive, setScoreGainActive] = useState(false);
   const scoreGainKeyRef                 = useRef(0);
   const [scoreGainKey, setScoreGainKey] = useState(0);
+  const allClearCountRef                = useRef(0);
   const [reviewPromptVisible, setReviewPromptVisible] = useState(false);
   const reviewOptedOutRef      = useRef(false);
   const reviewPendingRef       = useRef(false);
@@ -190,11 +191,11 @@ export default function GameScreen() {
     const pass = game.chainPass;
     const [destRow, destCol] = events[0].dest;
     const x = destCol * cellSize + cellSize * 0.5;
-    const y = Math.max(destRow * cellSize - cellSize * 0.25, 4);
+    const y = Math.max(destRow * cellSize - cellSize * 1.1, 4);
     lastMergePositionRef.current = { x, y };
     if (pass >= 2) {
       const rot = (Math.random() - 0.5) * 40;
-      addFloatingLabel('chain', `${pass}×`, x, y, colors.accent, 42, rot, 'Rubik_700Bold', undefined, 'rgba(0,0,0,0.88)');
+      addFloatingLabel('chain', `${pass}×`, x, y, colors.accent, 42, rot, 'Rubik_700Bold', undefined, colors.titleColor ?? 'rgba(0,0,0,0.88)');
     }
     // Update running score gain (builds up each pass)
     const gain = game.score - chainStartScoreRef.current;
@@ -216,6 +217,9 @@ export default function GameScreen() {
       setScoreGainActive(true);
     }
     if (prev === 'resolving' && game.phase === 'spawning') {
+      // Capture final gain including any all-clear bonus added in the same state update
+      const gain = game.score - chainStartScoreRef.current;
+      if (gain > 0) setScoreGain(`+${gain.toLocaleString()}`);
       setScoreGainActive(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -224,9 +228,28 @@ export default function GameScreen() {
   // Unmount score gain popup after fade completes
   useEffect(() => {
     if (scoreGainActive) return;
-    const t = setTimeout(() => setScoreGain(null), 350);
+    const t = setTimeout(() => setScoreGain(null), 1200);
     return () => clearTimeout(t);
   }, [scoreGainActive]);
+
+  // All Clear bonus popup — both labels added atomically so they don't erase each other
+  useEffect(() => {
+    if (game.allClearCount <= allClearCountRef.current) {
+      allClearCountRef.current = game.allClearCount; // sync on game reset
+      return;
+    }
+    allClearCountRef.current = game.allClearCount;
+    const cx = boardW / 2;
+    const cy = (cellSize * ROWS) / 2 - cellSize;
+    const id1 = String(floatingLabelIdRef.current++);
+    const id2 = String(floatingLabelIdRef.current++);
+    setFloatingLabels(prev => [
+      ...prev.filter(l => l.type !== 'chain'),
+      { id: id1, type: 'chain', text: 'ALL CLEAR', x: cx, y: cy - cellSize * 0.6, color: colors.accent, fontSize: 46, rotation: -4, fontFamily: 'Fredoka_700Bold', travelY: -60, rainbow: true },
+      { id: id2, type: 'chain', text: '+200',      x: cx, y: cy + cellSize * 0.55, color: colors.accent, fontSize: 34, rotation:  3, fontFamily: 'Fredoka_600SemiBold', travelY: -60, rainbow: true },
+    ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.allClearCount]);
 
   const { showInterstitial } = useInterstitialAd();
   const { showAdWithFallback } = useRewardedAd(useCallback(() => {

@@ -55,6 +55,7 @@ interface GameState {
   lockResetKey: number;
   lockResetCount: number;
   lastMergeEvents: MergeEvent[];
+  allClearCount: number;
 }
 
 type Action =
@@ -187,7 +188,14 @@ function initialState(): GameState {
     lockResetKey: 0,
     lockResetCount: 0,
     lastMergeEvents: [],
+    allClearCount: 0,
   };
+}
+
+const ALL_CLEAR_BONUS = 200;
+
+function isBoardEmpty(board: Board): boolean {
+  return board.every(row => row.every(cell => cell === null));
 }
 
 const MAX_LOCK_RESETS = 12;
@@ -339,7 +347,15 @@ function reducer(state: GameState, action: Action): GameState {
 
       if (!changed) {
         const { newBoard: gravBoard, moved } = applyGravity(state.board);
-        if (!moved) return { ...state, phase: 'spawning' };
+        if (!moved) {
+          const allClear = isBoardEmpty(state.board);
+          return {
+            ...state,
+            phase: 'spawning',
+            score: allClear ? state.score + ALL_CLEAR_BONUS : state.score,
+            allClearCount: allClear ? state.allClearCount + 1 : state.allClearCount,
+          };
+        }
         // After gravity, the tiles that moved become new triggers
         const newTriggers = new Set<string>();
         for (let r = 0; r < ROWS; r++) {
@@ -568,6 +584,7 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
     runBestChain: state.runBestChain,
     chainPass: state.chainPass,
     lastMergeEvents: state.lastMergeEvents,
+    allClearCount: state.allClearCount,
     startGame,
     resetGame,
     moveLeft,
