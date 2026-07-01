@@ -304,11 +304,6 @@ export default function SettingsScreen() {
           />
         </Section>
 
-        {/* Stats */}
-        <Section label="Stats" styles={styles}>
-          <RowItem label="Reset Stats" onPress={confirmReset} danger colors={colors} styles={styles} />
-        </Section>
-
         {/* About */}
         <Section label="About" styles={styles}>
           {hasRated ? (
@@ -318,7 +313,14 @@ export default function SettingsScreen() {
           )}
           <RowItem label="More Games by Topside" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games')} />
           <RowItem label="Privacy Policy" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/dicedrop/privacy')} />
+          <RowItem label="Terms of Service" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/dicedrop/tos')} />
+          <RowItem label="Contact" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/contact')} />
           <RowItem label="Version" value={Constants.expoConfig?.version ?? '—'} colors={colors} styles={styles} />
+        </Section>
+
+        {/* Stats */}
+        <Section label="Stats" styles={styles}>
+          <RowItem label="Reset Stats" onPress={confirmReset} danger colors={colors} styles={styles} />
         </Section>
 
         <View style={{ height: 8 }} />
@@ -455,10 +457,14 @@ function ToggleRow({ label, sublabel, value, onValueChange, colors, styles }: {
 }) {
   return (
     <View style={styles.row}>
-      <View style={{ flex: 1 }}>
+      {sublabel ? (
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <Text style={styles.rowLabel}>{label}</Text>
+          <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>{sublabel}</Text>
+        </View>
+      ) : (
         <Text style={styles.rowLabel}>{label}</Text>
-        {sublabel && <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>{sublabel}</Text>}
-      </View>
+      )}
       <Switch
         value={value}
         onValueChange={onValueChange}

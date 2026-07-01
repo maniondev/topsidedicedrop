@@ -35,22 +35,23 @@ export default function GameOverModal({
           {isNewBest && (
             <Text style={[styles.newBest, { color: colors.accent }]}>New Best!</Text>
           )}
-          <Text style={[styles.score, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
-            {score.toLocaleString()}
-          </Text>
-          <Text style={[styles.bestLabel, { color: colors.textMuted }]}>
-            {isNewBest
-              ? `Previous best: ${prevBest.toLocaleString()}`
-              : `Best: ${bestScore.toLocaleString()}`}
-          </Text>
+          <View style={styles.scoreGroup}>
+            <Text style={[styles.score, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
+              {score.toLocaleString()}
+            </Text>
+            <Text style={[styles.bestLabel, { color: colors.textMuted }]}>
+              {isNewBest
+                ? `Previous best: ${prevBest.toLocaleString()}`
+                : `Best: ${bestScore.toLocaleString()}`}
+            </Text>
+          </View>
 
           {freeContinueAvailable && (
             <TouchableOpacity
               style={[styles.continueBtn, { backgroundColor: colors.accent }]}
               onPress={onFreeContinue}
             >
-              <Text style={[styles.continueBtnText, { color: colors.accentText }]}>Free Continue</Text>
-              <Text style={[styles.continueSub, { color: colors.accentText }]}>Premium perk — 1 per run</Text>
+              <Text style={[styles.continueBtnText, { color: colors.accentText }]}>Continue</Text>
             </TouchableOpacity>
           )}
 
@@ -89,8 +90,9 @@ const styles = StyleSheet.create({
   card:         { width: '100%', maxWidth: 440, borderRadius: 20, borderWidth: 1, padding: 28, alignItems: 'center', gap: IS_LARGE ? 16 : 12 },
   title:        { fontSize: IS_LARGE ? 32 : 26 },
   newBest:      { fontSize: IS_LARGE ? 19 : 15, fontWeight: '700', letterSpacing: 0.5 },
+  scoreGroup:   { alignItems: 'center', gap: 4 },
   score:        { fontSize: IS_LARGE ? 68 : 52, lineHeight: IS_LARGE ? 78 : 60 },
-  bestLabel:    { fontSize: IS_LARGE ? 18 : 14 },
+  bestLabel:    { fontSize: IS_LARGE ? 18 : 14, marginTop: 4, marginBottom: 8 },
   continueBtn:  { width: '100%', paddingVertical: IS_LARGE ? 20 : 14, borderRadius: 14, alignItems: 'center', gap: 2 },
   continueBtnText: { fontSize: IS_LARGE ? 20 : 16, fontWeight: '700' },
   continueSub:  { fontSize: IS_LARGE ? 15 : 12, opacity: 0.85 },

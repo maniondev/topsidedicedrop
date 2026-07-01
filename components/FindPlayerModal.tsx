@@ -171,9 +171,6 @@ export default function FindPlayerModal({ visible, playerId, mode, onClose, onCh
                       <View key={f.player_id} style={[styles.row, { borderBottomColor: colors.border }]}>
                         <View style={styles.rowInfo}>
                           <Text style={[styles.rowName, { color: colors.text }]}>{f.display_name}</Text>
-                          <Text style={[styles.rowSub, { color: colors.textMuted }]}>
-                            Best {formatScore(f.best_score)}{f.run_count > 0 ? ` · ${f.run_count} ${f.run_count === 1 ? 'run' : 'runs'}` : ''}
-                          </Text>
                         </View>
                         <TouchableOpacity
                           style={[styles.actionBtn, { borderColor: colors.border }]}

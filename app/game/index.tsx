@@ -16,7 +16,7 @@ import { useAnimation } from '@/contexts/AnimationContext';
 import { useGame } from '@/hooks/useGame';
 import { useRewardedAd } from '@/hooks/useRewardedAd';
 import { useInterstitialAd } from '@/hooks/useInterstitialAd';
-import { isFirstRunOfSession, markFirstRunUsed } from '@/lib/sessionTracker';
+import { isFirstRunOfSession, markFirstRunUsed, resetFirstRunForQuit } from '@/lib/sessionTracker';
 import GameBoard from '@/components/game/GameBoard';
 import HUD from '@/components/game/HUD';
 import Controls from '@/components/game/Controls';
@@ -420,6 +420,7 @@ export default function GameScreen() {
     setFreeContinueUsed(false);
     setAdContinueUsed(false);
     prevBestLockedRef.current = false;
+    markFirstRunUsed();
     game.resetGame();
     router.back();
   }, [game.score, game.runBestChain, difficulty, freeContinueUsed, adContinueUsed, submitRun, game.resetGame]);
@@ -496,12 +497,14 @@ export default function GameScreen() {
     await clearSavedGame(difficulty);
     clearPendingRun();
     preContinueScoreRef.current = 0;
+    resetFirstRunForQuit();
     router.back();
   }, [game.score, game.runBestChain, difficulty, freeContinueUsed, adContinueUsed, submitRun]);
 
   // Quit without saving — discard score entirely, no stats recorded
   const handleQuitDiscard = useCallback(async () => {
     await clearSavedGame(difficulty);
+    resetFirstRunForQuit();
     router.back();
   }, [difficulty]);
 
@@ -619,30 +622,28 @@ export default function GameScreen() {
 
         <View style={{ height: S1 }} />
 
-        <View style={{ position: 'relative' }}>
-          <GestureDetector gesture={controlsDisabled ? Gesture.Tap() : boardGesture}>
-            <View style={[styles.boardWrap, { backgroundColor: colors.surfaceRaise }]}>
-              <GameBoard
-                board={game.board}
-                activePiece={game.activePiece}
-                ghostAnchorRow={game.ghostAnchorRow}
-                cellSize={cellSize}
-                chainPass={game.chainPass}
-                mergeEvents={game.lastMergeEvents}
+        <GestureDetector gesture={controlsDisabled ? Gesture.Tap() : boardGesture}>
+          <View style={[styles.boardWrap, { backgroundColor: colors.surfaceRaise }]}>
+            <GameBoard
+              board={game.board}
+              activePiece={game.activePiece}
+              ghostAnchorRow={game.ghostAnchorRow}
+              cellSize={cellSize}
+              chainPass={game.chainPass}
+              mergeEvents={game.lastMergeEvents}
+            />
+            <EmergencyCondenseOverlay visible={game.phase === 'condensing'} />
+            {showChainPopups && (
+              <FloatingLabelsOverlay
+                labels={floatingLabels.filter(l => l.type === 'chain')}
+                onRemove={removeFloatingLabel}
               />
-              <EmergencyCondenseOverlay visible={game.phase === 'condensing'} />
-              {showChainPopups && (
-                <FloatingLabelsOverlay
-                  labels={floatingLabels.filter(l => l.type === 'chain')}
-                  onRemove={removeFloatingLabel}
-                />
-              )}
-            </View>
-          </GestureDetector>
-          {showTutorial && (
-            <TutorialOverlay onDismiss={() => { setShowTutorial(false); markControlsSeen(); }} />
-          )}
-        </View>
+            )}
+          </View>
+        </GestureDetector>
+        {showTutorial && (
+          <TutorialOverlay onDismiss={() => { setShowTutorial(false); markControlsSeen(); }} />
+        )}
 
 
         <View style={{ height: s2 }} />

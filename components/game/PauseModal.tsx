@@ -40,14 +40,14 @@ export default function PauseModal({ visible, onResume, onContinueLater, onQuitA
 
             <TouchableOpacity
               style={[styles.btn, { backgroundColor: colors.accent }]}
-              onPress={() => { setConfirming(false); onQuitAndLog(); }}
+              onPress={onQuitAndLog}
             >
               <Text style={[styles.btnText, { color: colors.accentText }]}>Log Score</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.outlineBtn, { borderColor: colors.accent }]}
-              onPress={() => { setConfirming(false); onQuitDiscard(); }}
+              onPress={onQuitDiscard}
             >
               <Text style={[styles.outlineText, { color: colors.accent }]}>Discard Score</Text>
             </TouchableOpacity>

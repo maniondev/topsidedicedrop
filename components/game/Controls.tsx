@@ -26,7 +26,7 @@ const CtrlBtn = React.memo(function CtrlBtn({ onPress, children, size }: {
   return (
     <TouchableOpacity
       style={[styles.btn, { width: size, height: size, backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-      onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress(); }}
+      onPressIn={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onPress(); }}
       activeOpacity={0.65}
     >
       {children}

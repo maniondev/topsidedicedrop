@@ -213,10 +213,15 @@ function ScoreGainPopup({ text, color, active }: { text: string; color: string; 
     }
   }, [active]);
 
+  const plus   = text.startsWith('+') ? '+' : '';
+  const number = plus ? text.slice(1) : text;
+
   return (
-    <Animated.Text style={[styles.scoreGain, { color, opacity, transform: [{ scale }] }]}>
-      {text}
-    </Animated.Text>
+    <Animated.View style={[styles.scoreGainRow, { opacity, transform: [{ scale }] }]}>
+      <Text style={[styles.scoreGain, { color }]}>{plus}</Text>
+      <Text style={[styles.scoreGain, { color }]}>{number}</Text>
+      <Text style={[styles.scoreGain, { color: 'transparent' }]}>{plus}</Text>
+    </Animated.View>
   );
 }
 
@@ -321,5 +326,6 @@ const styles = StyleSheet.create({
   value:     { fontSize: 28 },
   divider:   { width: 1, height: VALUE_AREA_H, marginTop: IS_LARGE ? 20 : 16 },
   scoreGainWrap: { position: 'absolute', top: '100%', left: -60, right: -60, alignItems: 'center', paddingTop: 2 },
-  scoreGain:     { fontFamily: 'Fredoka_400Regular', fontSize: IS_LARGE ? 22 : 18, textAlign: 'center' },
+  scoreGainRow:  { flexDirection: 'row' },
+  scoreGain:     { fontFamily: 'Fredoka_400Regular', fontSize: IS_LARGE ? 22 : 18 },
 });

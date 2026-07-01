@@ -1,6 +1,6 @@
 import { AppState } from 'react-native';
 
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
+const SESSION_TIMEOUT_MS = 5 * 60 * 1000;
 
 let firstRunUsed = false;
 let lastBackgroundedAt = 0;
@@ -26,4 +26,8 @@ export function isFirstRunOfSession(): boolean {
 
 export function markFirstRunUsed(): void {
   firstRunUsed = true;
+}
+
+export function resetFirstRunForQuit(): void {
+  firstRunUsed = false;
 }
