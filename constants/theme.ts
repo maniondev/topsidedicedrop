@@ -77,6 +77,8 @@ export type ThemeColors = {
   darkenFaceColorsDot?: Partial<Record<FaceColorName, string>>;
   // Optional color for the "Topside" wordmark on the home screen (falls back to text)
   titleColor?: string;
+  // Optional outline/stroke color for floating chain labels (falls back to titleColor, then dark)
+  popupOutlineColor?: string;
 };
 
 export type ThemeId = 'dice' | 'light' | 'dark' | 'pastel' | 'grayscale' | 'neon' | 'sunset' | 'ocean' | 'forest';
@@ -473,7 +475,8 @@ export const Themes: Record<ThemeId, ThemeColors> = {
       purple: '#5E5E5E',
       black:  '#050505',
     },
-    iconBg:        '#E5E5E5',
+    iconBg:           '#E5E5E5',
+    popupOutlineColor: 'rgba(255,255,255,0.88)',
   },
 };
 

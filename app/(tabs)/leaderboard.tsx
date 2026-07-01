@@ -65,6 +65,7 @@ export default function LeaderboardScreen() {
   const scrollRef = useRef<ScrollView>(null);
 
   const [activeTab,       setActiveTab]       = useState<'yours' | 'leaderboard'>('yours');
+  const [showInfo,        setShowInfo]        = useState(false);
 
   // Sliding segment control
   const segPos      = useSharedValue(0); // 0 = yours, 1 = leaderboard
@@ -91,7 +92,7 @@ export default function LeaderboardScreen() {
   }));
 
   const [filterDifficulty, setFilterDifficulty] = useState<Difficulty | 'all'>('all');
-  const [filterType,      setFilterType]      = useState<'overall' | 'unassisted'>('overall');
+  const [filterType,      setFilterType]      = useState<'overall' | 'unassisted'>('unassisted');
   const [filterTime,      setFilterTime]      = useState<TimePeriod>('all');
   const [lbMode,          setLbMode]          = useState<LbMode>('best');
   const [lbScope,         setLbScope]         = useState<'global' | 'following'>('global');
@@ -371,7 +372,29 @@ export default function LeaderboardScreen() {
     <View style={[styles.safe, { backgroundColor: colors.background, paddingTop: top }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.titleColor ?? colors.text }]}>{activeTab === 'yours' ? 'Your Stats' : 'Leaderboard'}</Text>
+        <TouchableOpacity onPress={() => setShowInfo(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Ionicons name="help-circle-outline" size={26} color={colors.textMuted} />
+        </TouchableOpacity>
       </View>
+
+      <Modal visible={showInfo} transparent animationType="fade" onRequestClose={() => setShowInfo(false)}>
+        <Pressable style={styles.infoOverlay} onPress={() => setShowInfo(false)}>
+          <Pressable style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <Text style={[styles.infoTitle, { color: colors.text }]}>About the Leaderboard</Text>
+            <Text style={[styles.infoBody, { color: colors.textSecondary }]}>
+              <Text style={{ fontWeight: '700', color: colors.text }}>Unassisted</Text>
+              {' — scores from runs completed before using a continue.'}
+            </Text>
+            <Text style={[styles.infoBody, { color: colors.textSecondary }]}>
+              <Text style={{ fontWeight: '700', color: colors.text }}>All Runs</Text>
+              {' — every run, including those where a continue was used to extend the game.'}
+            </Text>
+            <TouchableOpacity style={[styles.infoBtn, { backgroundColor: colors.accent }]} onPress={() => setShowInfo(false)}>
+              <Text style={[styles.infoBtnText, { color: colors.accentText }]}>Got it</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Username card */}
       <View style={[styles.nameCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, marginHorizontal: 16, marginBottom: 12 }]}>
@@ -422,8 +445,8 @@ export default function LeaderboardScreen() {
             label="Type"
             value={filterType}
             options={[
-              { label: 'Overall', value: 'overall' },
-              { label: 'Unassisted', value: 'unassisted' },
+              { label: 'Unassisted Runs', value: 'unassisted' },
+              { label: 'All Runs', value: 'overall' },
             ]}
             onChange={setFilterType}
           />
@@ -636,8 +659,14 @@ export default function LeaderboardScreen() {
 
 const styles = StyleSheet.create({
   safe:           { flex: 1 },
-  header:         { paddingVertical: 16, paddingHorizontal: 20 },
+  header:         { paddingVertical: 16, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title:          { fontSize: IS_LARGE ? 36 : 28, fontWeight: '800', letterSpacing: -0.5 },
+  infoOverlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 32 },
+  infoCard:       { width: '100%', maxWidth: 440, borderRadius: 20, borderWidth: 1, padding: 24, gap: 14 },
+  infoTitle:      { fontSize: IS_LARGE ? 24 : 18, fontWeight: '800', marginBottom: 4 },
+  infoBody:       { fontSize: IS_LARGE ? 16 : 14, lineHeight: IS_LARGE ? 24 : 20 },
+  infoBtn:        { paddingVertical: IS_LARGE ? 16 : 12, borderRadius: 12, alignItems: 'center', marginTop: 4 },
+  infoBtnText:    { fontSize: IS_LARGE ? 18 : 15, fontWeight: '700' },
   content:        { paddingHorizontal: 16, paddingBottom: 32, gap: 12 },
 
   segment:        { flexDirection: 'row', borderRadius: 12, borderWidth: 1, padding: 3, gap: 3 },

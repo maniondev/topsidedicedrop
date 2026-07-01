@@ -17,14 +17,17 @@ export const AnimPackMeta: Record<AnimPackId, { label: string; description: stri
   glitch:   { label: 'Glitch',   description: 'Glitchy jitter effects',       free: false },
 };
 
-const ANIM_PACK_KEY = 'tm_anim_pack';
-const PERF_MODE_KEY = 'tm_perf_mode';
+const ANIM_PACK_KEY        = 'tm_anim_pack';
+const PERF_MODE_KEY        = 'tm_perf_mode';
+const CHAIN_POPUPS_KEY     = 'tm_chain_popups';
 
 interface AnimCtxType {
   animPack: AnimPackId;
   setAnimPack: (p: AnimPackId) => void;
   performanceMode: boolean;
   setPerformanceMode: (v: boolean) => void;
+  showChainPopups: boolean;
+  setShowChainPopups: (v: boolean) => void;
 }
 
 const AnimCtx = createContext<AnimCtxType>({
@@ -32,16 +35,20 @@ const AnimCtx = createContext<AnimCtxType>({
   setAnimPack: () => {},
   performanceMode: false,
   setPerformanceMode: () => {},
+  showChainPopups: true,
+  setShowChainPopups: () => {},
 });
 
 export function AnimationProvider({ children }: { children: ReactNode }) {
   const [animPack, setAnimPackState] = useState<AnimPackId>('classic');
   const [performanceMode, setPerfModeState] = useState(false);
+  const [showChainPopups, setChainPopupsState] = useState(true);
 
   useEffect(() => {
-    AsyncStorage.multiGet([ANIM_PACK_KEY, PERF_MODE_KEY]).then(([[, pack], [, perf]]) => {
+    AsyncStorage.multiGet([ANIM_PACK_KEY, PERF_MODE_KEY, CHAIN_POPUPS_KEY]).then(([[, pack], [, perf], [, chain]]) => {
       if (pack && ANIM_PACK_IDS.includes(pack as AnimPackId)) setAnimPackState(pack as AnimPackId);
       if (perf !== null) setPerfModeState(perf === 'true');
+      if (chain !== null) setChainPopupsState(chain !== 'false');
     }).catch(() => {});
   }, []);
 
@@ -55,9 +62,14 @@ export function AnimationProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(PERF_MODE_KEY, v ? 'true' : 'false').catch(() => {});
   }, []);
 
+  const setShowChainPopups = useCallback((v: boolean) => {
+    setChainPopupsState(v);
+    AsyncStorage.setItem(CHAIN_POPUPS_KEY, v ? 'true' : 'false').catch(() => {});
+  }, []);
+
   const value = useMemo(
-    () => ({ animPack, setAnimPack, performanceMode, setPerformanceMode }),
-    [animPack, setAnimPack, performanceMode, setPerformanceMode],
+    () => ({ animPack, setAnimPack, performanceMode, setPerformanceMode, showChainPopups, setShowChainPopups }),
+    [animPack, setAnimPack, performanceMode, setPerformanceMode, showChainPopups, setShowChainPopups],
   );
   return <AnimCtx.Provider value={value}>{children}</AnimCtx.Provider>;
 }

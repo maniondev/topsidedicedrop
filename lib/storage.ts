@@ -40,8 +40,16 @@ const STATS_RESET_KEY   = `${PREFIX}stats_reset`;
 // credited as hard (and vice-versa). One save slot per difficulty.
 const SAVED_GAME_PREFIX = `${PREFIX}saved_game_`;
 const savedKey = (d: Difficulty) => `${SAVED_GAME_PREFIX}${d}`;
-export const THEME_KEY = `${PREFIX}theme`;
-export const SOUND_KEY = `${PREFIX}sound`;
+export const THEME_KEY         = `${PREFIX}theme`;
+export const SOUND_KEY         = `${PREFIX}sound`;
+export const CONTROLS_SEEN_KEY = `${PREFIX}controls_seen`;
+
+export async function hasSeenControls(): Promise<boolean> {
+  try { return (await AsyncStorage.getItem(CONTROLS_SEEN_KEY)) === '1'; } catch { return false; }
+}
+export async function markControlsSeen(): Promise<void> {
+  try { await AsyncStorage.setItem(CONTROLS_SEEN_KEY, '1'); } catch {}
+}
 
 export interface SavedGame {
   board: Array<Array<{ value: number; id: string } | null>>;

@@ -17,9 +17,9 @@ const CONTROLS: { verb: string; rest: string }[] = [
 
 const RULES: { title: string; body: string }[] = [
   { title: 'Merge matching values', body: 'Two or more touching dice of the same value merge into one die of the next value: 1+1→2, 2+2→3, all the way up.' },
-  { title: 'Build chains', body: 'A merge can trigger more merges as dice settle. The longer the chain, the bigger the score multiplier.' },
   { title: 'Clear the sixes', body: 'Merge two or more 6s to clear them off the board for a big bonus. The best way to free up space.' },
-  { title: 'Survive', body: 'Unsupported stacks fall. The run ends when a new piece can no longer fit. Beat your best score!' },
+  { title: 'Build chains', body: 'A merge can trigger more merges as dice settle. The longer the chain, the bigger the score multiplier.' },
+  { title: 'Survive', body: 'Unsupported stacks fall. The run ends when a new piece can no longer fit. Beat your best score and climb the leaderboard!' },
 ];
 
 export default function HowToPlayModal({ visible, onClose }: Props) {

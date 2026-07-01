@@ -18,7 +18,8 @@ import { useAnimation, AnimPackMeta, ANIM_PACK_IDS, AnimPackId } from '@/context
 import { useDiceStyle, DiceStyleMeta, DICE_STYLE_IDS, DiceStyleId } from '@/contexts/DiceStyleContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useStats } from '@/contexts/StatsContext';
-import { loadStats, saveStats } from '@/lib/storage';
+import { loadStats, saveStats, CONTROLS_SEEN_KEY } from '@/lib/storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { submitScoreForCurrentPlayer } from '@/lib/scoreQueue';
 import PremiumModal from '@/components/PremiumModal';
 import { ThemeColors, ThemeId, ThemeMeta, THEME_IDS, Themes } from '@/constants/theme';
@@ -31,7 +32,7 @@ export default function SettingsScreen() {
   const { colors, themeId, setTheme } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const { soundEnabled, setSoundEnabled, soundPack, setSoundPack, play } = useSound();
-  const { animPack, setAnimPack, performanceMode, setPerformanceMode } = useAnimation();
+  const { animPack, setAnimPack, performanceMode, setPerformanceMode, showChainPopups, setShowChainPopups } = useAnimation();
   const { diceStyle, setDiceStyle } = useDiceStyle();
   const { isPremium, upgrade, restorePurchases, devToggle } = usePremium();
   const { resetStats, refresh } = useStats();
@@ -112,6 +113,14 @@ export default function SettingsScreen() {
           )}
           {!isPremium && (
             <RowItem label="Restore Purchases" onPress={restorePurchases} colors={colors} styles={styles} />
+          )}
+          {__DEV__ && (
+            <RowItem
+              label="⚙️ Dev: Reset Controls Tutorial"
+              onPress={() => AsyncStorage.removeItem(CONTROLS_SEEN_KEY)}
+              colors={colors}
+              styles={styles}
+            />
           )}
           {__DEV__ && (
             <RowItem
@@ -266,8 +275,8 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* Sound toggle */}
-        <Section label="Sound" styles={styles}>
+        {/* Sound + Gameplay toggles */}
+        <Section label="Gameplay" styles={styles}>
           <ToggleRow
             label="Sound Effects"
             value={soundEnabled}
@@ -275,22 +284,24 @@ export default function SettingsScreen() {
             colors={colors}
             styles={styles}
           />
-        </Section>
-
-        {/* Performance */}
-        <Section label="Performance" styles={styles}>
           <ToggleRow
-            label="Performance Mode"
-            value={performanceMode}
-            onValueChange={setPerformanceMode}
+            label="Chain Popups"
+            value={showChainPopups}
+            onValueChange={setShowChainPopups}
             colors={colors}
             styles={styles}
           />
-          <View style={styles.row}>
-            <Text style={[styles.rowLabel, { fontSize: 12, color: colors.textMuted }]}>
-              Reduces visual effects for smoother gameplay on older devices.
-            </Text>
-          </View>
+          <ToggleRow
+            label="Performance Mode"
+            sublabel="Reduces visual effects for smoother gameplay on older devices."
+            value={performanceMode}
+            onValueChange={v => {
+              setPerformanceMode(v);
+              if (v) { setSoundEnabled(false); setShowChainPopups(false); }
+            }}
+            colors={colors}
+            styles={styles}
+          />
         </Section>
 
         {/* Stats */}
@@ -438,13 +449,16 @@ function RowItem({ label, value, onPress, danger, colors, styles }: {
   );
 }
 
-function ToggleRow({ label, value, onValueChange, colors, styles }: {
-  label: string; value: boolean; onValueChange: (v: boolean) => void;
+function ToggleRow({ label, sublabel, value, onValueChange, colors, styles }: {
+  label: string; sublabel?: string; value: boolean; onValueChange: (v: boolean) => void;
   colors: ThemeColors; styles: ReturnType<typeof makeStyles>;
 }) {
   return (
     <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.rowLabel}>{label}</Text>
+        {sublabel && <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>{sublabel}</Text>}
+      </View>
       <Switch
         value={value}
         onValueChange={onValueChange}

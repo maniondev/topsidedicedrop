@@ -12,6 +12,7 @@ import { useStats } from '@/contexts/StatsContext';
 import { useSound } from '@/contexts/SoundContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useDifficulty } from '@/contexts/DifficultyContext';
+import { useAnimation } from '@/contexts/AnimationContext';
 import { useGame } from '@/hooks/useGame';
 import { useRewardedAd } from '@/hooks/useRewardedAd';
 import { useInterstitialAd } from '@/hooks/useInterstitialAd';
@@ -25,7 +26,8 @@ import EmergencyCondenseOverlay from '@/components/game/EmergencyCondenseOverlay
 import { FloatingLabelsOverlay, FloatingLabelData } from '@/components/game/FloatingLabels';
 import AdBanner from '@/components/AdBanner';
 import { onRunComplete } from '@/lib/adCounter';
-import { saveGame, loadSavedGame, clearSavedGame, savePendingRun, clearPendingRun } from '@/lib/storage';
+import { saveGame, loadSavedGame, clearSavedGame, savePendingRun, clearPendingRun, hasSeenControls, markControlsSeen } from '@/lib/storage';
+import TutorialOverlay from '@/components/game/TutorialOverlay';
 import { runMergePhase, computeClearSteps } from '@/lib/condense';
 import { COLS, ROWS } from '@/constants/game';
 import { submitScoreForCurrentPlayer, updateBestUnassistedForCurrentPlayer } from '@/lib/scoreQueue';
@@ -46,6 +48,7 @@ export default function GameScreen() {
   const { play, soundPack } = useSound();
   const { isPremium } = usePremium();
   const { gravityMs, difficulty } = useDifficulty();
+  const { showChainPopups } = useAnimation();
   const bestScore = statsFor(difficulty).bestScore;
   const bestUnassisted = statsFor(difficulty).bestUnassisted;
   const { width: rawWidth, height } = useWindowDimensions();
@@ -67,6 +70,8 @@ export default function GameScreen() {
   const scoreGainKeyRef                 = useRef(0);
   const [scoreGainKey, setScoreGainKey] = useState(0);
   const allClearCountRef                = useRef(0);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const tutorialShownRef                = useRef(false);
   const [reviewPromptVisible, setReviewPromptVisible] = useState(false);
   const reviewOptedOutRef      = useRef(false);
   const reviewPendingRef       = useRef(false);
@@ -91,7 +96,7 @@ export default function GameScreen() {
   const cellSize      = Math.max(Math.min(csH, csW), 32);
   const boardW        = cellSize * COLS;
 
-  const game = useGame(gravityMs, paused || reviewPromptVisible);
+  const game = useGame(gravityMs, paused || reviewPromptVisible || showTutorial);
 
   const handlePause = useCallback(() => setPaused(true), []);
 
@@ -122,6 +127,21 @@ export default function GameScreen() {
     }).catch(() => { game.startGame(); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Check if controls tutorial has been seen.
+  useEffect(() => {
+    hasSeenControls().then(seen => { if (!seen) tutorialShownRef.current = false; else tutorialShownRef.current = true; });
+  }, []);
+
+  // Show tutorial on first falling phase.
+  useEffect(() => {
+    if (tutorialShownRef.current) return;
+    if (game.phase === 'falling' || game.phase === 'locking') {
+      tutorialShownRef.current = true;
+      setShowTutorial(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.phase]);
 
   // Load review opt-out + last-prompted once on mount.
   useEffect(() => {
@@ -195,7 +215,7 @@ export default function GameScreen() {
     lastMergePositionRef.current = { x, y };
     if (pass >= 2) {
       const rot = (Math.random() - 0.5) * 40;
-      addFloatingLabel('chain', `${pass}×`, x, y, colors.accent, 42, rot, 'Rubik_700Bold', undefined, colors.titleColor ?? 'rgba(0,0,0,0.88)');
+      addFloatingLabel('chain', `${pass}×`, x, y, colors.accent, 42, rot, 'Rubik_700Bold', undefined, colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)');
     }
     // Update running score gain (builds up each pass)
     const gain = game.score - chainStartScoreRef.current;
@@ -599,23 +619,30 @@ export default function GameScreen() {
 
         <View style={{ height: S1 }} />
 
-        <GestureDetector gesture={controlsDisabled ? Gesture.Tap() : boardGesture}>
-          <View style={[styles.boardWrap, { backgroundColor: colors.surfaceRaise }]}>
-            <GameBoard
-              board={game.board}
-              activePiece={game.activePiece}
-              ghostAnchorRow={game.ghostAnchorRow}
-              cellSize={cellSize}
-              chainPass={game.chainPass}
-              mergeEvents={game.lastMergeEvents}
-            />
-            <EmergencyCondenseOverlay visible={game.phase === 'condensing'} />
-            <FloatingLabelsOverlay
-              labels={floatingLabels.filter(l => l.type === 'chain')}
-              onRemove={removeFloatingLabel}
-            />
-          </View>
-        </GestureDetector>
+        <View style={{ position: 'relative' }}>
+          <GestureDetector gesture={controlsDisabled ? Gesture.Tap() : boardGesture}>
+            <View style={[styles.boardWrap, { backgroundColor: colors.surfaceRaise }]}>
+              <GameBoard
+                board={game.board}
+                activePiece={game.activePiece}
+                ghostAnchorRow={game.ghostAnchorRow}
+                cellSize={cellSize}
+                chainPass={game.chainPass}
+                mergeEvents={game.lastMergeEvents}
+              />
+              <EmergencyCondenseOverlay visible={game.phase === 'condensing'} />
+              {showChainPopups && (
+                <FloatingLabelsOverlay
+                  labels={floatingLabels.filter(l => l.type === 'chain')}
+                  onRemove={removeFloatingLabel}
+                />
+              )}
+            </View>
+          </GestureDetector>
+          {showTutorial && (
+            <TutorialOverlay onDismiss={() => { setShowTutorial(false); markControlsSeen(); }} />
+          )}
+        </View>
 
 
         <View style={{ height: s2 }} />
