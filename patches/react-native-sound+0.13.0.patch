@@ -1,8 +1,21 @@
 diff --git a/node_modules/react-native-sound/ios/RNSound.mm b/node_modules/react-native-sound/ios/RNSound.mm
-index 94b2335..e545fb1 100644
+index 94b2335..6f984b4 100644
 --- a/node_modules/react-native-sound/ios/RNSound.mm
 +++ b/node_modules/react-native-sound/ios/RNSound.mm
-@@ -216,20 +216,13 @@ - (NSString *)categoryForName:(NSString *)categoryName {
+@@ -197,6 +197,12 @@ - (NSString *)categoryForName:(NSString *)categoryName {
+     
+     if (player) {
+         @synchronized(self) {
++            // PATCHED (Topside): set Playback + MixWithOthers before prepareToPlay so the
++            // session activates with the correct options, preventing music interruption.
++            [[AVAudioSession sharedInstance]
++                setCategory:AVAudioSessionCategoryPlayback
++                withOptions:AVAudioSessionCategoryOptionMixWithOthers | AVAudioSessionCategoryOptionAllowBluetooth
++                      error:nil];
+             player.delegate = self;
+             player.enableRate = YES;
+             [player prepareToPlay];
+@@ -216,20 +222,13 @@ - (NSString *)categoryForName:(NSString *)categoryName {
  }
  
  RCT_EXPORT_METHOD(play:(double)key callback:(RCTResponseSenderBlock)callback) {
@@ -29,4 +42,4 @@ index 94b2335..e545fb1 100644
 +    // none of that is needed here — play() just plays the prepared buffer now.
      self._key = key;
      AVAudioPlayer *player = [self playerForKey:key];
- 
+     

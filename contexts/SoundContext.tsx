@@ -237,8 +237,8 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   enabledRef.current = soundEnabled;
   const soundPackRef = useRef<SoundPackId>('topside');
   soundPackRef.current = soundPack;
-  const poolsRef    = useRef<Partial<Record<SoundName, Sound[]>>>({});
-  const idxRef      = useRef<Partial<Record<SoundName, number>>>({});
+  const poolsRef      = useRef<Partial<Record<SoundName, Sound[]>>>({});
+  const idxRef        = useRef<Partial<Record<SoundName, number>>>({});
   const loadingRef  = useRef(false);
 
   // Load persisted settings
