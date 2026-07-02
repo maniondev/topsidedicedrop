@@ -141,6 +141,27 @@ export default function SettingsScreen() {
           )}
         </Section>
 
+        {/* Sound */}
+        <Section label="Sound" styles={styles}>
+          <ToggleRow
+            label="Sound Effects"
+            value={soundEnabled}
+            onValueChange={setSoundEnabled}
+            colors={colors}
+            styles={styles}
+          />
+          {soundEnabled && (
+            <ToggleRow
+              label="Play in Silent Mode"
+              sublabel="May pause Spotify / Apple Music"
+              value={soundMode === 'playback'}
+              onValueChange={v => setSoundMode(v ? 'playback' : 'ambient')}
+              colors={colors}
+              styles={styles}
+            />
+          )}
+        </Section>
+
         {/* ── Customize ── */}
         <View style={styles.customizeHeader}>
           <Text style={styles.customizeTitle}>Customize</Text>
@@ -275,25 +296,8 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        {/* Sound + Gameplay toggles */}
+        {/* Gameplay toggles */}
         <Section label="Gameplay" styles={styles}>
-          <ToggleRow
-            label="Sound Effects"
-            value={soundEnabled}
-            onValueChange={setSoundEnabled}
-            colors={colors}
-            styles={styles}
-          />
-          {soundEnabled && (
-            <ToggleRow
-              label="Play in Silent Mode"
-              sublabel="May pause Spotify / Apple Music"
-              value={soundMode === 'playback'}
-              onValueChange={v => setSoundMode(v ? 'playback' : 'ambient')}
-              colors={colors}
-              styles={styles}
-            />
-          )}
           <ToggleRow
             label="Chain Popups"
             value={showChainPopups}
