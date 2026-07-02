@@ -19,6 +19,14 @@ export interface FloatingLabelData {
 
 const RAINBOW_PALETTE = ['#FF3B3B', '#FF8C00', '#FFD700', '#2ECC40', '#00AAFF', '#A044FF'];
 
+// Uniform 2.5px radius in 8 directions — equal distance so stroke is even all around
+const R = 2.5;
+const D = R * 0.707; // R/√2 ≈ 1.77
+const STROKE_OFFSETS: [number, number][] = [
+  [0, -R], [R, -D], [R, 0], [R, D],
+  [0, R], [-R, D], [-R, 0], [-R, -D],
+];
+
 function RainbowText({ text, fontSize, fontFamily }: { text: string; fontSize: number; fontFamily?: string }) {
   let colorIndex = 0;
   return (
@@ -84,12 +92,15 @@ function FloatingLabelItem({
         {rainbow ? (
           <RainbowText text={text} fontSize={fontSize} fontFamily={fontFamily} />
         ) : glowColor ? (
-          <Text style={[textStyle, {
-            color,
-            textShadowColor: glowColor,
-            textShadowOffset: { width: 0, height: 0 },
-            textShadowRadius: 3,
-          }]}>{text}</Text>
+          <View style={styles.strokeWrap}>
+            {STROKE_OFFSETS.map(([dx, dy], i) => (
+              <Text key={i} style={[textStyle, styles.strokeCopy, {
+                color: glowColor,
+                transform: [{ translateX: dx }, { translateY: dy }],
+              }]}>{text}</Text>
+            ))}
+            <Text style={[textStyle, { color }]}>{text}</Text>
+          </View>
         ) : (
           <Text style={[textStyle, styles.dropShadow, { color }]}>{text}</Text>
         )}
@@ -123,6 +134,8 @@ const styles = StyleSheet.create({
   animWrap:       { alignItems: 'center' },
   dropShadow:     { textShadowColor: 'rgba(0,0,0,0.55)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 4 },
   text:           { fontWeight: '800' },
+  strokeWrap:     { alignItems: 'center' },
+  strokeCopy:     { position: 'absolute' },
   rainbowRow:     { flexDirection: 'row', alignItems: 'center' },
   rainbowChar:    { fontWeight: '800' },
 });
