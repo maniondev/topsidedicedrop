@@ -95,6 +95,9 @@ export default function GameScreen() {
   const csH           = Math.floor((effectiveH - nonBoardH) / ROWS);
   const cellSize      = Math.max(Math.min(csH, csW), 32);
   const boardW        = cellSize * COLS;
+  // Floating popups are sized in absolute px; scale them up on large screens so
+  // they stay proportional to the bigger board/dice (position already scales via cellSize).
+  const popScale      = isLargeScreen ? 1.5 : 1;
 
   const game = useGame(gravityMs, paused || reviewPromptVisible || showTutorial);
 
@@ -216,9 +219,7 @@ export default function GameScreen() {
     const gain = game.score - chainStartScoreRef.current;
     if (gain > 0) {
       const rot = (Math.random() - 0.5) * 40;
-      addFloatingLabel('chain', `+${gain.toLocaleString()}`, x, y, colors.accent, 42, rot, 'Rubik_700Bold', undefined, colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)');
-    }
-    if (gain > 0) {
+      addFloatingLabel('chain', `+${gain.toLocaleString()}`, x, y, colors.accent, 42 * popScale, rot, 'Rubik_700Bold', undefined, colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)');
       setScoreGain(`+${gain.toLocaleString()}`);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -265,11 +266,13 @@ export default function GameScreen() {
     const id3 = String(floatingLabelIdRef.current++);
     const outline = colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)';
     const boardH  = cellSize * ROWS;
+    const gap     = 86 * popScale;                       // vertical spacing between stacked labels
+    const topY    = Math.max(cy - 112 * popScale, 4);    // 'All' baseline, clamped to board top
     setFloatingLabels(prev => [
       ...prev.filter(l => l.type !== 'chain'),
-      { id: id1, type: 'chain', text: 'All',  x: cx, y: Math.max(cy - 112, 4),            color: colors.accent, fontSize: 62, rotation: -9, fontFamily: 'Fredoka_700Bold',     travelY: -35, glowColor: outline, centerH: true },
-      { id: id2, type: 'chain', text: 'Clear', x: cx, y: Math.max(cy - 112, 4) + 86,     color: colors.accent, fontSize: 62, rotation:  9, fontFamily: 'Fredoka_700Bold',     travelY: -35, glowColor: outline, centerH: true },
-      { id: id3, type: 'chain', text: '+200', x: cx, y: Math.min(Math.max(cy - 112, 4) + 172, boardH - 58), color: colors.accent, fontSize: 44, rotation: -7, fontFamily: 'Fredoka_600SemiBold', travelY: -35, glowColor: outline, centerH: true },
+      { id: id1, type: 'chain', text: 'All',   x: cx, y: topY,                                          color: colors.accent, fontSize: 62 * popScale, rotation: -9, fontFamily: 'Fredoka_700Bold',     travelY: -35, glowColor: outline, centerH: true },
+      { id: id2, type: 'chain', text: 'Clear', x: cx, y: topY + gap,                                    color: colors.accent, fontSize: 62 * popScale, rotation:  9, fontFamily: 'Fredoka_700Bold',     travelY: -35, glowColor: outline, centerH: true },
+      { id: id3, type: 'chain', text: '+200',  x: cx, y: Math.min(topY + gap * 2, boardH - 58 * popScale), color: colors.accent, fontSize: 44 * popScale, rotation: -7, fontFamily: 'Fredoka_600SemiBold', travelY: -35, glowColor: outline, centerH: true },
     ]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.allClearCount]);
