@@ -5,7 +5,7 @@ export interface FloatingLabelData {
   id: string;
   type: 'chain' | 'score';
   text: string;
-  x: number;        // center x in board coordinates (ignored when centerHorizontally)
+  x: number;        // center x in board coordinates (ignored when centerH or centerHorizontally)
   y: number;        // top y in overlay coordinates
   color: string;
   fontSize: number;
@@ -15,6 +15,7 @@ export interface FloatingLabelData {
   glowColor?: string; // when set: stacked-text outline using this color for the stroke
   rainbow?: boolean;  // when set: render each character in a cycling rainbow palette
   holdMs?: number;    // ms to hold at full opacity before fading (default 220)
+  centerH?: boolean;  // center across full overlay width (avoids narrow 120px anchor wrapping wide text)
 }
 
 const RAINBOW_PALETTE = ['#FF3B3B', '#FF8C00', '#FFD700', '#2ECC40', '#00AAFF', '#A044FF'];
@@ -52,7 +53,7 @@ function RainbowText({ text, fontSize, fontFamily }: { text: string; fontSize: n
 
 
 function FloatingLabelItem({
-  text, x, y, color, fontSize, rotation, fontFamily, travelY = -70, glowColor, rainbow, holdMs = 220, onDone, centerHorizontally = false,
+  text, x, y, color, fontSize, rotation, fontFamily, travelY = -70, glowColor, rainbow, holdMs = 220, centerH, onDone, centerHorizontally = false,
 }: FloatingLabelData & { onDone: () => void; centerHorizontally?: boolean }) {
   const translateY = useRef(new Animated.Value(0)).current;
   const opacity    = useRef(new Animated.Value(0)).current;
@@ -75,7 +76,7 @@ function FloatingLabelItem({
     ]).start(({ finished }) => { if (finished) onDone(); });
   }, []);
 
-  const anchorStyle = centerHorizontally
+  const anchorStyle = (centerHorizontally || centerH)
     ? [styles.anchor, styles.anchorCentered, { top: y }]
     : [styles.anchor, { left: x - 60, top: y }];
 

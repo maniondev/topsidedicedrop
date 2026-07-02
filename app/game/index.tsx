@@ -267,9 +267,9 @@ export default function GameScreen() {
     const boardH  = cellSize * ROWS;
     setFloatingLabels(prev => [
       ...prev.filter(l => l.type !== 'chain'),
-      { id: id1, type: 'chain', text: 'All',   x: cx, y: Math.max(cy - 130, 4),          color: colors.accent, fontSize: 62, rotation: -9, fontFamily: 'Fredoka_700Bold',       travelY: -35, glowColor: outline },
-      { id: id2, type: 'chain', text: 'Clear',  x: cx, y: cy - 52,                        color: colors.accent, fontSize: 62, rotation:  9, fontFamily: 'Fredoka_700Bold',       travelY: -35, glowColor: outline },
-      { id: id3, type: 'chain', text: '+200',   x: cx, y: Math.min(cy + 30, boardH - 56), color: colors.accent, fontSize: 44, rotation: -7, fontFamily: 'Fredoka_600SemiBold',   travelY: -35, glowColor: outline },
+      { id: id1, type: 'chain', text: 'All',  x: cx, y: Math.max(cy - 112, 4),            color: colors.accent, fontSize: 62, rotation: -9, fontFamily: 'Fredoka_700Bold',     travelY: -35, glowColor: outline, centerH: true },
+      { id: id2, type: 'chain', text: 'Clear', x: cx, y: Math.max(cy - 112, 4) + 86,     color: colors.accent, fontSize: 62, rotation:  9, fontFamily: 'Fredoka_700Bold',     travelY: -35, glowColor: outline, centerH: true },
+      { id: id3, type: 'chain', text: '+200', x: cx, y: Math.min(Math.max(cy - 112, 4) + 172, boardH - 58), color: colors.accent, fontSize: 44, rotation: -7, fontFamily: 'Fredoka_600SemiBold', travelY: -35, glowColor: outline, centerH: true },
     ]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.allClearCount]);
