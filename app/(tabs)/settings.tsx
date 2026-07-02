@@ -153,7 +153,7 @@ export default function SettingsScreen() {
           {soundEnabled && (
             <ToggleRow
               label="Play in Silent Mode"
-              sublabel="May pause Spotify / Apple Music"
+              sublabel="May pause streaming music"
               value={soundMode === 'playback'}
               onValueChange={v => setSoundMode(v ? 'playback' : 'ambient')}
               colors={colors}
