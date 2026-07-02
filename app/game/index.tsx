@@ -262,10 +262,14 @@ export default function GameScreen() {
     const cy = (cellSize * ROWS) / 2 - cellSize;
     const id1 = String(floatingLabelIdRef.current++);
     const id2 = String(floatingLabelIdRef.current++);
+    const id3 = String(floatingLabelIdRef.current++);
+    const outline = colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)';
+    const boardH  = cellSize * ROWS;
     setFloatingLabels(prev => [
       ...prev.filter(l => l.type !== 'chain'),
-      { id: id1, type: 'chain', text: 'ALL CLEAR', x: cx, y: cy - cellSize * 0.6, color: colors.accent, fontSize: 46, rotation: -4, fontFamily: 'Fredoka_700Bold', travelY: -60, glowColor: colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)' },
-      { id: id2, type: 'chain', text: '+200',      x: cx, y: cy + cellSize * 0.55, color: colors.accent, fontSize: 34, rotation:  3, fontFamily: 'Fredoka_600SemiBold', travelY: -60, glowColor: colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)' },
+      { id: id1, type: 'chain', text: 'All',   x: cx, y: Math.max(cy - 130, 4),          color: colors.accent, fontSize: 62, rotation: -9, fontFamily: 'Fredoka_700Bold',       travelY: -35, glowColor: outline },
+      { id: id2, type: 'chain', text: 'Clear',  x: cx, y: cy - 52,                        color: colors.accent, fontSize: 62, rotation:  9, fontFamily: 'Fredoka_700Bold',       travelY: -35, glowColor: outline },
+      { id: id3, type: 'chain', text: '+200',   x: cx, y: Math.min(cy + 30, boardH - 56), color: colors.accent, fontSize: 44, rotation: -7, fontFamily: 'Fredoka_600SemiBold',   travelY: -35, glowColor: outline },
     ]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.allClearCount]);
@@ -621,25 +625,30 @@ export default function GameScreen() {
 
         <View style={{ height: S1 }} />
 
-        <GestureDetector gesture={controlsDisabled ? Gesture.Tap() : boardGesture}>
-          <View style={[styles.boardWrap, { backgroundColor: colors.surfaceRaise }]}>
-            <GameBoard
-              board={game.board}
-              activePiece={game.activePiece}
-              ghostAnchorRow={game.ghostAnchorRow}
-              cellSize={cellSize}
-              chainPass={game.chainPass}
-              mergeEvents={game.lastMergeEvents}
-            />
-            <EmergencyCondenseOverlay visible={game.phase === 'condensing'} />
-            {showChainPopups && (
-              <FloatingLabelsOverlay
-                labels={floatingLabels.filter(l => l.type === 'chain')}
-                onRemove={removeFloatingLabel}
+        {/* Wrapper gives FloatingLabelsOverlay a clipping-free coordinate space
+            that matches the board, while boardWrap keeps overflow:hidden for its
+            border-radius and the GameBoard canvas. */}
+        <View>
+          <GestureDetector gesture={controlsDisabled ? Gesture.Tap() : boardGesture}>
+            <View style={[styles.boardWrap, { backgroundColor: colors.surfaceRaise }]}>
+              <GameBoard
+                board={game.board}
+                activePiece={game.activePiece}
+                ghostAnchorRow={game.ghostAnchorRow}
+                cellSize={cellSize}
+                chainPass={game.chainPass}
+                mergeEvents={game.lastMergeEvents}
               />
-            )}
-          </View>
-        </GestureDetector>
+              <EmergencyCondenseOverlay visible={game.phase === 'condensing'} />
+            </View>
+          </GestureDetector>
+          {showChainPopups && (
+            <FloatingLabelsOverlay
+              labels={floatingLabels.filter(l => l.type === 'chain')}
+              onRemove={removeFloatingLabel}
+            />
+          )}
+        </View>
         {showTutorial && (
           <TutorialOverlay onDismiss={() => { setShowTutorial(false); markControlsSeen(); }} />
         )}
