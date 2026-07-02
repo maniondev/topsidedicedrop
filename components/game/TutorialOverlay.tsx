@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View, Platform, Dimensions } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
+
+const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
 
 const HINTS = [
   { icon: '← →', label: 'Swipe to move' },
@@ -45,10 +47,10 @@ export default function TutorialOverlay({ onDismiss }: Props) {
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', padding: 40 },
-  card:     { borderRadius: 16, borderWidth: 1, paddingTop: 8, paddingBottom: 16, paddingHorizontal: 24, width: '100%', maxWidth: 440 },
-  row:      { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 14, minHeight: 70 },
-  icon:     { fontSize: 22, width: 32, textAlign: 'center' },
-  label:    { fontSize: 15, flex: 1, flexWrap: 'wrap' },
-  btn:      { marginTop: 12, borderRadius: 10, paddingVertical: 16, alignItems: 'center' },
-  btnText:  { fontSize: 16, fontFamily: 'Rubik_700Bold' },
+  card:     { borderRadius: 16, borderWidth: 1, paddingTop: 8, paddingBottom: IS_LARGE ? 22 : 16, paddingHorizontal: IS_LARGE ? 32 : 24, width: '100%', maxWidth: IS_LARGE ? 560 : 440 },
+  row:      { flexDirection: 'row', alignItems: 'center', paddingVertical: IS_LARGE ? 20 : 14, gap: IS_LARGE ? 20 : 14, minHeight: IS_LARGE ? 92 : 70 },
+  icon:     { fontSize: IS_LARGE ? 30 : 22, width: IS_LARGE ? 44 : 32, textAlign: 'center' },
+  label:    { fontSize: IS_LARGE ? 21 : 15, flex: 1, flexWrap: 'wrap' },
+  btn:      { marginTop: IS_LARGE ? 18 : 12, borderRadius: IS_LARGE ? 14 : 10, paddingVertical: IS_LARGE ? 22 : 16, alignItems: 'center' },
+  btnText:  { fontSize: IS_LARGE ? 22 : 16, fontFamily: 'Rubik_700Bold' },
 });
