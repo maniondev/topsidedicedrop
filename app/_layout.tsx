@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, Platform, AppState } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useFonts, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
 import { Fredoka_400Regular, Fredoka_600SemiBold, Fredoka_700Bold } from '@expo-google-fonts/fredoka';
 import { Rubik_700Bold } from '@expo-google-fonts/rubik';
@@ -22,7 +22,6 @@ import { DifficultyProvider } from '@/contexts/DifficultyContext';
 import { GameStatusProvider } from '@/contexts/GameStatusContext';
 import { AnimationProvider } from '@/contexts/AnimationContext';
 import { DiceStyleProvider } from '@/contexts/DiceStyleContext';
-import AnimatedSplash from '@/components/AnimatedSplash';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -44,11 +43,7 @@ function AppShell() {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({ PlayfairDisplay_700Bold, Fredoka_400Regular, Fredoka_600SemiBold, Fredoka_700Bold, Rubik_700Bold });
-  const [splashDone, setSplashDone] = useState(false);
 
-  // Hand off from the native splash to our JS AnimatedSplash: once fonts are
-  // ready the JS splash is mounted, so hiding the native one reveals it (not a
-  // flash of the app underneath).
   useEffect(() => {
     if (fontsLoaded || fontError) SplashScreen.hideAsync();
   }, [fontsLoaded, fontError]);
@@ -115,7 +110,6 @@ export default function RootLayout() {
           </StatsProvider>
         </PremiumProvider>
       </ThemeProvider>
-      {!splashDone && <AnimatedSplash onFinish={() => setSplashDone(true)} />}
     </GestureHandlerRootView>
   );
 }
