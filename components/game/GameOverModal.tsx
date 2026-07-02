@@ -14,13 +14,12 @@ interface Props {
   onContinue: () => void;
   onNewGame: () => void;
   onHome: () => void;
-  showAdNotice: boolean;
 }
 
 export default function GameOverModal({
   visible, score, bestScore, prevBest,
   freeContinueAvailable,
-  onFreeContinue, onContinue, onNewGame, onHome, showAdNotice,
+  onFreeContinue, onContinue, onNewGame, onHome,
 }: Props) {
   const { colors } = useTheme();
   const isNewBest = score > prevBest && score > 0;
@@ -62,7 +61,7 @@ export default function GameOverModal({
               onPress={onContinue}
             >
               <Text style={[styles.continueBtnText, { color: colors.accentText }]}>▶ Continue</Text>
-              <Text style={[styles.continueSub, { color: colors.accentText }]}>With an ad</Text>
+              <Text style={[styles.continueSub, { color: colors.accentText }]}>Watch a longer ad</Text>
             </TouchableOpacity>
           )}
 
@@ -71,9 +70,6 @@ export default function GameOverModal({
             onPress={onNewGame}
           >
             <Text style={[styles.newGameText, { color: colors.text }]}>New Game</Text>
-            {showAdNotice && (
-              <Text style={[styles.continueSub, { color: colors.textMuted }]}>With a skippable ad</Text>
-            )}
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.homeBtn} onPress={onHome}>

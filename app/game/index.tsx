@@ -683,7 +683,6 @@ export default function GameScreen() {
         onContinue={handleContinue}
         onNewGame={handleNewGame}
         onHome={handleGoHome}
-        showAdNotice={!isPremium && !isFirstRunOfSession()}
       />
 
       <PauseModal
