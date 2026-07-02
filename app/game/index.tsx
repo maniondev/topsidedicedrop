@@ -272,7 +272,7 @@ export default function GameScreen() {
       ...prev.filter(l => l.type !== 'chain'),
       { id: id1, type: 'chain', text: 'All',   x: cx, y: topY,                                          color: colors.accent, fontSize: 62 * popScale, rotation: -9, fontFamily: 'Fredoka_700Bold',     travelY: -35, glowColor: outline, centerH: true },
       { id: id2, type: 'chain', text: 'Clear', x: cx, y: topY + gap,                                    color: colors.accent, fontSize: 62 * popScale, rotation:  9, fontFamily: 'Fredoka_700Bold',     travelY: -35, glowColor: outline, centerH: true },
-      { id: id3, type: 'chain', text: '+200',  x: cx, y: Math.min(topY + gap * 2, boardH - 58 * popScale), color: colors.accent, fontSize: 44 * popScale, rotation: -7, fontFamily: 'Fredoka_600SemiBold', travelY: -35, glowColor: outline, centerH: true },
+      { id: id3, type: 'chain', text: '+500',  x: cx, y: Math.min(topY + gap * 2, boardH - 58 * popScale), color: colors.accent, fontSize: 44 * popScale, rotation: -7, fontFamily: 'Fredoka_600SemiBold', travelY: -35, glowColor: outline, centerH: true },
     ]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.allClearCount]);

@@ -192,7 +192,7 @@ function initialState(): GameState {
   };
 }
 
-const ALL_CLEAR_BONUS = 200;
+const ALL_CLEAR_BONUS = 500;
 
 function isBoardEmpty(board: Board): boolean {
   return board.every(row => row.every(cell => cell === null));
