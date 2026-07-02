@@ -299,7 +299,7 @@ export default function SettingsScreen() {
         {/* Gameplay toggles */}
         <Section label="Gameplay" styles={styles}>
           <ToggleRow
-            label="Chain Popups"
+            label="Score Popups"
             value={showChainPopups}
             onValueChange={setShowChainPopups}
             colors={colors}
