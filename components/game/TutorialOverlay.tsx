@@ -47,7 +47,7 @@ export default function TutorialOverlay({ onDismiss }: Props) {
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.65)', padding: 40 },
-  card:     { borderRadius: 16, borderWidth: 1, paddingTop: 8, paddingBottom: IS_LARGE ? 22 : 16, paddingHorizontal: IS_LARGE ? 32 : 24, width: '100%', maxWidth: IS_LARGE ? 560 : 440 },
+  card:     { borderRadius: 16, borderWidth: 1, paddingTop: 8, paddingBottom: IS_LARGE ? 22 : 16, paddingHorizontal: IS_LARGE ? 32 : 24, width: '100%', maxWidth: IS_LARGE ? 460 : 440 },
   row:      { flexDirection: 'row', alignItems: 'center', paddingVertical: IS_LARGE ? 20 : 14, gap: IS_LARGE ? 20 : 14, minHeight: IS_LARGE ? 92 : 70 },
   icon:     { fontSize: IS_LARGE ? 30 : 22, width: IS_LARGE ? 44 : 32, textAlign: 'center' },
   label:    { fontSize: IS_LARGE ? 21 : 15, flex: 1, flexWrap: 'wrap' },
