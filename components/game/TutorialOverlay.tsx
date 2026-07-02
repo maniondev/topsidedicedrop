@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useRef } from 'react';
-import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View, Platform, Dimensions } from 'react-native';
+import { Animated, Linking, Modal, StyleSheet, Text, TouchableOpacity, View, Platform, Dimensions } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 
 const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
+const TOS_URL     = 'https://topside.games/dicedrop/tos';
+const PRIVACY_URL = 'https://topside.games/dicedrop/privacy';
 
 const HINTS = [
   { icon: '← →', label: 'Swipe to move' },
@@ -39,6 +41,12 @@ export default function TutorialOverlay({ onDismiss }: Props) {
           <TouchableOpacity style={[styles.btn, { backgroundColor: colors.accent }]} onPress={dismiss} activeOpacity={0.8}>
             <Text style={[styles.btnText, { color: colors.accentText }]}>Got it</Text>
           </TouchableOpacity>
+          <Text style={[styles.consent, { color: colors.textMuted }]}>
+            By continuing, you agree to our{' '}
+            <Text style={{ color: colors.accent }} onPress={() => Linking.openURL(TOS_URL)}>Terms</Text>
+            {' '}and{' '}
+            <Text style={{ color: colors.accent }} onPress={() => Linking.openURL(PRIVACY_URL)}>Privacy Policy</Text>.
+          </Text>
         </View>
       </Animated.View>
     </Modal>
@@ -53,4 +61,5 @@ const styles = StyleSheet.create({
   label:    { fontSize: IS_LARGE ? 21 : 15, flex: 1, flexWrap: 'wrap' },
   btn:      { marginTop: IS_LARGE ? 18 : 12, borderRadius: IS_LARGE ? 14 : 10, paddingVertical: IS_LARGE ? 22 : 16, alignItems: 'center' },
   btnText:  { fontSize: IS_LARGE ? 22 : 16, fontFamily: 'Rubik_700Bold' },
+  consent:  { fontSize: IS_LARGE ? 14 : 11, lineHeight: IS_LARGE ? 20 : 16, textAlign: 'center', marginTop: IS_LARGE ? 16 : 12 },
 });
