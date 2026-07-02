@@ -3,8 +3,10 @@ import { AppState } from 'react-native';
 import Sound from 'react-native-sound';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { restoreGameAudioSession } from '@/lib/audioSession';
+import { restoreGameAudioSession, setAudioMode } from '@/lib/audioSession';
 import { SOUND_KEY } from '@/lib/storage';
+
+const SOUND_MODE_KEY = 'tm_sound_mode';
 
 function loadSound(uri: string, vol: number): Promise<Sound | null> {
   return new Promise(resolve => {
@@ -219,6 +221,8 @@ interface SoundCtxType {
   setSoundEnabled: (v: boolean) => void;
   soundPack: SoundPackId;
   setSoundPack: (p: SoundPackId) => void;
+  soundMode: 'ambient' | 'playback';
+  setSoundMode: (m: 'ambient' | 'playback') => void;
   play: (name: SoundName, rate?: number) => void;
 }
 
@@ -227,16 +231,21 @@ const SoundCtx = createContext<SoundCtxType>({
   setSoundEnabled: () => {},
   soundPack: 'topside',
   setSoundPack: () => {},
+  soundMode: 'ambient',
+  setSoundMode: () => {},
   play: () => {},
 });
 
 export function SoundProvider({ children }: { children: ReactNode }) {
   const [soundEnabled, setSoundEnabledState] = useState(true);
   const [soundPack, setSoundPackState] = useState<SoundPackId>('topside');
+  const [soundMode, setSoundModeState] = useState<'ambient' | 'playback'>('ambient');
   const enabledRef   = useRef(true);
   enabledRef.current = soundEnabled;
   const soundPackRef = useRef<SoundPackId>('topside');
   soundPackRef.current = soundPack;
+  const soundModeRef = useRef<'ambient' | 'playback'>('ambient');
+  soundModeRef.current = soundMode;
   const poolsRef      = useRef<Partial<Record<SoundName, Sound[]>>>({});
   const idxRef        = useRef<Partial<Record<SoundName, number>>>({});
   const loadingRef  = useRef(false);
@@ -245,13 +254,20 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     AsyncStorage.getItem(SOUND_KEY).then(v => { if (v === '0') setSoundEnabledState(false); }).catch(() => {});
     AsyncStorage.getItem(SOUND_PACK_KEY).then(v => { if (v && v in SOUND_PACKS) setSoundPackState(v as SoundPackId); }).catch(() => {});
+    AsyncStorage.getItem(SOUND_MODE_KEY).then(v => {
+      if (v === 'playback') { setSoundModeState('playback'); setAudioMode('playback'); }
+    }).catch(() => {});
   }, []);
 
   async function buildPool(pack: SoundPackId, cancelled: () => boolean) {
     if (loadingRef.current) return;
     loadingRef.current = true;
     try {
-      Sound.setCategory('Ambient');
+      if (soundModeRef.current === 'playback') {
+        Sound.setCategory('Playback', true);
+      } else {
+        Sound.setCategory('Ambient');
+      }
 
       const sources = SOUND_PACKS[pack];
       const assets  = SOUND_NAMES.map(name => ({ name, asset: Asset.fromModule(sources[name]) }));
@@ -280,12 +296,12 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  // Reload sound pool when pack changes
+  // Reload sound pool when pack or mode changes
   useEffect(() => {
     let cancelled = false;
     buildPool(soundPack, () => cancelled);
     return () => { cancelled = true; };
-  }, [soundPack]);
+  }, [soundPack, soundMode]);
 
   useEffect(() => {
     return () => {
@@ -315,6 +331,12 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(SOUND_PACK_KEY, p).catch(() => {});
   }, []);
 
+  const setSoundMode = useCallback((m: 'ambient' | 'playback') => {
+    setSoundModeState(m);
+    setAudioMode(m);
+    AsyncStorage.setItem(SOUND_MODE_KEY, m).catch(() => {});
+  }, []);
+
   const play = useCallback((name: SoundName, rate: number = 1) => {
     if (!enabledRef.current) return;
     const pool = poolsRef.current[name];
@@ -338,7 +360,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, []);
 
-  const value = useMemo(() => ({ soundEnabled, setSoundEnabled, soundPack, setSoundPack, play }), [soundEnabled, soundPack, play]);
+  const value = useMemo(() => ({ soundEnabled, setSoundEnabled, soundPack, setSoundPack, soundMode, setSoundMode, play }), [soundEnabled, soundPack, soundMode, play]);
   return <SoundCtx.Provider value={value}>{children}</SoundCtx.Provider>;
 }
 

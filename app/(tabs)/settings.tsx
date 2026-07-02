@@ -31,7 +31,7 @@ export default function SettingsScreen() {
   const { top } = useSafeAreaInsets();
   const { colors, themeId, setTheme } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const { soundEnabled, setSoundEnabled, soundPack, setSoundPack, play } = useSound();
+  const { soundEnabled, setSoundEnabled, soundPack, setSoundPack, soundMode, setSoundMode, play } = useSound();
   const { animPack, setAnimPack, performanceMode, setPerformanceMode, showChainPopups, setShowChainPopups } = useAnimation();
   const { diceStyle, setDiceStyle } = useDiceStyle();
   const { isPremium, upgrade, restorePurchases, devToggle } = usePremium();
@@ -284,6 +284,16 @@ export default function SettingsScreen() {
             colors={colors}
             styles={styles}
           />
+          {soundEnabled && (
+            <ToggleRow
+              label="Play in Silent Mode"
+              sublabel="May pause Spotify / Apple Music"
+              value={soundMode === 'playback'}
+              onValueChange={v => setSoundMode(v ? 'playback' : 'ambient')}
+              colors={colors}
+              styles={styles}
+            />
+          )}
           <ToggleRow
             label="Chain Popups"
             value={showChainPopups}
