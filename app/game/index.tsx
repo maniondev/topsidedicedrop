@@ -31,7 +31,7 @@ import TutorialOverlay from '@/components/game/TutorialOverlay';
 import { runMergePhase, computeClearSteps } from '@/lib/condense';
 import { COLS, ROWS } from '@/constants/game';
 import { submitScoreForCurrentPlayer, updateBestUnassistedForCurrentPlayer } from '@/lib/scoreQueue';
-import { getReviewOptedOut, setReviewOptedOut, isReviewMilestone, openNativeReview, getReviewLastPrompted, setReviewLastPrompted, setHasRated } from '@/lib/reviewPrompt';
+import { getReviewOptedOut, setReviewOptedOut, isReviewMilestone, openNativeReview, getReviewLastPrompted, setReviewLastPrompted, setHasRated, reviewCooldownPassed, getReviewPendingFromPurchase, clearReviewPendingFromPurchase } from '@/lib/reviewPrompt';
 import ReviewPromptModal from '@/components/ReviewPromptModal';
 
 // No tab bar in this screen — more space for the board
@@ -77,6 +77,7 @@ export default function GameScreen() {
   const reviewPendingRef       = useRef(false);
   const reviewLastPromptedRef  = useRef(0);
   const reviewPendingCountRef  = useRef(0);
+  const reviewFromPurchaseRef  = useRef(false);
 
   // Measured height of the gameArea container — the only reliable way to know available
   // vertical space on Android, where useWindowDimensions and useSafeAreaInsets can disagree.
@@ -150,6 +151,7 @@ export default function GameScreen() {
   useEffect(() => {
     getReviewOptedOut().then(v  => { reviewOptedOutRef.current = v; });
     getReviewLastPrompted().then(n => { reviewLastPromptedRef.current = n; });
+    getReviewPendingFromPurchase().then(v => { reviewFromPurchaseRef.current = v; });
   }, []);
 
   // When the game-over modal closes (phase leaves 'gameOver'), show review if pending.
@@ -389,16 +391,22 @@ export default function GameScreen() {
     clearPendingRun();
     preContinueScoreRef.current = 0;
 
-    // Check review milestone using total runs across all difficulties (+1 for this run).
+    // Queue a review prompt for after the game-over modal closes. Two sources —
+    // a run-count milestone, or a recent premium purchase — share one cooldown so
+    // no two prompts ever land within REVIEW_EVERY games (avoids back-to-back).
     const totalRuns = (['easy', 'medium', 'hard'] as const)
       .reduce((sum, d) => sum + statsFor(d).totalRuns, 0) + 1;
-    if (
-      !reviewOptedOutRef.current &&
-      isReviewMilestone(totalRuns) &&
-      totalRuns > reviewLastPromptedRef.current
-    ) {
+    const cooldownOk = reviewCooldownPassed(totalRuns, reviewLastPromptedRef.current);
+    const wantMilestone = isReviewMilestone(totalRuns) && cooldownOk;
+    const wantPurchase  = reviewFromPurchaseRef.current && cooldownOk;
+    if (!reviewOptedOutRef.current && (wantMilestone || wantPurchase)) {
       reviewPendingRef.current = true;
       reviewPendingCountRef.current = totalRuns;
+      if (wantPurchase) {
+        // Consume the purchase trigger now that it's being shown.
+        reviewFromPurchaseRef.current = false;
+        clearReviewPendingFromPurchase();
+      }
     }
 
     setFreeContinueUsed(false);
@@ -702,7 +710,9 @@ export default function GameScreen() {
         onRate={() => {
           setReviewPromptVisible(false);
           reviewOptedOutRef.current = true;
+          reviewFromPurchaseRef.current = false;
           setReviewOptedOut();
+          clearReviewPendingFromPurchase();
           setHasRated();
           openNativeReview();
         }}
@@ -712,7 +722,9 @@ export default function GameScreen() {
         onDontAsk={() => {
           setReviewPromptVisible(false);
           reviewOptedOutRef.current = true;
+          reviewFromPurchaseRef.current = false;
           setReviewOptedOut();
+          clearReviewPendingFromPurchase();
         }}
       />
 

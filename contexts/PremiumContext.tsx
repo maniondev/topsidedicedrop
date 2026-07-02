@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { Platform, Alert } from 'react-native';
 import Purchases, { LOG_LEVEL, CustomerInfo } from 'react-native-purchases';
 import { logPurchaseEvent } from '@/lib/appsflyer';
+import { setReviewPendingFromPurchase } from '@/lib/reviewPrompt';
 
 const RC_IOS_KEY     = 'appl_bEfjghrErvdIBhSvAvrEMXEAInP';
 const RC_ANDROID_KEY = 'goog_eyVRQLwacLpBhQjOGFOVqesoYMT';
@@ -60,6 +61,9 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
       const { customerInfo } = await Purchases.purchasePackage(pkg);
       if (hasEntitlement(customerInfo)) {
         logPurchaseEvent(pkg.product.price, pkg.product.currencyCode ?? 'USD');
+        // Queue a review prompt for the next eligible game-over (rides the
+        // premium delight rather than interrupting the purchase).
+        setReviewPendingFromPurchase();
       }
       setIsPremium(hasEntitlement(customerInfo));
     } catch (e: any) {
