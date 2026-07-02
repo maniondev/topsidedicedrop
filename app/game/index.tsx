@@ -204,7 +204,7 @@ export default function GameScreen() {
     setFloatingLabels(prev => prev.filter(l => l.id !== id));
   }, []);
 
-  // Chain multiplier popup + running score gain: fires on each merge pass
+  // Chain score popup + running score gain: fires on each merge pass
   useEffect(() => {
     const events = game.lastMergeEvents;
     if (events.length === 0) return;
@@ -213,12 +213,11 @@ export default function GameScreen() {
     const x = destCol * cellSize + cellSize * 0.5;
     const y = Math.max(destRow * cellSize - cellSize * 1.1, 4);
     lastMergePositionRef.current = { x, y };
-    if (pass >= 2) {
-      const rot = (Math.random() - 0.5) * 40;
-      addFloatingLabel('chain', `${pass}×`, x, y, colors.accent, 42, rot, 'Rubik_700Bold', undefined, colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)');
-    }
-    // Update running score gain (builds up each pass)
     const gain = game.score - chainStartScoreRef.current;
+    if (pass >= 2 && gain > 0) {
+      const rot = (Math.random() - 0.5) * 40;
+      addFloatingLabel('chain', `+${gain.toLocaleString()}`, x, y, colors.accent, 42, rot, 'Rubik_700Bold', undefined, colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)');
+    }
     if (gain > 0) {
       setScoreGain(`+${gain.toLocaleString()}`);
     }
