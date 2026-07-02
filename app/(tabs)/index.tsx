@@ -35,7 +35,6 @@ export default function LobbyScreen() {
   const { top } = useSafeAreaInsets();
   const [hasSavedGame, setHasSavedGame] = useState(false);
   const [howToOpen, setHowToOpen] = useState(false);
-  const [isFirstRun, setIsFirstRun] = useState(true);
   const { showInterstitial } = useInterstitialAd();
 
   useEffect(() => {
@@ -94,7 +93,6 @@ export default function LobbyScreen() {
 
   useFocusEffect(useCallback(() => {
     loadSavedGame(difficulty).then(s => setHasSavedGame(!!s)).catch(() => {});
-    setIsFirstRun(isFirstRunOfSession());
   }, [difficulty]));
 
   const handleContinue = useCallback(() => {
@@ -194,9 +192,6 @@ export default function LobbyScreen() {
               <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'Rubik_700Bold', fontSize: f(24) }]}>
                 Play
               </Text>
-              {!isPremium && !isFirstRun && (
-                <Text style={[styles.adNotice, { color: colors.accentText, fontSize: f(11), opacity: 0.75 }]}>Watch a short ad</Text>
-              )}
             </TouchableOpacity>
           )}
         </View>
@@ -355,7 +350,6 @@ const styles = StyleSheet.create({
   btnSingle:    {},
   playBtn:      { alignItems: 'center', justifyContent: 'center' },
   playBtnText:  {},
-  adNotice:     { fontWeight: '500' },
 
   bottomRow:    { flexDirection: 'row' },
   rowBtn:       { borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
