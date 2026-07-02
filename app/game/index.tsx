@@ -264,7 +264,7 @@ export default function GameScreen() {
     const id2 = String(floatingLabelIdRef.current++);
     setFloatingLabels(prev => [
       ...prev.filter(l => l.type !== 'chain'),
-      { id: id1, type: 'chain', text: 'ALL CLEAR', x: cx, y: cy - cellSize * 0.6, color: colors.accent, fontSize: 46, rotation: -4, fontFamily: 'Fredoka_700Bold', travelY: -60, rainbow: true },
+      { id: id1, type: 'chain', text: 'ALL CLEAR', x: cx, y: cy - cellSize * 0.6, color: colors.accent, fontSize: 46, rotation: -4, fontFamily: 'Fredoka_700Bold', travelY: -60, glowColor: colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)' },
       { id: id2, type: 'chain', text: '+200',      x: cx, y: cy + cellSize * 0.55, color: colors.accent, fontSize: 34, rotation:  3, fontFamily: 'Fredoka_600SemiBold', travelY: -60, glowColor: colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)' },
     ]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
