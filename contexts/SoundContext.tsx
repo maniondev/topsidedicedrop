@@ -251,7 +251,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     if (loadingRef.current) return;
     loadingRef.current = true;
     try {
-      Sound.setCategory('Playback', true);
+      Sound.setCategory('Ambient');
 
       const sources = SOUND_PACKS[pack];
       const assets  = SOUND_NAMES.map(name => ({ name, asset: Asset.fromModule(sources[name]) }));

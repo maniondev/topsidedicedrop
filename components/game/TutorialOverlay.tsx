@@ -49,6 +49,6 @@ const styles = StyleSheet.create({
   row:      { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, gap: 14, minHeight: 70 },
   icon:     { fontSize: 22, width: 32, textAlign: 'center' },
   label:    { fontSize: 15, flex: 1, flexWrap: 'wrap' },
-  btn:      { marginTop: 12, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
+  btn:      { marginTop: 12, borderRadius: 10, paddingVertical: 16, alignItems: 'center' },
   btnText:  { fontSize: 16, fontFamily: 'Rubik_700Bold' },
 });
