@@ -1,8 +1,10 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions, Linking } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 
 const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
+const TOS_URL     = 'https://topside.games/dicedrop/tos';
+const PRIVACY_URL = 'https://topside.games/dicedrop/privacy';
 
 interface Props {
   visible: boolean;
@@ -52,6 +54,12 @@ export default function HowToPlayModal({ visible, onClose }: Props) {
           <TouchableOpacity style={[styles.btn, { backgroundColor: colors.accent }]} onPress={onClose}>
             <Text style={[styles.btnText, { color: colors.accentText }]}>Got it</Text>
           </TouchableOpacity>
+          <Text style={[styles.consent, { color: colors.textMuted }]}>
+            By continuing, you agree to our{' '}
+            <Text style={{ color: colors.accent }} onPress={() => Linking.openURL(TOS_URL)}>Terms</Text>
+            {' '}and{' '}
+            <Text style={{ color: colors.accent }} onPress={() => Linking.openURL(PRIVACY_URL)}>Privacy Policy</Text>.
+          </Text>
         </View>
       </View>
     </Modal>
@@ -69,4 +77,5 @@ const styles = StyleSheet.create({
   verb:      { fontWeight: '700' },
   btn:       { paddingVertical: IS_LARGE ? 20 : 13, borderRadius: 12, alignItems: 'center' },
   btnText:   { fontSize: IS_LARGE ? 22 : 16, fontWeight: '700' },
+  consent:   { fontSize: IS_LARGE ? 14 : 11, lineHeight: IS_LARGE ? 20 : 16, textAlign: 'center', marginTop: 2 },
 });
