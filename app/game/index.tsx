@@ -214,7 +214,7 @@ export default function GameScreen() {
     const y = Math.max(destRow * cellSize - cellSize * 1.1, 4);
     lastMergePositionRef.current = { x, y };
     const gain = game.score - chainStartScoreRef.current;
-    if (pass >= 2 && gain > 0) {
+    if (gain > 0) {
       const rot = (Math.random() - 0.5) * 40;
       addFloatingLabel('chain', `+${gain.toLocaleString()}`, x, y, colors.accent, 42, rot, 'Rubik_700Bold', undefined, colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)');
     }
