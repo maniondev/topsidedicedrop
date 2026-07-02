@@ -20,6 +20,10 @@ export interface FloatingLabelData {
 
 const RAINBOW_PALETTE = ['#FF3B3B', '#FF8C00', '#FFD700', '#2ECC40', '#00AAFF', '#A044FF'];
 
+// Wide enough that scaled-up score text (iPad) never wraps; box is invisible so
+// extra width is harmless — the text stays centered on the anchor's x.
+const ANCHOR_W = 320;
+
 // Uniform 2.5px radius in 8 directions — equal distance so stroke is even all around
 const R = 2.5;
 const D = R * 0.707; // R/√2 ≈ 1.77
@@ -78,7 +82,7 @@ function FloatingLabelItem({
 
   const anchorStyle = (centerHorizontally || centerH)
     ? [styles.anchor, styles.anchorCentered, { top: y }]
-    : [styles.anchor, { left: x - 60, top: y }];
+    : [styles.anchor, { left: x - ANCHOR_W / 2, top: y }];
 
   const textStyle = [styles.text, { fontSize, fontFamily: fontFamily ?? undefined }];
 
@@ -95,15 +99,15 @@ function FloatingLabelItem({
         ) : glowColor ? (
           <View style={styles.strokeWrap}>
             {STROKE_OFFSETS.map(([dx, dy], i) => (
-              <Text key={i} style={[textStyle, styles.strokeCopy, {
+              <Text key={i} numberOfLines={1} style={[textStyle, styles.strokeCopy, {
                 color: glowColor,
                 transform: [{ translateX: dx }, { translateY: dy }],
               }]}>{text}</Text>
             ))}
-            <Text style={[textStyle, { color }]}>{text}</Text>
+            <Text numberOfLines={1} style={[textStyle, { color }]}>{text}</Text>
           </View>
         ) : (
-          <Text style={[textStyle, styles.dropShadow, { color }]}>{text}</Text>
+          <Text numberOfLines={1} style={[textStyle, styles.dropShadow, { color }]}>{text}</Text>
         )}
       </Animated.View>
     </View>
@@ -130,7 +134,7 @@ export function FloatingLabelsOverlay({
 }
 
 const styles = StyleSheet.create({
-  anchor:         { position: 'absolute', width: 120, alignItems: 'center' },
+  anchor:         { position: 'absolute', width: ANCHOR_W, alignItems: 'center' },
   anchorCentered: { left: 0, right: 0, width: undefined, alignItems: 'center' },
   animWrap:       { alignItems: 'center' },
   dropShadow:     { textShadowColor: 'rgba(0,0,0,0.55)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 4 },
