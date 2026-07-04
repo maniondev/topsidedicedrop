@@ -51,26 +51,42 @@ export default function AppIconScreen() {
     setBusy(false);
   };
 
+  const firstGroup  = APP_ICON_IDS.slice(0, 4);
+  const secondGroup = APP_ICON_IDS.slice(4);
+
   return (
     <View style={styles.safe}>
       <SettingsSubHeader title="App Icon" colors={colors} />
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={[styles.section, { marginBottom: 24 }]}>
-          <View style={styles.sectionCard}>
-            {APP_ICON_IDS.map((id, i) => (
-              <PickerRow
-                key={id}
-                label={APP_ICON_META[id].label}
-                selected={current === id}
-                locked={false}
-                onSelect={() => handleSelect(id)}
-                preview={<Image source={PREVIEW_SOURCES[id]} style={{ width: '100%', height: '100%' }} />}
-                isLast={i === APP_ICON_IDS.length - 1}
-                colors={colors}
-                styles={styles}
-              />
-            ))}
-          </View>
+      <ScrollView contentContainerStyle={[styles.content, { gap: 16 }]}>
+        <View style={styles.sectionCard}>
+          {firstGroup.map((id, i) => (
+            <PickerRow
+              key={id}
+              label={APP_ICON_META[id].label}
+              selected={current === id}
+              locked={false}
+              onSelect={() => handleSelect(id)}
+              preview={<Image source={PREVIEW_SOURCES[id]} style={{ width: '100%', height: '100%' }} />}
+              isLast={i === firstGroup.length - 1}
+              colors={colors}
+              styles={styles}
+            />
+          ))}
+        </View>
+        <View style={[styles.sectionCard, { marginBottom: 24 }]}>
+          {secondGroup.map((id, i) => (
+            <PickerRow
+              key={id}
+              label={APP_ICON_META[id].label}
+              selected={current === id}
+              locked={false}
+              onSelect={() => handleSelect(id)}
+              preview={<Image source={PREVIEW_SOURCES[id]} style={{ width: '100%', height: '100%' }} />}
+              isLast={i === secondGroup.length - 1}
+              colors={colors}
+              styles={styles}
+            />
+          ))}
         </View>
       </ScrollView>
     </View>

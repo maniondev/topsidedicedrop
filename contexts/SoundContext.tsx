@@ -21,7 +21,7 @@ function loadSound(uri: string, vol: number): Promise<Sound | null> {
 export type SoundPackId = 'topside' | 'splash' | 'dig' | 'marimba' | 'bubbles' | 'snow' | 'fight' | 'coins' | 'metal' | 'rubber';
 export const SOUND_PACK_IDS: SoundPackId[] = ['topside', 'splash', 'dig', 'marimba', 'bubbles', 'snow', 'fight', 'coins', 'metal', 'rubber'];
 export const SoundPackMeta: Record<SoundPackId, { label: string; description: string; hidden?: boolean }> = {
-  topside: { label: 'Topside',  description: 'The signature Topside sound' },
+  topside: { label: 'Classic',  description: 'The signature Topside sound' },
   splash:  { label: 'Splash',   description: 'Watery, bubbly drops' },
   dig:     { label: 'Dig',      description: 'Earthy, percussive hits' },
   marimba: { label: 'Marimba',  description: 'Warm wooden tones' },
