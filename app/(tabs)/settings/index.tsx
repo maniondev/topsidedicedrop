@@ -24,7 +24,7 @@ export default function SettingsScreen() {
   const { colors, themeId } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   const { soundEnabled, setSoundEnabled, soundPack, soundMode, setSoundMode } = useSound();
-  const { devMusicIncluded, setDevMusicIncluded } = useMusic();
+  const { musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded } = useMusic();
   const { animPack, performanceMode, setPerformanceMode, showChainPopups, setShowChainPopups } = useAnimation();
   const { diceStyle } = useDiceStyle();
   const { isPremium, restorePurchases, devToggle } = usePremium();
@@ -153,6 +153,15 @@ export default function SettingsScreen() {
             colors={colors}
             styles={styles}
           />
+          {devMusicIncluded && (
+            <ToggleRow
+              label="Music"
+              value={musicEnabled}
+              onValueChange={setMusicEnabled}
+              colors={colors}
+              styles={styles}
+            />
+          )}
           {soundEnabled && (
             <ToggleRow
               label="Break Through Silent Mode"
