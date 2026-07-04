@@ -236,50 +236,57 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     return () => sub.remove();
   }, [fadeTo]);
 
-  // Turning music ON is handled entirely by the effect below (so exactly one
-  // code path decides "launch sequence vs. normal fade-in", avoiding a race
-  // where this setter and the effect could both start playback back-to-back).
-  // Turning OFF is handled here directly since the effect only reacts to "on".
+  // Plain on/off mute toggles (Settings, home screen, pause menu) are instant
+  // — no fade — since they're a mute switch, not a track transition. The
+  // very first activation of a session (cold launch, or the first time the
+  // dev flag/toggle is flipped on) instead goes through the launch-sequence
+  // effect below; these setters skip playback in that case and let the
+  // effect handle it (stinger + unfaded start).
   const setMusicEnabled = useCallback((v: boolean) => {
     setMusicEnabledState(v);
     AsyncStorage.setItem(MUSIC_ENABLED_KEY, v ? '1' : '0').catch(() => {});
-    if (!v) {
-      (Object.keys(soundsRef.current) as MusicTrack[]).forEach(track => {
-        const snd = soundsRef.current[track];
-        if (!snd) return;
-        fadeTo(track, 0, () => { try { snd.pause(); } catch {} });
-      });
+    if (!devIncludedRef.current) return;
+    const track = currentTrackRef.current;
+    const snd = soundsRef.current[track];
+    if (!snd) return;
+    clearFade(track);
+    if (v) {
+      if (hasPlayedLaunchRef.current) {
+        try { snd.setVolume(MUSIC_VOLUME); snd.play(); } catch {}
+        (snd as any)._lastVolume = MUSIC_VOLUME;
+      }
+    } else {
+      try { snd.pause(); } catch {}
     }
-  }, [fadeTo]);
+  }, []);
 
   const setDevMusicIncluded = useCallback((v: boolean) => {
     setDevMusicIncludedState(v);
     AsyncStorage.setItem(DEV_MUSIC_INCLUDED_KEY, v ? '1' : '0').catch(() => {});
-    if (!v) {
-      (Object.keys(soundsRef.current) as MusicTrack[]).forEach(track => {
-        const snd = soundsRef.current[track];
-        if (!snd) return;
-        clearFade(track);
-        try { snd.pause(); snd.setVolume(0); } catch {}
-      });
+    if (!enabledRef.current) return;
+    const track = currentTrackRef.current;
+    const snd = soundsRef.current[track];
+    if (!snd) return;
+    clearFade(track);
+    if (v) {
+      if (hasPlayedLaunchRef.current) {
+        try { snd.setVolume(MUSIC_VOLUME); snd.play(); } catch {}
+        (snd as any)._lastVolume = MUSIC_VOLUME;
+      }
+    } else {
+      try { snd.pause(); } catch {}
     }
   }, []);
 
-  // Kick off playback once tracks finish loading, if settings were already on
-  // by the time loading completes (covers both load-order races: settings
-  // resolving before or after the tracks themselves finish loading). Also
-  // fires whenever musicEnabled/devMusicIncluded flip on later. The very
-  // first activation of a session plays the launch stinger + an unfaded menu
-  // track start; anything after that uses the normal fade-based playTrack.
+  // Fires exactly once per session, the very first time both musicEnabled
+  // and devMusicIncluded are true (whichever settles last) — plays the
+  // launch stinger + an unfaded menu track start. All later on/off toggles
+  // are handled instantly by the setters above instead.
   useEffect(() => {
-    if (tracksReady && musicEnabled && devMusicIncluded) {
-      if (!hasPlayedLaunchRef.current) {
-        playLaunchSequence();
-      } else {
-        playTrack(currentTrackRef.current);
-      }
+    if (tracksReady && musicEnabled && devMusicIncluded && !hasPlayedLaunchRef.current) {
+      playLaunchSequence();
     }
-  }, [tracksReady, musicEnabled, devMusicIncluded, playTrack, playLaunchSequence]);
+  }, [tracksReady, musicEnabled, devMusicIncluded, playLaunchSequence]);
 
   const value = useMemo(
     () => ({ musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic }),
