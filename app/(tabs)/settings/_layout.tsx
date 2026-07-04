@@ -1,4 +1,6 @@
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
+import { TouchableOpacity, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 
 export default function SettingsStackLayout() {
@@ -12,6 +14,17 @@ export default function SettingsStackLayout() {
         headerTitleStyle: { color: colors.text, fontWeight: '700' },
         headerShadowVisible: false,
         animation: 'none',
+        headerBackVisible: false,
+        headerLeft: () => (
+          <TouchableOpacity
+            onPress={() => router.back()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
+            <Text style={{ color: colors.textSecondary, fontSize: 17 }}>Settings</Text>
+          </TouchableOpacity>
+        ),
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false, title: 'Settings' }} />
