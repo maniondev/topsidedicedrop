@@ -17,11 +17,12 @@ const LAUNCH_SOURCE = require('@/assets/sounds/music/launch.m4a');
 
 const CROSSFADE_MS = 800;
 const FADE_STEP_MS = 32;
-// Ceiling volume per track so music sits under SFX. Gameplay is quieter
-// so it doesn't compete with merge/chain SFX.
+// Single-track mode: only the menu track ever plays. "game" here just means
+// the ducked volume level while in a game, not a separate track — the
+// gameplay.m4a file/loading is kept around for when a second track returns.
 const TRACK_VOLUME: Record<MusicTrack, number> = {
-  menu: 0.55,
-  game: 0.22, // 0.55 * 0.65 * 0.6
+  menu: 0.3,
+  game: 0.1,
 };
 
 function loadMusic(uri: string): Promise<Sound | null> {
@@ -170,49 +171,36 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Single-track mode: "switching" tracks just ducks/restores the one menu
+  // track's volume — no pause, no restart, no second track ever plays.
   const playTrack = useCallback((track: MusicTrack) => {
     currentTrackRef.current = track;
     if (!enabledRef.current || !devIncludedRef.current) return;
 
-    const incoming = soundsRef.current[track];
-    if (!incoming) return;
+    const menuSound = soundsRef.current.menu;
+    if (!menuSound) return;
 
-    // Start incoming track from the beginning (if not already playing) and fade it in.
-    incoming.getCurrentTime((_seconds, isPlaying) => {
-      if (!isPlaying) {
-        try { incoming.setCurrentTime(0); } catch {}
-        incoming.play();
-      }
+    menuSound.getCurrentTime((_seconds, isPlaying) => {
+      if (!isPlaying) menuSound.play();
     });
-    fadeTo(track, TRACK_VOLUME[track]);
-
-    // Fade out and pause every other loaded track.
-    (Object.keys(soundsRef.current) as MusicTrack[]).forEach(other => {
-      if (other === track) return;
-      const snd = soundsRef.current[other];
-      if (!snd) return;
-      fadeTo(other, 0, () => { try { snd.pause(); } catch {} });
-    });
+    fadeTo('menu', TRACK_VOLUME[track]);
   }, [fadeTo]);
 
-  // Pause/resume the current track in place — no track switch, no restart.
-  // Used for in-game pause (as opposed to leaving the game screen entirely,
-  // which goes through playTrack() and restarts the menu track).
+  // Kept for later (currently unused — the pause modal no longer pauses
+  // music). Fixed to always target the single active menu sound.
   const pauseMusic = useCallback(() => {
-    const track = currentTrackRef.current;
-    const snd = soundsRef.current[track];
+    const snd = soundsRef.current.menu;
     if (!snd) return;
-    clearFade(track);
+    clearFade('menu');
     try { snd.pause(); } catch {}
   }, []);
 
   const resumeMusic = useCallback(() => {
     if (!enabledRef.current || !devIncludedRef.current) return;
-    const track = currentTrackRef.current;
-    const snd = soundsRef.current[track];
+    const snd = soundsRef.current.menu;
     if (!snd) return;
     snd.play();
-    fadeTo(track, TRACK_VOLUME[track]);
+    fadeTo('menu', TRACK_VOLUME[currentTrackRef.current]);
   }, [fadeTo]);
 
   // Pause music the instant the app leaves the foreground (home button, app
@@ -223,10 +211,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     const sub = AppState.addEventListener('change', state => {
       if (state === 'active') {
         if (enabledRef.current && devIncludedRef.current) {
-          const snd = soundsRef.current[currentTrackRef.current];
+          const snd = soundsRef.current.menu;
           if (snd) {
             snd.play();
-            fadeTo(currentTrackRef.current, TRACK_VOLUME[currentTrackRef.current]);
+            fadeTo('menu', TRACK_VOLUME[currentTrackRef.current]);
           }
         }
       } else {
@@ -251,14 +239,14 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     setMusicEnabledState(v);
     AsyncStorage.setItem(MUSIC_ENABLED_KEY, v ? '1' : '0').catch(() => {});
     if (!devIncludedRef.current) return;
-    const track = currentTrackRef.current;
-    const snd = soundsRef.current[track];
+    const snd = soundsRef.current.menu;
     if (!snd) return;
-    clearFade(track);
+    clearFade('menu');
     if (v) {
       if (hasPlayedLaunchRef.current) {
-        try { snd.setVolume(TRACK_VOLUME[track]); snd.play(); } catch {}
-        (snd as any)._lastVolume = TRACK_VOLUME[track];
+        const vol = TRACK_VOLUME[currentTrackRef.current];
+        try { snd.setVolume(vol); snd.play(); } catch {}
+        (snd as any)._lastVolume = vol;
       }
     } else {
       try { snd.pause(); } catch {}
@@ -269,14 +257,14 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     setDevMusicIncludedState(v);
     AsyncStorage.setItem(DEV_MUSIC_INCLUDED_KEY, v ? '1' : '0').catch(() => {});
     if (!enabledRef.current) return;
-    const track = currentTrackRef.current;
-    const snd = soundsRef.current[track];
+    const snd = soundsRef.current.menu;
     if (!snd) return;
-    clearFade(track);
+    clearFade('menu');
     if (v) {
       if (hasPlayedLaunchRef.current) {
-        try { snd.setVolume(TRACK_VOLUME[track]); snd.play(); } catch {}
-        (snd as any)._lastVolume = TRACK_VOLUME[track];
+        const vol = TRACK_VOLUME[currentTrackRef.current];
+        try { snd.setVolume(vol); snd.play(); } catch {}
+        (snd as any)._lastVolume = vol;
       }
     } else {
       try { snd.pause(); } catch {}
