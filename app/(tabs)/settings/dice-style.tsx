@@ -3,7 +3,7 @@ import { View, ScrollView } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useDiceStyle, DiceStyleMeta, DICE_STYLE_IDS } from '@/contexts/DiceStyleContext';
-import { makeSettingsStyles, PickerRow, DiceStylePreview } from '@/components/settings/SettingsShared';
+import { makeSettingsStyles, PickerRow, DiceStylePreview, SettingsSubHeader } from '@/components/settings/SettingsShared';
 import PremiumModal from '@/components/PremiumModal';
 
 export default function DiceStyleScreen() {
@@ -15,6 +15,7 @@ export default function DiceStyleScreen() {
 
   return (
     <View style={[styles.safe]}>
+      <SettingsSubHeader title="Dice Style" colors={colors} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.section, { marginBottom: 24 }]}>
           <View style={styles.sectionCard}>

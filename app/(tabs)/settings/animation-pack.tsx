@@ -3,7 +3,7 @@ import { View, ScrollView } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useAnimation, AnimPackMeta, ANIM_PACK_IDS, AnimPackId } from '@/contexts/AnimationContext';
-import { makeSettingsStyles, PickerRow, AnimatedDie } from '@/components/settings/SettingsShared';
+import { makeSettingsStyles, PickerRow, AnimatedDie, SettingsSubHeader } from '@/components/settings/SettingsShared';
 import PremiumModal from '@/components/PremiumModal';
 
 export default function AnimationPackScreen() {
@@ -18,6 +18,7 @@ export default function AnimationPackScreen() {
 
   return (
     <View style={[styles.safe]}>
+      <SettingsSubHeader title="Animation Pack" colors={colors} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.section, { marginBottom: 24 }]}>
           <View style={styles.sectionCard}>

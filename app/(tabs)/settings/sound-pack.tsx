@@ -3,7 +3,7 @@ import { View, ScrollView } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useSound, SoundPackMeta, SOUND_PACK_IDS } from '@/contexts/SoundContext';
-import { makeSettingsStyles, PickerRow } from '@/components/settings/SettingsShared';
+import { makeSettingsStyles, PickerRow, SettingsSubHeader } from '@/components/settings/SettingsShared';
 import PremiumModal from '@/components/PremiumModal';
 
 export default function SoundPackScreen() {
@@ -17,6 +17,7 @@ export default function SoundPackScreen() {
 
   return (
     <View style={[styles.safe]}>
+      <SettingsSubHeader title="Sound Pack" colors={colors} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.section, { marginBottom: 24 }]}>
           <View style={styles.sectionCard}>

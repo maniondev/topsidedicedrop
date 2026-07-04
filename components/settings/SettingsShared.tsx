@@ -5,11 +5,42 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Canvas, RoundedRect, Circle, Rect, Group, BlurMask, RadialGradient, vec, rrect, rect } from '@shopify/react-native-skia';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { ThemeColors, ThemeId, ThemeMeta, Themes } from '@/constants/theme';
 import { AnimPackId } from '@/contexts/AnimationContext';
 import { DiceStyleId } from '@/contexts/DiceStyleContext';
 
 export const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
+
+// Custom header for Settings sub-screens — deliberately not the native header,
+// since iOS wraps native headerLeft buttons in a pill/capsule container that
+// can't be stripped from JS. This gives full control: plain chevron + label,
+// no background, centered title.
+export function SettingsSubHeader({ title, colors }: { title: string; colors: ThemeColors }) {
+  const { top } = useSafeAreaInsets();
+  return (
+    <View style={[subHeaderStyles.container, { paddingTop: top + 8, backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+      <TouchableOpacity
+        onPress={() => router.back()}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        style={subHeaderStyles.backBtn}
+      >
+        <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
+        <Text style={[subHeaderStyles.backLabel, { color: colors.textSecondary }]}>Settings</Text>
+      </TouchableOpacity>
+      <Text style={[subHeaderStyles.title, { color: colors.text }]} numberOfLines={1}>{title}</Text>
+      <View style={subHeaderStyles.backBtn} />
+    </View>
+  );
+}
+
+const subHeaderStyles = StyleSheet.create({
+  container: { flexDirection: 'row', alignItems: 'center', paddingBottom: 10, paddingHorizontal: 8, borderBottomWidth: 1 },
+  backBtn:   { flexDirection: 'row', alignItems: 'center', gap: 2, minWidth: 90, paddingLeft: 4 },
+  backLabel: { fontSize: 17 },
+  title:     { flex: 1, textAlign: 'center', fontSize: IS_LARGE ? 20 : 17, fontWeight: '700' },
+});
 
 export function Section({ label, children, styles }: {
   label: string; children: React.ReactNode;

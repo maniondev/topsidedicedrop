@@ -3,7 +3,7 @@ import { View, ScrollView } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { ThemeId, THEME_IDS, ThemeMeta } from '@/constants/theme';
-import { makeSettingsStyles, PickerRow } from '@/components/settings/SettingsShared';
+import { makeSettingsStyles, PickerRow, SettingsSubHeader } from '@/components/settings/SettingsShared';
 import PremiumModal from '@/components/PremiumModal';
 
 const FREE_THEMES: ThemeId[] = ['dicedrop', 'light', 'dark'];
@@ -16,6 +16,7 @@ export default function ThemeScreen() {
 
   return (
     <View style={[styles.safe]}>
+      <SettingsSubHeader title="Theme" colors={colors} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.section, { marginBottom: 24 }]}>
           <View style={styles.sectionCard}>

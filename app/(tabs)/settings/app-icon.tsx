@@ -2,7 +2,7 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { View, Text, ScrollView, Image } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
-import { makeSettingsStyles, PickerRow } from '@/components/settings/SettingsShared';
+import { makeSettingsStyles, PickerRow, SettingsSubHeader } from '@/components/settings/SettingsShared';
 import { APP_ICON_IDS, APP_ICON_META, APP_ICON_SUPPORTED, AppIconId, getAppIcon, setAppIcon } from '@/lib/appIcon';
 
 const PREVIEW_SOURCES: Record<AppIconId, any> = {
@@ -24,6 +24,7 @@ export default function AppIconScreen() {
   if (!APP_ICON_SUPPORTED) {
     return (
       <View style={styles.safe}>
+        <SettingsSubHeader title="App Icon" colors={colors} />
         <ScrollView contentContainerStyle={styles.content}>
           <View style={[styles.section, { marginBottom: 24 }]}>
             <View style={[styles.sectionCard, { padding: 16 }]}>
@@ -47,6 +48,7 @@ export default function AppIconScreen() {
 
   return (
     <View style={styles.safe}>
+      <SettingsSubHeader title="App Icon" colors={colors} />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={[styles.section, { marginBottom: 24 }]}>
           <View style={styles.sectionCard}>
