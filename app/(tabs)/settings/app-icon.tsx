@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import React, { useMemo, useState, useCallback } from 'react';
+import { View, Text, ScrollView, Image } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
-import { makeSettingsStyles } from '@/components/settings/SettingsShared';
+import { makeSettingsStyles, PickerRow } from '@/components/settings/SettingsShared';
 import { APP_ICON_IDS, APP_ICON_META, APP_ICON_SUPPORTED, AppIconId, getAppIcon, setAppIcon } from '@/lib/appIcon';
 
 const PREVIEW_SOURCES: Record<AppIconId, any> = {
@@ -52,20 +51,17 @@ export default function AppIconScreen() {
         <View style={[styles.section, { marginBottom: 24 }]}>
           <View style={styles.sectionCard}>
             {APP_ICON_IDS.map((id, i) => (
-              <TouchableOpacity
+              <PickerRow
                 key={id}
-                style={[
-                  iconRow.row,
-                  i < APP_ICON_IDS.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator },
-                ]}
-                onPress={() => handleSelect(id)}
-                activeOpacity={0.7}
-                disabled={busy}
-              >
-                <Image source={PREVIEW_SOURCES[id]} style={iconRow.thumb} />
-                <Text style={[styles.rowLabel, { marginLeft: 12 }]}>{APP_ICON_META[id].label}</Text>
-                {current === id && <Ionicons name="checkmark-circle" size={20} color={colors.accent} />}
-              </TouchableOpacity>
+                label={APP_ICON_META[id].label}
+                selected={current === id}
+                locked={false}
+                onSelect={() => handleSelect(id)}
+                preview={<Image source={PREVIEW_SOURCES[id]} style={{ width: '100%', height: '100%' }} />}
+                isLast={i === APP_ICON_IDS.length - 1}
+                colors={colors}
+                styles={styles}
+              />
             ))}
           </View>
         </View>
@@ -73,8 +69,3 @@ export default function AppIconScreen() {
     </View>
   );
 }
-
-const iconRow = StyleSheet.create({
-  row:   { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
-  thumb: { width: 48, height: 48, borderRadius: 12 },
-});

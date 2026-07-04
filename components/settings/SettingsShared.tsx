@@ -69,6 +69,32 @@ export function ToggleRow({ label, sublabel, value, onValueChange, colors, style
   );
 }
 
+export function PickerRow({ label, selected, locked, onSelect, icon, preview, swatchColor, isLast, colors, styles }: {
+  label: string; selected: boolean; locked: boolean; onSelect: () => void;
+  icon?: React.ComponentProps<typeof Ionicons>['name'];
+  preview?: React.ReactNode;
+  swatchColor?: string; // background color for the thumbnail box (theme rows)
+  isLast?: boolean;
+  colors: ThemeColors; styles: ReturnType<typeof makeSettingsStyles>;
+}) {
+  return (
+    <TouchableOpacity
+      style={[styles.pickerRow, !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator }]}
+      onPress={onSelect}
+      activeOpacity={0.7}
+    >
+      <View style={[styles.pickerRowThumb, { backgroundColor: swatchColor ?? colors.card, borderColor: colors.cardBorder }]}>
+        {preview ?? (icon && <Ionicons name={icon} size={22} color={selected ? colors.accent : colors.textSecondary} />)}
+      </View>
+      <Text style={[styles.rowLabel, { marginLeft: 12 }]} numberOfLines={1}>{label}</Text>
+      {locked
+        ? <Ionicons name="lock-closed" size={16} color={colors.textMuted} />
+        : selected && <Ionicons name="checkmark-circle" size={20} color={colors.accent} />
+      }
+    </TouchableOpacity>
+  );
+}
+
 export function ThemeCard({ id, selected, locked, onSelect, colors, styles }: {
   id: ThemeId; selected: boolean; locked: boolean; onSelect: () => void;
   colors: ThemeColors; styles: ReturnType<typeof makeSettingsStyles>;
@@ -549,6 +575,23 @@ export function makeSettingsStyles(c: ThemeColors) {
     packCardDesc: {
       fontSize: IS_LARGE ? 12 : 10,
       lineHeight: IS_LARGE ? 16 : 13,
+    },
+
+    // Row-based picker (theme / sound pack / animation pack / dice style / app icon)
+    pickerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingVertical: IS_LARGE ? 14 : 12,
+    },
+    pickerRowThumb: {
+      width: IS_LARGE ? 56 : 48,
+      height: IS_LARGE ? 56 : 48,
+      borderRadius: 12,
+      borderWidth: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
     },
   });
 }

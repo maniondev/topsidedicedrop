@@ -1,11 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, ScrollView } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePremium } from '@/contexts/PremiumContext';
-import { ThemeId, THEME_IDS } from '@/constants/theme';
-import { makeSettingsStyles, ThemeCard } from '@/components/settings/SettingsShared';
+import { ThemeId, THEME_IDS, ThemeMeta } from '@/constants/theme';
+import { makeSettingsStyles, PickerRow } from '@/components/settings/SettingsShared';
 import PremiumModal from '@/components/PremiumModal';
-import { useState } from 'react';
 
 const FREE_THEMES: ThemeId[] = ['dice', 'light', 'dark'];
 
@@ -20,22 +19,28 @@ export default function ThemeScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.section, { marginBottom: 24 }]}>
           <View style={styles.sectionCard}>
-            <View style={styles.themeGrid}>
-              {THEME_IDS.map(id => (
-                <ThemeCard
+            {THEME_IDS.map((id, i) => {
+              const meta = ThemeMeta[id];
+              const [bg, , accent] = meta.swatches;
+              const locked = !isPremium && !FREE_THEMES.includes(id);
+              return (
+                <PickerRow
                   key={id}
-                  id={id}
+                  label={meta.label}
                   selected={themeId === id}
-                  locked={!isPremium && !FREE_THEMES.includes(id)}
+                  locked={locked}
                   onSelect={() => {
-                    if (!isPremium && !FREE_THEMES.includes(id)) { setPremiumModalOpen(true); return; }
+                    if (locked) { setPremiumModalOpen(true); return; }
                     setTheme(id);
                   }}
+                  swatchColor={bg}
+                  preview={<View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: accent }} />}
+                  isLast={i === THEME_IDS.length - 1}
                   colors={colors}
                   styles={styles}
                 />
-              ))}
-            </View>
+              );
+            })}
           </View>
         </View>
       </ScrollView>

@@ -3,7 +3,7 @@ import { View, ScrollView } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useDiceStyle, DiceStyleMeta, DICE_STYLE_IDS } from '@/contexts/DiceStyleContext';
-import { makeSettingsStyles, PackCard, DiceStylePreview } from '@/components/settings/SettingsShared';
+import { makeSettingsStyles, PickerRow, DiceStylePreview } from '@/components/settings/SettingsShared';
 import PremiumModal from '@/components/PremiumModal';
 
 export default function DiceStyleScreen() {
@@ -18,27 +18,26 @@ export default function DiceStyleScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.section, { marginBottom: 24 }]}>
           <View style={styles.sectionCard}>
-            <View style={styles.packGrid}>
-              {DICE_STYLE_IDS.map(id => {
-                const meta = DiceStyleMeta[id];
-                const locked = !meta.free && !isPremium;
-                return (
-                  <PackCard
-                    key={id}
-                    label={meta.label}
-                    selected={diceStyle === id}
-                    locked={locked}
-                    onSelect={() => {
-                      if (locked) { setPremiumModalOpen(true); return; }
-                      setDiceStyle(id);
-                    }}
-                    preview={<DiceStylePreview styleId={id} />}
-                    colors={colors}
-                    styles={styles}
-                  />
-                );
-              })}
-            </View>
+            {DICE_STYLE_IDS.map((id, i) => {
+              const meta = DiceStyleMeta[id];
+              const locked = !meta.free && !isPremium;
+              return (
+                <PickerRow
+                  key={id}
+                  label={meta.label}
+                  selected={diceStyle === id}
+                  locked={locked}
+                  onSelect={() => {
+                    if (locked) { setPremiumModalOpen(true); return; }
+                    setDiceStyle(id);
+                  }}
+                  preview={<DiceStylePreview styleId={id} />}
+                  isLast={i === DICE_STYLE_IDS.length - 1}
+                  colors={colors}
+                  styles={styles}
+                />
+              );
+            })}
           </View>
         </View>
       </ScrollView>

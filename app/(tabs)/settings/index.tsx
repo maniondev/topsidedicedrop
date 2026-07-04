@@ -16,7 +16,7 @@ import PremiumModal from '@/components/PremiumModal';
 import { ThemeMeta } from '@/constants/theme';
 import { openNativeReview, getHasRated } from '@/lib/reviewPrompt';
 import { Section, RowItem, ToggleRow, makeSettingsStyles } from '@/components/settings/SettingsShared';
-import { getAppIcon, getCurrentAppIconLabel } from '@/lib/appIcon';
+import { getAppIcon, getCurrentAppIconLabel, APP_ICON_SUPPORTED } from '@/lib/appIcon';
 
 export default function SettingsScreen() {
   const { top } = useSafeAreaInsets();
@@ -171,7 +171,9 @@ export default function SettingsScreen() {
             <RowItem label="Sound Pack" value={SoundPackMeta[soundPack].label} onPress={() => router.push('/settings/sound-pack')} colors={colors} styles={styles} />
             <RowItem label="Animation Pack" value={AnimPackMeta[animPack].label} onPress={() => router.push('/settings/animation-pack')} colors={colors} styles={styles} />
             <RowItem label="Dice Style" value={DiceStyleMeta[diceStyle].label} onPress={() => router.push('/settings/dice-style')} colors={colors} styles={styles} />
-            <RowItem label="App Icon" value={getCurrentAppIconLabel()} onPress={() => router.push('/settings/app-icon')} colors={colors} styles={styles} />
+            {APP_ICON_SUPPORTED && (
+              <RowItem label="App Icon" value={getCurrentAppIconLabel()} onPress={() => router.push('/settings/app-icon')} colors={colors} styles={styles} />
+            )}
           </View>
         </View>
 
