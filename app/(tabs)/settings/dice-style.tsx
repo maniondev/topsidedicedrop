@@ -32,7 +32,8 @@ export default function DiceStyleScreen() {
                     if (locked) { setPremiumModalOpen(true); return; }
                     setDiceStyle(id);
                   }}
-                  preview={<DiceStylePreview styleId={id} />}
+                  preview={<DiceStylePreview styleId={id} size={32} />}
+                  bare
                   isLast={i === DICE_STYLE_IDS.length - 1}
                   colors={colors}
                   styles={styles}

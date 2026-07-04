@@ -41,8 +41,10 @@ export default function AnimationPackScreen() {
                       ref={handle => { dieRefs.current[id] = handle ?? undefined; }}
                       packId={id}
                       color={animPack === id ? colors.accent : colors.textSecondary}
+                      size={30}
                     />
                   }
+                  bare
                   isLast={i === visibleIds.length - 1}
                   colors={colors}
                   styles={styles}

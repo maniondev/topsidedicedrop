@@ -100,11 +100,12 @@ export function ToggleRow({ label, sublabel, value, onValueChange, colors, style
   );
 }
 
-export function PickerRow({ label, selected, locked, onSelect, icon, preview, swatchColor, isLast, colors, styles }: {
+export function PickerRow({ label, selected, locked, onSelect, icon, preview, swatchColor, bare, isLast, colors, styles }: {
   label: string; selected: boolean; locked: boolean; onSelect: () => void;
   icon?: React.ComponentProps<typeof Ionicons>['name'];
   preview?: React.ReactNode;
   swatchColor?: string; // background color for the thumbnail box (theme rows)
+  bare?: boolean; // no thumbnail box/background — just a larger icon/preview
   isLast?: boolean;
   colors: ThemeColors; styles: ReturnType<typeof makeSettingsStyles>;
 }) {
@@ -114,12 +115,12 @@ export function PickerRow({ label, selected, locked, onSelect, icon, preview, sw
       onPress={onSelect}
       activeOpacity={0.7}
     >
-      <View style={[styles.pickerRowThumb, { backgroundColor: swatchColor ?? colors.card, borderColor: colors.cardBorder }]}>
-        {preview ?? (icon && <Ionicons name={icon} size={22} color={selected ? colors.accent : colors.textSecondary} />)}
+      <View style={bare ? styles.pickerRowBareThumb : [styles.pickerRowThumb, { backgroundColor: swatchColor ?? colors.card, borderColor: colors.cardBorder }]}>
+        {preview ?? (icon && <Ionicons name={icon} size={bare ? 30 : 22} color={selected ? colors.accent : colors.textSecondary} />)}
       </View>
       <Text style={[styles.rowLabel, { marginLeft: 12 }]} numberOfLines={1}>{label}</Text>
       {locked
-        ? <Ionicons name="lock-closed" size={16} color={colors.textMuted} />
+        ? <Ionicons name="lock-closed" size={16} color={colors.accent} />
         : selected && <Ionicons name="checkmark-circle" size={20} color={colors.accent} />
       }
     </TouchableOpacity>
@@ -199,8 +200,8 @@ export function PackCard({ label, description, selected, locked, comingSoon, onS
 const PREVIEW_RED = '#D92B2B';
 const PREVIEW_DOT = '#ffffff';
 
-export function DiceStylePreview({ styleId }: { styleId: DiceStyleId }) {
-  const cs = 20;
+export function DiceStylePreview({ styleId, size = 20 }: { styleId: DiceStyleId; size?: number }) {
+  const cs = size;
   const pad = 1.5;
   const rw = cs - pad * 2;
   const rx = pad, ry = pad;
@@ -281,7 +282,7 @@ export function DiceStylePreview({ styleId }: { styleId: DiceStyleId }) {
 }
 
 export const AnimatedDie = forwardRef(function AnimatedDie(
-  { packId, color }: { packId: AnimPackId; color: string },
+  { packId, color, size = 20 }: { packId: AnimPackId; color: string; size?: number },
   ref: React.Ref<{ play: () => void }>,
 ) {
   const scale  = useSharedValue(1);
@@ -399,7 +400,7 @@ export const AnimatedDie = forwardRef(function AnimatedDie(
 
   return (
     <Animated.View style={animStyle}>
-      <Ionicons name="dice" size={20} color={color} />
+      <Ionicons name="dice" size={size} color={color} />
     </Animated.View>
   );
 });
@@ -623,6 +624,12 @@ export function makeSettingsStyles(c: ThemeColors) {
       alignItems: 'center',
       justifyContent: 'center',
       overflow: 'hidden',
+    },
+    pickerRowBareThumb: {
+      width: IS_LARGE ? 56 : 48,
+      height: IS_LARGE ? 56 : 48,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
   });
 }

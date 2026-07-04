@@ -153,28 +153,16 @@ export default function SettingsScreen() {
           )}
         </Section>
 
-        {/* ── Customize ── */}
-        <View style={styles.customizeHeader}>
-          <Text style={styles.customizeTitle}>Customize</Text>
-          {!isPremium && (
-            <TouchableOpacity onPress={handleUpgrade} style={[styles.premiumPill, { backgroundColor: colors.premiumGold }]}>
-              <Ionicons name="star" size={10} color="#fff" />
-              <Text style={styles.premiumPillText}>Premium</Text>
-            </TouchableOpacity>
+        {/* Customize */}
+        <Section label="Customize" styles={styles}>
+          <RowItem label="Theme" value={ThemeMeta[themeId].label} onPress={() => router.push('/settings/theme')} colors={colors} styles={styles} />
+          <RowItem label="Sound Pack" value={SoundPackMeta[soundPack].label} onPress={() => router.push('/settings/sound-pack')} colors={colors} styles={styles} />
+          <RowItem label="Animation Pack" value={AnimPackMeta[animPack].label} onPress={() => router.push('/settings/animation-pack')} colors={colors} styles={styles} />
+          <RowItem label="Dice Style" value={DiceStyleMeta[diceStyle].label} onPress={() => router.push('/settings/dice-style')} colors={colors} styles={styles} />
+          {APP_ICON_SUPPORTED && (
+            <RowItem label="App Icon" value={getCurrentAppIconLabel()} onPress={() => router.push('/settings/app-icon')} colors={colors} styles={styles} />
           )}
-        </View>
-
-        <View style={[styles.section, { marginBottom: 24 }]}>
-          <View style={styles.sectionCard}>
-            <RowItem label="Theme" value={ThemeMeta[themeId].label} onPress={() => router.push('/settings/theme')} colors={colors} styles={styles} />
-            <RowItem label="Sound Pack" value={SoundPackMeta[soundPack].label} onPress={() => router.push('/settings/sound-pack')} colors={colors} styles={styles} />
-            <RowItem label="Animation Pack" value={AnimPackMeta[animPack].label} onPress={() => router.push('/settings/animation-pack')} colors={colors} styles={styles} />
-            <RowItem label="Dice Style" value={DiceStyleMeta[diceStyle].label} onPress={() => router.push('/settings/dice-style')} colors={colors} styles={styles} />
-            {APP_ICON_SUPPORTED && (
-              <RowItem label="App Icon" value={getCurrentAppIconLabel()} onPress={() => router.push('/settings/app-icon')} colors={colors} styles={styles} />
-            )}
-          </View>
-        </View>
+        </Section>
 
         {/* Gameplay toggles */}
         <Section label="Gameplay" styles={styles}>

@@ -45,6 +45,7 @@ export default function SoundPackScreen() {
                     setTimeout(() => play('merge3'), 750);
                   }}
                   icon="musical-notes"
+                  bare
                   isLast={i === visibleIds.length - 1}
                   colors={colors}
                   styles={styles}
