@@ -10,6 +10,7 @@ import { runOnJS } from 'react-native-reanimated';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useStats } from '@/contexts/StatsContext';
 import { useSound } from '@/contexts/SoundContext';
+import { useMusic } from '@/contexts/MusicContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useDifficulty } from '@/contexts/DifficultyContext';
 import { useAnimation } from '@/contexts/AnimationContext';
@@ -46,6 +47,7 @@ export default function GameScreen() {
   const { colors } = useTheme();
   const { statsFor, submitRun, submitPreContinueRun } = useStats();
   const { play, soundPack } = useSound();
+  const { playTrack } = useMusic();
   const { isPremium } = usePremium();
   const { gravityMs, difficulty } = useDifficulty();
   const { showChainPopups } = useAnimation();
@@ -113,6 +115,13 @@ export default function GameScreen() {
   // The score at the moment the first continue was used — stored on the final run record
   // so the "unassisted" filter can show the pre-continue leg without creating a duplicate entry.
   const preContinueScoreRef = useRef<number>(0);
+
+  // Crossfade to the gameplay music track while this screen is active, back
+  // to the menu track when leaving (covers back button, home nav, etc.).
+  useEffect(() => {
+    playTrack('game');
+    return () => playTrack('menu');
+  }, [playTrack]);
 
   // On mount: start fresh if ?fresh=1, otherwise resume a saved game if one exists
   useEffect(() => {
