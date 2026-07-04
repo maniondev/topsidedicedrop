@@ -6,6 +6,26 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MUSIC_ENABLED_KEY = 'tm_music_enabled';
 const DEV_MUSIC_INCLUDED_KEY = 'tm_dev_music_included';
+const SOUND_MODE_KEY = 'tm_sound_mode'; // shared with SoundContext — same persisted setting
+
+// SoundContext only sets the AVAudioSession category once its own async
+// buildPool() resolves. If music tries to construct/play Sound instances
+// before that happens, the session is still in its default (unconfigured)
+// state and playback is silent until something else forces a setCategory
+// call (e.g. toggling Break Through Silent Mode). Make music self-sufficient
+// by setting the category itself before touching any Sound instances.
+async function ensureAudioCategorySet(): Promise<void> {
+  try {
+    const mode = await AsyncStorage.getItem(SOUND_MODE_KEY);
+    if (mode === 'playback') {
+      Sound.setCategory('Playback', true);
+    } else {
+      Sound.setCategory('Ambient');
+    }
+  } catch {
+    try { Sound.setCategory('Ambient'); } catch {}
+  }
+}
 
 export type MusicTrack = 'menu' | 'game';
 
@@ -21,8 +41,8 @@ const FADE_STEP_MS = 32;
 // the ducked volume level while in a game, not a separate track — the
 // gameplay.m4a file/loading is kept around for when a second track returns.
 const TRACK_VOLUME: Record<MusicTrack, number> = {
-  menu: 0.3,
-  game: 0.1,
+  menu: 0.12,
+  game: 0.04,
 };
 
 function loadMusic(uri: string): Promise<Sound | null> {
@@ -71,6 +91,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const [musicEnabled, setMusicEnabledState] = useState(true);
   const [devMusicIncluded, setDevMusicIncludedState] = useState(false);
   const [tracksReady, setTracksReady] = useState(false);
+  const [settingsReady, setSettingsReady] = useState(false);
   const enabledRef = useRef(true);
   enabledRef.current = musicEnabled;
   const devIncludedRef = useRef(false);
@@ -82,15 +103,29 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const currentTrackRef = useRef<MusicTrack>('menu');
   const fadeIntervalsRef = useRef<Partial<Record<MusicTrack, ReturnType<typeof setInterval>>>>({});
 
+  // Wait for BOTH persisted settings to resolve before the launch-sequence
+  // effect below makes its one-time "did music start on?" decision — reading
+  // them independently (racing tracksReady) could catch musicEnabled/
+  // devMusicIncluded still at their defaults instead of the real persisted
+  // values.
   useEffect(() => {
-    AsyncStorage.getItem(MUSIC_ENABLED_KEY).then(v => { if (v === '0') setMusicEnabledState(false); }).catch(() => {});
-    AsyncStorage.getItem(DEV_MUSIC_INCLUDED_KEY).then(v => { if (v === '1') setDevMusicIncludedState(true); }).catch(() => {});
+    (async () => {
+      const [enabledVal, devVal] = await Promise.all([
+        AsyncStorage.getItem(MUSIC_ENABLED_KEY).catch(() => null),
+        AsyncStorage.getItem(DEV_MUSIC_INCLUDED_KEY).catch(() => null),
+      ]);
+      if (enabledVal === '0') setMusicEnabledState(false);
+      if (devVal === '1') setDevMusicIncludedState(true);
+      setSettingsReady(true);
+    })();
   }, []);
 
   // Load both loop tracks + the one-shot launch stinger once on mount.
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      await ensureAudioCategorySet();
+      if (cancelled) return;
       const [entries, launchSnd] = await Promise.all([
         Promise.all(
           (Object.keys(TRACK_SOURCES) as MusicTrack[]).map(async track => {
@@ -271,15 +306,20 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Fires exactly once per session, the very first time both musicEnabled
-  // and devMusicIncluded are true (whichever settles last) — plays the
-  // launch stinger + an unfaded menu track start. All later on/off toggles
-  // are handled instantly by the setters above instead.
+  // Fires exactly once per session, right when cold-launch conditions are
+  // fully known (tracks loaded + persisted settings resolved). If music was
+  // actually on at that moment, play the launch stinger + unfaded start.
+  // Either way, mark the decision as made — so if music happened to be OFF
+  // at launch, a later manual toggle-on is treated as a normal instant
+  // enable, not a replay of the launch sequence.
   useEffect(() => {
-    if (tracksReady && musicEnabled && devMusicIncluded && !hasPlayedLaunchRef.current) {
-      playLaunchSequence();
+    if (tracksReady && settingsReady && !hasPlayedLaunchRef.current) {
+      hasPlayedLaunchRef.current = true;
+      if (musicEnabled && devMusicIncluded) {
+        playLaunchSequence();
+      }
     }
-  }, [tracksReady, musicEnabled, devMusicIncluded, playLaunchSequence]);
+  }, [tracksReady, settingsReady, musicEnabled, devMusicIncluded, playLaunchSequence]);
 
   const value = useMemo(
     () => ({ musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic }),
