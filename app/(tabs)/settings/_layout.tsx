@@ -11,6 +11,8 @@ export default function SettingsStackLayout() {
         headerTintColor: colors.text,
         headerTitleStyle: { color: colors.text, fontWeight: '700' },
         headerShadowVisible: false,
+        animation: 'slide_from_right',
+        animationDuration: 200,
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false, title: 'Settings' }} />
