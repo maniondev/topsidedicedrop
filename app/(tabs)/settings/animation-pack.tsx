@@ -45,6 +45,7 @@ export default function AnimationPackScreen() {
                     />
                   }
                   bare
+                  compact
                   isLast={i === visibleIds.length - 1}
                   colors={colors}
                   styles={styles}

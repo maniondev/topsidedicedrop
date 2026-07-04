@@ -34,6 +34,7 @@ export default function DiceStyleScreen() {
                   }}
                   preview={<DiceStylePreview styleId={id} size={32} />}
                   bare
+                  compact
                   isLast={i === DICE_STYLE_IDS.length - 1}
                   colors={colors}
                   styles={styles}

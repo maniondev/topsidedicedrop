@@ -100,18 +100,23 @@ export function ToggleRow({ label, sublabel, value, onValueChange, colors, style
   );
 }
 
-export function PickerRow({ label, selected, locked, onSelect, icon, preview, swatchColor, bare, isLast, colors, styles }: {
+export function PickerRow({ label, selected, locked, onSelect, icon, preview, swatchColor, bare, compact, isLast, colors, styles }: {
   label: string; selected: boolean; locked: boolean; onSelect: () => void;
   icon?: React.ComponentProps<typeof Ionicons>['name'];
   preview?: React.ReactNode;
   swatchColor?: string; // background color for the thumbnail box (theme rows)
   bare?: boolean; // no thumbnail box/background — just a larger icon/preview
+  compact?: boolean; // ~10% shorter row height
   isLast?: boolean;
   colors: ThemeColors; styles: ReturnType<typeof makeSettingsStyles>;
 }) {
   return (
     <TouchableOpacity
-      style={[styles.pickerRow, !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border }]}
+      style={[
+        styles.pickerRow,
+        compact && { paddingVertical: IS_LARGE ? 13 : 11 },
+        !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border },
+      ]}
       onPress={onSelect}
       activeOpacity={0.7}
     >
