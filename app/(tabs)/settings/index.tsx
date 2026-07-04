@@ -11,7 +11,7 @@ import { useAnimation, AnimPackMeta } from '@/contexts/AnimationContext';
 import { useDiceStyle, DiceStyleMeta } from '@/contexts/DiceStyleContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useStats } from '@/contexts/StatsContext';
-import { loadStats, saveStats, CONTROLS_SEEN_KEY } from '@/lib/storage';
+import { CONTROLS_SEEN_KEY } from '@/lib/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PremiumModal from '@/components/PremiumModal';
 import { ThemeMeta } from '@/constants/theme';
@@ -28,7 +28,8 @@ export default function SettingsScreen() {
   const { animPack, performanceMode, setPerformanceMode, showChainPopups, setShowChainPopups } = useAnimation();
   const { diceStyle } = useDiceStyle();
   const { isPremium, restorePurchases, devToggle } = usePremium();
-  const { resetStats, refresh } = useStats();
+  const { resetStats } = useStats();
+  const [devControlsRevealed, setDevControlsRevealed] = useState(false);
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
   const [hasRated, setHasRatedState] = useState(false);
   const [, forceIconLabelRefresh] = useState(0);
@@ -83,30 +84,46 @@ export default function SettingsScreen() {
     }
   };
 
-  const boostStatsForScreenshots = async () => {
-    const stats = await loadStats();
-    const DAY = 24 * 60 * 60 * 1000;
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    // Set medium best scores
-    stats.byDifficulty.medium.bestScore = 12294;
-    stats.byDifficulty.medium.bestUnassisted = 4174;
-    stats.byDifficulty.medium.totalRuns = Math.max(stats.byDifficulty.medium.totalRuns, 47);
-    stats.byDifficulty.medium.lifetimeScore = Math.max(stats.byDifficulty.medium.lifetimeScore, 189430);
-    // Inject 17 consecutive daily runs (one per day) for streak
-    const existingDays = new Set(stats.recentRuns.map(r => {
-      const d = new Date(r.date); d.setHours(0, 0, 0, 0); return d.getTime();
-    }));
-    const fakeRuns = [];
-    for (let i = 0; i < 17; i++) {
-      const day = today.getTime() - i * DAY;
-      if (!existingDays.has(day)) {
-        fakeRuns.push({ score: Math.floor(800 + Math.random() * 3000), date: day + 10 * 60 * 1000, bestChain: Math.floor(1 + Math.random() * 5), difficulty: 'medium' as const, usedContinue: false });
+  // Hidden gesture: tap the "Settings" title 5x, holding the 5th tap for 2s,
+  // reveals dev-only controls (Reset Controls Tutorial, Enable/Remove
+  // Premium, Include Music toggle) that are otherwise hidden even in dev
+  // builds — keeps the Premium section looking like production by default.
+  const devTapCountRef = useRef(0);
+  const devResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const devHoldTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearDevResetTimer = () => {
+    if (devResetTimerRef.current) { clearTimeout(devResetTimerRef.current); devResetTimerRef.current = null; }
+  };
+  const scheduleDevReset = () => {
+    clearDevResetTimer();
+    devResetTimerRef.current = setTimeout(() => { devTapCountRef.current = 0; }, 1500);
+  };
+
+  const handleTitlePressIn = () => {
+    if (devTapCountRef.current === 4) {
+      devHoldTimerRef.current = setTimeout(() => {
+        devTapCountRef.current = 0;
+        clearDevResetTimer();
+        setDevControlsRevealed(v => !v);
+      }, 2000);
+    }
+  };
+
+  const handleTitlePressOut = () => {
+    if (devHoldTimerRef.current) {
+      clearTimeout(devHoldTimerRef.current);
+      devHoldTimerRef.current = null;
+      if (devTapCountRef.current === 4) {
+        devTapCountRef.current = 0;
+        clearDevResetTimer();
+        return;
       }
     }
-    stats.recentRuns = [...fakeRuns, ...stats.recentRuns].slice(0, 100);
-    await saveStats(stats);
-    await refresh();
-    Alert.alert('Done', 'Stats boosted for screenshots!');
+    if (devTapCountRef.current < 4) {
+      devTapCountRef.current += 1;
+      scheduleDevReset();
+    }
   };
 
   const confirmReset = () => {
@@ -127,7 +144,9 @@ export default function SettingsScreen() {
     <View style={[styles.safe, { paddingTop: top }]}>
       <ScrollView ref={scrollRef} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-        <Text style={styles.screenTitle}>Settings</Text>
+        <Pressable onPressIn={handleTitlePressIn} onPressOut={handleTitlePressOut}>
+          <Text style={styles.screenTitle}>Settings</Text>
+        </Pressable>
 
         {/* Premium */}
         <Section label="Premium" styles={styles}>
@@ -149,7 +168,7 @@ export default function SettingsScreen() {
           {!isPremium && (
             <RowItem label="Restore Purchases" onPress={restorePurchases} colors={colors} styles={styles} />
           )}
-          {__DEV__ && (
+          {__DEV__ && devControlsRevealed && (
             <RowItem
               label="⚙️ Dev: Reset Controls Tutorial"
               onPress={() => AsyncStorage.removeItem(CONTROLS_SEEN_KEY)}
@@ -157,15 +176,7 @@ export default function SettingsScreen() {
               styles={styles}
             />
           )}
-          {__DEV__ && (
-            <RowItem
-              label="⚙️ Dev: Boost Stats (screenshots)"
-              onPress={boostStatsForScreenshots}
-              colors={colors}
-              styles={styles}
-            />
-          )}
-          {__DEV__ && (
+          {__DEV__ && devControlsRevealed && (
             <RowItem
               label={isPremium ? '⚙️ Dev: Remove Premium' : '⚙️ Dev: Enable Premium'}
               onPress={devToggle}
@@ -174,7 +185,7 @@ export default function SettingsScreen() {
               styles={styles}
             />
           )}
-          {__DEV__ && (
+          {__DEV__ && devControlsRevealed && (
             <ToggleRow
               label="⚙️ Dev: Include Music (testing)"
               sublabel="Simulates a shipped track to test the Sound/Music split UI"
