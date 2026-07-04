@@ -11,10 +11,9 @@ export default function SettingsStackLayout() {
         headerTintColor: colors.text,
         headerTitleStyle: { color: colors.text, fontWeight: '700' },
         headerShadowVisible: false,
-        headerBackTitle: '',
       }}
     >
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="index" options={{ headerShown: false, title: 'Settings' }} />
       <Stack.Screen name="theme" options={{ title: 'Theme' }} />
       <Stack.Screen name="sound-pack" options={{ title: 'Sound Pack' }} />
       <Stack.Screen name="animation-pack" options={{ title: 'Animation Pack' }} />

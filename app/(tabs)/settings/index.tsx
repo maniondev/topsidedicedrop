@@ -33,7 +33,6 @@ export default function SettingsScreen() {
   const scrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(useCallback(() => {
-    scrollRef.current?.scrollTo({ y: 0, animated: false });
     getHasRated().then(setHasRatedState);
     getAppIcon().then(() => forceIconLabelRefresh(n => n + 1));
   }, []));

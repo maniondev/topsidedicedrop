@@ -79,7 +79,7 @@ export function PickerRow({ label, selected, locked, onSelect, icon, preview, sw
 }) {
   return (
     <TouchableOpacity
-      style={[styles.pickerRow, !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator }]}
+      style={[styles.pickerRow, !isLast && { borderBottomWidth: 1, borderBottomColor: colors.border }]}
       onPress={onSelect}
       activeOpacity={0.7}
     >
