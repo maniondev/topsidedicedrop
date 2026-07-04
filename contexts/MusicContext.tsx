@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { AppState } from 'react-native';
 import Sound from 'react-native-sound';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -136,6 +137,32 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       if (!snd) return;
       fadeTo(other, 0, () => { try { snd.pause(); } catch {} });
     });
+  }, [fadeTo]);
+
+  // Pause music the instant the app leaves the foreground (home button, app
+  // switcher, incoming call, etc.) and resume the current track on return —
+  // otherwise it keeps playing in the background regardless of audio-session
+  // category, which isn't the intended behavior for game music.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'active') {
+        if (enabledRef.current && devIncludedRef.current) {
+          const snd = soundsRef.current[currentTrackRef.current];
+          if (snd) {
+            snd.play();
+            fadeTo(currentTrackRef.current, MUSIC_VOLUME);
+          }
+        }
+      } else {
+        (Object.keys(soundsRef.current) as MusicTrack[]).forEach(track => {
+          const snd = soundsRef.current[track];
+          if (!snd) return;
+          clearFade(track);
+          try { snd.pause(); } catch {}
+        });
+      }
+    });
+    return () => sub.remove();
   }, [fadeTo]);
 
   const setMusicEnabled = useCallback((v: boolean) => {
