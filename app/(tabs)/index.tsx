@@ -35,11 +35,13 @@ export default function LobbyScreen() {
   const { top } = useSafeAreaInsets();
   const [hasSavedGame, setHasSavedGame] = useState(false);
   const [howToOpen, setHowToOpen] = useState(false);
+  const [howToIsFirstOpen, setHowToIsFirstOpen] = useState(false);
   const { showInterstitial } = useInterstitialAd();
 
   useEffect(() => {
     AsyncStorage.getItem('tm_seen_how_to_play').then(v => {
       if (!v) {
+        setHowToIsFirstOpen(true);
         setHowToOpen(true);
         AsyncStorage.setItem('tm_seen_how_to_play', '1').catch(() => {});
       }
@@ -248,7 +250,7 @@ export default function LobbyScreen() {
         <View style={[styles.bottomRow, { gap }]}>
           <TouchableOpacity
             style={[styles.rowBtn, { flex: 1, height: rowH, borderRadius: r14, paddingHorizontal: f(16), gap: f(8), backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-            onPress={() => setHowToOpen(true)}
+            onPress={() => { setHowToIsFirstOpen(false); setHowToOpen(true); }}
           >
             <Ionicons name="book-outline" size={f(18)} color={colors.accent} />
             <Text style={[styles.rowBtnText, { color: colors.textSecondary, fontSize: f(15) }]}>How to Play</Text>
@@ -282,7 +284,7 @@ export default function LobbyScreen() {
         )}
       </View>
 
-      <HowToPlayModal visible={howToOpen} onClose={() => setHowToOpen(false)} />
+      <HowToPlayModal visible={howToOpen} showConsent={howToIsFirstOpen} onClose={() => setHowToOpen(false)} />
       <PremiumModal visible={premiumModalVisible} onClose={() => setPremiumModalVisible(false)} />
 
       {/* New Game confirmation */}

@@ -9,6 +9,7 @@ const PRIVACY_URL = 'https://topside.games/dicedrop/privacy';
 interface Props {
   visible: boolean;
   onClose: () => void;
+  showConsent?: boolean;
 }
 
 const CONTROLS: { verb: string; rest: string }[] = [
@@ -24,7 +25,7 @@ const RULES: { title: string; body: string }[] = [
   { title: 'Survive', body: 'Unsupported stacks fall. The run ends when a new piece can no longer fit. Beat your best score and climb the leaderboard!' },
 ];
 
-export default function HowToPlayModal({ visible, onClose }: Props) {
+export default function HowToPlayModal({ visible, onClose, showConsent }: Props) {
   const { colors } = useTheme();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -54,12 +55,14 @@ export default function HowToPlayModal({ visible, onClose }: Props) {
           <TouchableOpacity style={[styles.btn, { backgroundColor: colors.accent }]} onPress={onClose}>
             <Text style={[styles.btnText, { color: colors.accentText }]}>Got it</Text>
           </TouchableOpacity>
-          <Text style={[styles.consent, { color: colors.textMuted }]}>
-            By continuing, you agree to our{' '}
-            <Text style={{ color: colors.accent }} onPress={() => Linking.openURL(TOS_URL)}>Terms</Text>
-            {' '}and{' '}
-            <Text style={{ color: colors.accent }} onPress={() => Linking.openURL(PRIVACY_URL)}>Privacy Policy</Text>.
-          </Text>
+          {showConsent && (
+            <Text style={[styles.consent, { color: colors.textMuted }]}>
+              By continuing, you agree to our{' '}
+              <Text style={{ color: colors.accent }} onPress={() => Linking.openURL(TOS_URL)}>Terms</Text>
+              {' '}and{' '}
+              <Text style={{ color: colors.accent }} onPress={() => Linking.openURL(PRIVACY_URL)}>Privacy Policy</Text>.
+            </Text>
+          )}
         </View>
       </View>
     </Modal>
