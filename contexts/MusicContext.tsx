@@ -208,6 +208,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     const launch = launchSoundRef.current;
     if (launch) {
       try {
+        launch.setVolume(0.3);
         launch.play(() => startTheme());
       } catch {
         startTheme();
