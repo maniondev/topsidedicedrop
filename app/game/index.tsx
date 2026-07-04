@@ -47,7 +47,7 @@ export default function GameScreen() {
   const { colors } = useTheme();
   const { statsFor, submitRun, submitPreContinueRun } = useStats();
   const { play, soundPack } = useSound();
-  const { playTrack } = useMusic();
+  const { playTrack, pauseMusic, resumeMusic } = useMusic();
   const { isPremium } = usePremium();
   const { gravityMs, difficulty } = useDifficulty();
   const { showChainPopups } = useAnimation();
@@ -122,6 +122,16 @@ export default function GameScreen() {
     playTrack('game');
     return () => playTrack('menu');
   }, [playTrack]);
+
+  // Pause the gameplay track in place while the pause modal is open (no
+  // restart), resume from the same spot on unpause. Skip the first run so
+  // this doesn't fire redundantly right after the mount effect above starts
+  // the track.
+  const pausedMusicDidMountRef = useRef(false);
+  useEffect(() => {
+    if (!pausedMusicDidMountRef.current) { pausedMusicDidMountRef.current = true; return; }
+    if (paused) pauseMusic(); else resumeMusic();
+  }, [paused, pauseMusic, resumeMusic]);
 
   // On mount: start fresh if ?fresh=1, otherwise resume a saved game if one exists
   useEffect(() => {

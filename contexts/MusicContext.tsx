@@ -37,6 +37,8 @@ interface MusicCtxType {
   devMusicIncluded: boolean;
   setDevMusicIncluded: (v: boolean) => void;
   playTrack: (track: MusicTrack) => void;
+  pauseMusic: () => void;
+  resumeMusic: () => void;
 }
 
 const MusicCtx = createContext<MusicCtxType>({
@@ -45,6 +47,8 @@ const MusicCtx = createContext<MusicCtxType>({
   devMusicIncluded: false,
   setDevMusicIncluded: () => {},
   playTrack: () => {},
+  pauseMusic: () => {},
+  resumeMusic: () => {},
 });
 
 export function MusicProvider({ children }: { children: React.ReactNode }) {
@@ -142,6 +146,26 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     });
   }, [fadeTo]);
 
+  // Pause/resume the current track in place — no track switch, no restart.
+  // Used for in-game pause (as opposed to leaving the game screen entirely,
+  // which goes through playTrack() and restarts the menu track).
+  const pauseMusic = useCallback(() => {
+    const track = currentTrackRef.current;
+    const snd = soundsRef.current[track];
+    if (!snd) return;
+    clearFade(track);
+    try { snd.pause(); } catch {}
+  }, []);
+
+  const resumeMusic = useCallback(() => {
+    if (!enabledRef.current || !devIncludedRef.current) return;
+    const track = currentTrackRef.current;
+    const snd = soundsRef.current[track];
+    if (!snd) return;
+    snd.play();
+    fadeTo(track, MUSIC_VOLUME);
+  }, [fadeTo]);
+
   // Pause music the instant the app leaves the foreground (home button, app
   // switcher, incoming call, etc.) and resume the current track on return —
   // otherwise it keeps playing in the background regardless of audio-session
@@ -207,8 +231,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   }, [tracksReady, musicEnabled, devMusicIncluded, playTrack]);
 
   const value = useMemo(
-    () => ({ musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack }),
-    [musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack],
+    () => ({ musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic }),
+    [musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic],
   );
 
   return <MusicCtx.Provider value={value}>{children}</MusicCtx.Provider>;
