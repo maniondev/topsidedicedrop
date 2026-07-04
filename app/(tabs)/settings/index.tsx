@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSound, SoundPackMeta } from '@/contexts/SoundContext';
+import { useMusic } from '@/contexts/MusicContext';
 import { useAnimation, AnimPackMeta } from '@/contexts/AnimationContext';
 import { useDiceStyle, DiceStyleMeta } from '@/contexts/DiceStyleContext';
 import { usePremium } from '@/contexts/PremiumContext';
@@ -23,6 +24,7 @@ export default function SettingsScreen() {
   const { colors, themeId } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   const { soundEnabled, setSoundEnabled, soundPack, soundMode, setSoundMode } = useSound();
+  const { devMusicIncluded, setDevMusicIncluded } = useMusic();
   const { animPack, performanceMode, setPerformanceMode, showChainPopups, setShowChainPopups } = useAnimation();
   const { diceStyle } = useDiceStyle();
   const { isPremium, restorePurchases, devToggle } = usePremium();
@@ -126,6 +128,16 @@ export default function SettingsScreen() {
               label={isPremium ? '⚙️ Dev: Remove Premium' : '⚙️ Dev: Enable Premium'}
               onPress={devToggle}
               danger={isPremium}
+              colors={colors}
+              styles={styles}
+            />
+          )}
+          {__DEV__ && (
+            <ToggleRow
+              label="⚙️ Dev: Include Music (testing)"
+              sublabel="Simulates a shipped track to test the Sound/Music split UI"
+              value={devMusicIncluded}
+              onValueChange={setDevMusicIncluded}
               colors={colors}
               styles={styles}
             />

@@ -17,6 +17,7 @@ import { initAppsFlyer } from '@/lib/appsflyer';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 import { PremiumProvider } from '@/contexts/PremiumContext';
 import { SoundProvider } from '@/contexts/SoundContext';
+import { MusicProvider } from '@/contexts/MusicContext';
 import { StatsProvider } from '@/contexts/StatsContext';
 import { DifficultyProvider } from '@/contexts/DifficultyContext';
 import { GameStatusProvider } from '@/contexts/GameStatusContext';
@@ -99,11 +100,13 @@ export default function RootLayout() {
             <DifficultyProvider>
               <GameStatusProvider>
                 <SoundProvider>
-                  <AnimationProvider>
-                    <DiceStyleProvider>
-                      <AppShell />
-                    </DiceStyleProvider>
-                  </AnimationProvider>
+                  <MusicProvider>
+                    <AnimationProvider>
+                      <DiceStyleProvider>
+                        <AppShell />
+                      </DiceStyleProvider>
+                    </AnimationProvider>
+                  </MusicProvider>
                 </SoundProvider>
               </GameStatusProvider>
             </DifficultyProvider>

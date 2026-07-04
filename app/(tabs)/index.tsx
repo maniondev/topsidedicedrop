@@ -13,6 +13,7 @@ import { useStats } from '@/contexts/StatsContext';
 import { useDifficulty, Difficulty, GRAVITY_MS } from '@/contexts/DifficultyContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useSound } from '@/contexts/SoundContext';
+import { useMusic } from '@/contexts/MusicContext';
 import AppLogo from '@/components/AppLogo';
 import HowToPlayModal from '@/components/HowToPlayModal';
 import PremiumModal from '@/components/PremiumModal';
@@ -32,6 +33,7 @@ export default function LobbyScreen() {
   const { difficulty, setDifficulty } = useDifficulty();
   const { isPremium, upgrade } = usePremium();
   const { soundEnabled, setSoundEnabled } = useSound();
+  const { musicEnabled, setMusicEnabled, devMusicIncluded } = useMusic();
   const { top } = useSafeAreaInsets();
   const [hasSavedGame, setHasSavedGame] = useState(false);
   const [howToOpen, setHowToOpen] = useState(false);
@@ -255,19 +257,36 @@ export default function LobbyScreen() {
             <Ionicons name="book-outline" size={f(18)} color={colors.accent} />
             <Text style={[styles.rowBtnText, { color: colors.textSecondary, fontSize: f(15) }]}>How to Play</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.rowBtn, { flex: 1, height: rowH, borderRadius: r14, paddingHorizontal: f(16), gap: f(8), backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-            onPress={() => setSoundEnabled(!soundEnabled)}
-          >
-            <Ionicons
-              name={soundEnabled ? 'volume-high' : 'volume-mute'}
-              size={f(20)}
-              color={soundEnabled ? colors.accent : colors.textMuted}
-            />
-            <Text style={[styles.rowBtnText, { color: colors.textSecondary, fontSize: f(15), width: f(76) }]}>
-              {soundEnabled ? 'Sound On' : 'Sound Off'}
-            </Text>
-          </TouchableOpacity>
+          {devMusicIncluded ? (
+            <View style={[styles.bottomRow, { flex: 1, gap: f(8) }]}>
+              <CrossableIconButton
+                icon="volume-high"
+                enabled={soundEnabled}
+                onPress={() => setSoundEnabled(!soundEnabled)}
+                rowH={rowH} r14={r14} f={f} colors={colors}
+              />
+              <CrossableIconButton
+                icon="musical-notes"
+                enabled={musicEnabled}
+                onPress={() => setMusicEnabled(!musicEnabled)}
+                rowH={rowH} r14={r14} f={f} colors={colors}
+              />
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.rowBtn, { flex: 1, height: rowH, borderRadius: r14, paddingHorizontal: f(16), gap: f(8), backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+              onPress={() => setSoundEnabled(!soundEnabled)}
+            >
+              <Ionicons
+                name={soundEnabled ? 'volume-high' : 'volume-mute'}
+                size={f(20)}
+                color={soundEnabled ? colors.accent : colors.textMuted}
+              />
+              <Text style={[styles.rowBtnText, { color: colors.textSecondary, fontSize: f(15), width: f(76) }]}>
+                {soundEnabled ? 'Sound On' : 'Sound Off'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {!isPremium && (
@@ -321,6 +340,37 @@ export default function LobbyScreen() {
     </View>
   );
 }
+
+// Icon-only toggle button with a diagonal strike overlay when off — used for
+// the Sound/Music split (dev-only, pending a real music track).
+function CrossableIconButton({ icon, enabled, onPress, rowH, r14, f, colors }: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  enabled: boolean;
+  onPress: () => void;
+  rowH: number; r14: number; f: (n: number) => number;
+  colors: ReturnType<typeof useTheme>['colors'];
+}) {
+  return (
+    <TouchableOpacity
+      style={[crossBtnStyles.btn, { flex: 1, height: rowH, borderRadius: r14, backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      <View style={crossBtnStyles.iconWrap}>
+        <Ionicons name={icon} size={f(20)} color={enabled ? colors.accent : colors.textMuted} />
+        {!enabled && (
+          <View style={[crossBtnStyles.strike, { backgroundColor: colors.textMuted, width: f(26) }]} />
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+const crossBtnStyles = StyleSheet.create({
+  btn:      { alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
+  iconWrap: { alignItems: 'center', justifyContent: 'center' },
+  strike:   { position: 'absolute', height: 2, borderRadius: 1, transform: [{ rotate: '-45deg' }] },
+});
 
 const styles = StyleSheet.create({
   safe:         { flex: 1 },
