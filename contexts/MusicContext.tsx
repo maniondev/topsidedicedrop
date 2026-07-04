@@ -184,18 +184,18 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }, FADE_STEP_MS);
   }, []);
 
-  // Cold-launch only: play the one-shot launch stinger, then start the menu
-  // track immediately at full volume — no fade in, unlike every other
+  // Cold-launch only: play the one-shot launch stinger to completion, THEN
+  // start the menu track at full volume — no fade in, unlike every other
   // transition (including returning from background, which still fades).
+  // Sequential (stinger finishes before theme starts), not simultaneous.
   const playLaunchSequence = useCallback(() => {
     hasPlayedLaunchRef.current = true;
     currentTrackRef.current = 'menu';
     if (!enabledRef.current || !devIncludedRef.current) return;
 
-    try { launchSoundRef.current?.play(); } catch {}
-
-    const theme = soundsRef.current.menu;
-    if (theme) {
+    const startTheme = () => {
+      const theme = soundsRef.current.menu;
+      if (!theme) return;
       clearFade('menu');
       try {
         theme.setCurrentTime(0);
@@ -203,6 +203,17 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         theme.play();
       } catch {}
       (theme as any)._lastVolume = TRACK_VOLUME.menu;
+    };
+
+    const launch = launchSoundRef.current;
+    if (launch) {
+      try {
+        launch.play(() => startTheme());
+      } catch {
+        startTheme();
+      }
+    } else {
+      startTheme();
     }
   }, []);
 
