@@ -459,24 +459,6 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     adBorder:      '#4A2018',
     statusBar:     'light',
     invertLogoGradient: true,
-    gameColors: {
-      red:    '#D94050',
-      orange: '#E07820',
-      yellow: '#D4A020',
-      green:  '#7A9060',
-      blue:   '#5060A0',
-      purple: '#8A4A9A',
-      black:  '#1A0E08',
-    },
-    gameColorsDim: {
-      red:    '#8A1E28',
-      orange: '#8A4810',
-      yellow: '#826010',
-      green:  '#485838',
-      blue:   '#303A60',
-      purple: '#522C5A',
-      black:  '#0E0806',
-    },
   },
 };
 
