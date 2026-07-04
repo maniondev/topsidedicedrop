@@ -81,22 +81,21 @@ export type ThemeColors = {
   popupOutlineColor?: string;
 };
 
-export type ThemeId = 'dice' | 'light' | 'dark' | 'pastel' | 'grayscale' | 'neon' | 'sunset' | 'ocean' | 'forest' | 'test';
+export type ThemeId = 'dicedrop' | 'light' | 'dark' | 'dice' | 'pastel' | 'grayscale' | 'ocean' | 'forest' | 'neon';
 
 export const ThemeMeta: Record<ThemeId, { label: string; swatches: [string, string, string] }> = {
-  dice:      { label: 'Topside',   swatches: ['#F4EDDD', '#F8F3E8', '#F08A2C'] },
-  dark:      { label: 'Dark',      swatches: ['#0A0A14', '#1E1E32', '#6C63FF'] },
+  dicedrop:  { label: 'Dice Drop', swatches: ['#1C1008', '#2E1A0C', '#D94050'] },
   light:     { label: 'Light',     swatches: ['#F4F4F8', '#FFFFFF', '#5558EF'] },
+  dark:      { label: 'Dark',      swatches: ['#0A0A14', '#1E1E32', '#6C63FF'] },
+  dice:      { label: 'Topside',   swatches: ['#F4EDDD', '#F8F3E8', '#F08A2C'] },
   pastel:    { label: 'Pastel',    swatches: ['#F3EEF9', '#FEFBFF', '#9B72E0'] },
-  neon:      { label: 'Neon',      swatches: ['#000005', '#0A0A1E', '#00FFFF'] },
   grayscale: { label: 'Grayscale', swatches: ['#F8F8F8', '#FFFFFF', '#222222'] },
-  sunset:    { label: 'Sunset',    swatches: ['#1C1008', '#2E1A0C', '#D94050'] },
   ocean:     { label: 'Ocean',     swatches: ['#0A1828', '#112238', '#00C4B4'] },
   forest:    { label: 'Forest',    swatches: ['#0F1F12', '#182A1A', '#C4956A'] },
-  test:      { label: 'Test',      swatches: ['#1C1008', '#2E1A0C', '#D94050'] },
+  neon:      { label: 'Neon',      swatches: ['#000005', '#0A0A1E', '#00FFFF'] },
 };
 
-export const THEME_IDS: ThemeId[] = ['dice', 'light', 'dark', 'pastel', 'grayscale', 'neon', 'sunset', 'ocean', 'forest', 'test'];
+export const THEME_IDS: ThemeId[] = ['dicedrop', 'light', 'dark', 'dice', 'pastel', 'grayscale', 'ocean', 'forest', 'neon'];
 
 export const Themes: Record<ThemeId, ThemeColors> = {
   dice: {
@@ -290,53 +289,6 @@ export const Themes: Record<ThemeId, ThemeColors> = {
       black:  '#050510',
     },
   },
-  sunset: {
-    background:    '#1C1008',
-    surface:       '#281510',
-    surfaceRaise:  '#3A1E10',
-    card:          '#2E1A0C',
-    cardBorder:    '#5A3018',
-    text:          '#FFE4C0',
-    textSecondary: '#C08040',
-    textMuted:     '#9A6030',
-    textDim:       '#9A6030',
-    accent:        '#D94050',
-    accentDim:     '#4A1018',
-    accentText:    '#FFFFFF',
-    blue:          '#D94050',
-    blueDim:       '#4A1018',
-    premiumGold:   '#D94050',
-    premiumBg:     '#1E0A0E',
-    border:        '#4A2A14',
-    separator:     '#281408',
-    gridLine:      '#3A2010',
-    inputBg:       '#221208',
-    danger:        '#FF5544',
-    success:       '#D94050',
-    iconBg:        '#241210',
-    adBg:          '#221008',
-    adBorder:      '#4A2018',
-    statusBar:     'light',
-    invertLogoGradient: true,
-    gameColors: {
-      red:    '#D94050',
-      orange: '#E07820',
-      yellow: '#D4A020',
-      green:  '#7A9060',
-      blue:   '#5060A0',
-      purple: '#8A4A9A',
-      black:  '#1A0E08',
-    },
-    gameColorsDim: {
-      red:    '#8A1E28',
-      orange: '#8A4810',
-      yellow: '#826010',
-      green:  '#485838',
-      blue:   '#303A60',
-      purple: '#522C5A',
-      black:  '#0E0806',
-    },
-  },
   ocean: {
     background:    '#0A1828',
     surface:       '#0F2030',
@@ -479,7 +431,7 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     iconBg:           '#E5E5E5',
     popupOutlineColor: 'rgba(255,255,255,0.88)',
   },
-  test: {
+  dicedrop: {
     background:    '#1C1008',
     surface:       '#281510',
     surfaceRaise:  '#3A1E10',

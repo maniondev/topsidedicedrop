@@ -11,13 +11,13 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  themeId: 'dice',
-  colors: Themes.dice,
+  themeId: 'dicedrop',
+  colors: Themes.dicedrop,
   setTheme: () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [themeId, setThemeId] = useState<ThemeId>('dice');
+  const [themeId, setThemeId] = useState<ThemeId>('dicedrop');
 
   useEffect(() => {
     AsyncStorage.getItem(THEME_KEY).then((v) => {

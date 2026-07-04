@@ -6,7 +6,7 @@ import { ThemeId, THEME_IDS, ThemeMeta } from '@/constants/theme';
 import { makeSettingsStyles, PickerRow } from '@/components/settings/SettingsShared';
 import PremiumModal from '@/components/PremiumModal';
 
-const FREE_THEMES: ThemeId[] = ['dice', 'light', 'dark'];
+const FREE_THEMES: ThemeId[] = ['dicedrop', 'light', 'dark'];
 
 export default function ThemeScreen() {
   const { colors, themeId, setTheme } = useTheme();
