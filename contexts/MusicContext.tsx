@@ -124,9 +124,12 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     const incoming = soundsRef.current[track];
     if (!incoming) return;
 
-    // Start incoming track (if not already playing) and fade it in.
+    // Start incoming track from the beginning (if not already playing) and fade it in.
     incoming.getCurrentTime((_seconds, isPlaying) => {
-      if (!isPlaying) incoming.play();
+      if (!isPlaying) {
+        try { incoming.setCurrentTime(0); } catch {}
+        incoming.play();
+      }
     });
     fadeTo(track, MUSIC_VOLUME);
 
