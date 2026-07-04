@@ -459,15 +459,6 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     adBorder:      '#4A2018',
     statusBar:     'light',
     invertLogoGradient: true,
-    darkenFaceColors: ['red', 'orange', 'yellow', 'green', 'blue', 'purple'],
-    darkenFaceColorsDot: {
-      red:    '#14100C',
-      orange: '#14100C',
-      yellow: '#14100C',
-      green:  '#14100C',
-      blue:   '#14100C',
-      purple: '#14100C',
-    },
     gameColors: {
       red:    '#E5384A',
       orange: '#F08A2C',
