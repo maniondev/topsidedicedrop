@@ -18,10 +18,10 @@ const LAUNCH_SOURCE = require('@/assets/sounds/music/launch.m4a');
 const CROSSFADE_MS = 800;
 const FADE_STEP_MS = 32;
 // Ceiling volume per track so music sits under SFX. Gameplay is quieter
-// (65% of the menu level) so it doesn't compete with merge/chain SFX.
+// so it doesn't compete with merge/chain SFX.
 const TRACK_VOLUME: Record<MusicTrack, number> = {
   menu: 0.55,
-  game: 0.36, // 0.55 * 0.65
+  game: 0.22, // 0.55 * 0.65 * 0.6
 };
 
 function loadMusic(uri: string): Promise<Sound | null> {
