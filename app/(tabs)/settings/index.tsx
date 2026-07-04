@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useRef, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Pressable, Alert, Linking } from 'react-native';
 import { useFocusEffect, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -40,6 +40,48 @@ export default function SettingsScreen() {
   }, []));
 
   const handleUpgrade = () => setPremiumModalOpen(true);
+
+  // Hidden gesture: tap "Sound" 5x, holding the 5th tap for 2s, toggles the
+  // dev music-testing flag without needing a dev build.
+  const soundTapCountRef = useRef(0);
+  const soundResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const soundHoldTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearSoundResetTimer = () => {
+    if (soundResetTimerRef.current) { clearTimeout(soundResetTimerRef.current); soundResetTimerRef.current = null; }
+  };
+  const scheduleSoundReset = () => {
+    clearSoundResetTimer();
+    soundResetTimerRef.current = setTimeout(() => { soundTapCountRef.current = 0; }, 1500);
+  };
+
+  const handleSoundHeaderPressIn = () => {
+    if (soundTapCountRef.current === 4) {
+      soundHoldTimerRef.current = setTimeout(() => {
+        soundTapCountRef.current = 0;
+        clearSoundResetTimer();
+        setDevMusicIncluded(!devMusicIncluded);
+        Alert.alert('Dev Toggle', devMusicIncluded ? 'Music testing UI disabled' : 'Music testing UI enabled');
+      }, 2000);
+    }
+  };
+
+  const handleSoundHeaderPressOut = () => {
+    if (soundHoldTimerRef.current) {
+      clearTimeout(soundHoldTimerRef.current);
+      soundHoldTimerRef.current = null;
+      if (soundTapCountRef.current === 4) {
+        // Released before the 2s hold completed — sequence failed.
+        soundTapCountRef.current = 0;
+        clearSoundResetTimer();
+        return;
+      }
+    }
+    if (soundTapCountRef.current < 4) {
+      soundTapCountRef.current += 1;
+      scheduleSoundReset();
+    }
+  };
 
   const boostStatsForScreenshots = async () => {
     const stats = await loadStats();
@@ -144,35 +186,40 @@ export default function SettingsScreen() {
           )}
         </Section>
 
-        {/* Sound */}
-        <Section label="Sound" styles={styles}>
-          <ToggleRow
-            label="Sound Effects"
-            value={soundEnabled}
-            onValueChange={setSoundEnabled}
-            colors={colors}
-            styles={styles}
-          />
-          {devMusicIncluded && (
+        {/* Sound — header has a hidden 5-tap-and-hold gesture (see handleSoundHeaderPress*) */}
+        <View style={styles.section}>
+          <Pressable onPressIn={handleSoundHeaderPressIn} onPressOut={handleSoundHeaderPressOut}>
+            <Text style={styles.sectionLabel}>Sound</Text>
+          </Pressable>
+          <View style={styles.sectionCard}>
             <ToggleRow
-              label="Music"
-              value={musicEnabled}
-              onValueChange={setMusicEnabled}
+              label="Sound Effects"
+              value={soundEnabled}
+              onValueChange={setSoundEnabled}
               colors={colors}
               styles={styles}
             />
-          )}
-          {soundEnabled && (
-            <ToggleRow
-              label="Break Through Silent Mode"
-              sublabel="May pause streaming music"
-              value={soundMode === 'playback'}
-              onValueChange={v => setSoundMode(v ? 'playback' : 'ambient')}
-              colors={colors}
-              styles={styles}
-            />
-          )}
-        </Section>
+            {devMusicIncluded && (
+              <ToggleRow
+                label="Music"
+                value={musicEnabled}
+                onValueChange={setMusicEnabled}
+                colors={colors}
+                styles={styles}
+              />
+            )}
+            {soundEnabled && (
+              <ToggleRow
+                label="Break Through Silent Mode"
+                sublabel="May pause streaming music"
+                value={soundMode === 'playback'}
+                onValueChange={v => setSoundMode(v ? 'playback' : 'ambient')}
+                colors={colors}
+                styles={styles}
+              />
+            )}
+          </View>
+        </View>
 
         {/* Customize */}
         <Section label="Customize" styles={styles}>
