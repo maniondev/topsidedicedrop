@@ -45,7 +45,7 @@ function RunRow({ rank, run }: { rank: number; run: RunRecord }) {
     <View style={[styles.runRow, { borderBottomColor: colors.border }]}>
       <Text style={[styles.runRank, { color: rank <= 3 ? colors.accent : colors.textMuted }]}>#{rank}</Text>
       <View style={styles.runInfo}>
-        <Text style={[styles.runName, { color: colors.text }]} numberOfLines={1}>{formatDate(run.date)}</Text>
+        <Text style={[styles.runName, { color: colors.statNumColor ?? colors.text }]} numberOfLines={1}>{formatDate(run.date)}</Text>
         <Text style={[styles.runDate, { color: colors.textMuted }]}>{run.difficulty}</Text>
       </View>
       <View style={styles.runRight}>
@@ -434,55 +434,55 @@ export default function LeaderboardScreen() {
           </View>
       </View>
 
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      {/* Filters — fixed alongside the segment tabs; only the list below scrolls */}
+      <View style={[styles.filterGrid, { paddingHorizontal: 16, marginBottom: 12 }]}>
+        <FilterDropdown
+          label="Difficulty"
+          value={filterDifficulty}
+          options={[
+            { label: 'All', value: 'all' },
+            { label: 'Easy', value: 'easy' },
+            { label: 'Medium', value: 'medium' },
+            { label: 'Hard', value: 'hard' },
+          ]}
+          onChange={setFilterDifficulty}
+        />
+        <FilterDropdown
+          label="Type"
+          value={filterType}
+          options={[
+            { label: 'Unassisted Runs', value: 'unassisted' },
+            { label: 'All Runs', value: 'overall' },
+          ]}
+          onChange={setFilterType}
+        />
+        {activeTab === 'leaderboard' && (
+          <>
+            <FilterDropdown
+              label="Period"
+              value={filterTime}
+              options={[
+                { label: 'All Time', value: 'all' },
+                { label: 'This Month', value: 'month' },
+                { label: 'This Week', value: 'week' },
+                { label: 'Today', value: 'day' },
+              ]}
+              onChange={setFilterTime}
+            />
+            <FilterDropdown
+              label="Scope"
+              value={lbScope}
+              options={[
+                { label: 'Global', value: 'global' },
+                { label: 'Following', value: 'following' },
+              ]}
+              onChange={setLbScope}
+            />
+          </>
+        )}
+      </View>
 
-        {/* Filters */}
-        <View style={styles.filterGrid}>
-          <FilterDropdown
-            label="Difficulty"
-            value={filterDifficulty}
-            options={[
-              { label: 'All', value: 'all' },
-              { label: 'Easy', value: 'easy' },
-              { label: 'Medium', value: 'medium' },
-              { label: 'Hard', value: 'hard' },
-            ]}
-            onChange={setFilterDifficulty}
-          />
-          <FilterDropdown
-            label="Type"
-            value={filterType}
-            options={[
-              { label: 'Unassisted Runs', value: 'unassisted' },
-              { label: 'All Runs', value: 'overall' },
-            ]}
-            onChange={setFilterType}
-          />
-          {activeTab === 'leaderboard' && (
-            <>
-              <FilterDropdown
-                label="Period"
-                value={filterTime}
-                options={[
-                  { label: 'All Time', value: 'all' },
-                  { label: 'This Month', value: 'month' },
-                  { label: 'This Week', value: 'week' },
-                  { label: 'Today', value: 'day' },
-                ]}
-                onChange={setFilterTime}
-              />
-              <FilterDropdown
-                label="Scope"
-                value={lbScope}
-                options={[
-                  { label: 'Global', value: 'global' },
-                  { label: 'Following', value: 'following' },
-                ]}
-                onChange={setLbScope}
-              />
-            </>
-          )}
-        </View>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
         {activeTab === 'yours' ? (
           <>
@@ -607,7 +607,7 @@ export default function LeaderboardScreen() {
                         <View key={i} style={[styles.runRow, { borderBottomColor: colors.border, backgroundColor: isYou ? colors.accentDim : 'transparent' }]}>
                           <Text style={[styles.runRank, { color: i < 3 ? colors.accent : colors.textMuted }]}>#{i + 1}</Text>
                           <View style={styles.runInfo}>
-                            <Text style={[styles.runName, { color: isYou ? colors.accent : colors.text }]} numberOfLines={1}>
+                            <Text style={[styles.runName, { color: isYou ? colors.accent : (colors.statNumColor ?? colors.text) }]} numberOfLines={1}>
                               {entry.display_name}{isYou ? ' (you)' : ''}
                             </Text>
                             <Text style={[styles.runDate, { color: colors.textMuted }]}>{entry.difficulty}</Text>
@@ -630,7 +630,7 @@ export default function LeaderboardScreen() {
                         <View key={i} style={[styles.runRow, { borderBottomColor: colors.border, backgroundColor: isYou ? colors.accentDim : 'transparent' }]}>
                           <Text style={[styles.runRank, { color: i < 3 ? colors.accent : colors.textMuted }]}>#{i + 1}</Text>
                           <View style={styles.runInfo}>
-                            <Text style={[styles.runName, { color: isYou ? colors.accent : colors.text }]} numberOfLines={1}>
+                            <Text style={[styles.runName, { color: isYou ? colors.accent : (colors.statNumColor ?? colors.text) }]} numberOfLines={1}>
                               {entry.display_name}{isYou ? ' (you)' : ''}
                             </Text>
                             <Text style={[styles.runDate, { color: colors.textMuted }]}>{entry.run_count} runs</Text>

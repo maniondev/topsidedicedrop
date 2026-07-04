@@ -206,18 +206,18 @@ export default function LobbyScreen() {
       <View style={[styles.statsGrid, { gap: f(12) }]}>
         <View style={[styles.statsRow, { gap: f(12) }]}>
           <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
-            <Ionicons name="trophy-outline" size={f(22)} color={colors.accent} />
-            <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
-              {dstats.bestScore > 0 ? dstats.bestScore.toLocaleString() : '—'}
-            </Text>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>BEST OVERALL</Text>
-          </View>
-          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
             <Ionicons name="star-outline" size={f(22)} color={colors.accent} />
             <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
               {dstats.bestUnassisted > 0 ? dstats.bestUnassisted.toLocaleString() : '—'}
             </Text>
             <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>BEST UNASSISTED</Text>
+          </View>
+          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
+            <Ionicons name="trophy-outline" size={f(22)} color={colors.accent} />
+            <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+              {dstats.bestScore > 0 ? dstats.bestScore.toLocaleString() : '—'}
+            </Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>BEST OVERALL</Text>
           </View>
         </View>
         <View style={[styles.statsRow, { gap: f(12) }]}>

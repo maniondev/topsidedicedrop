@@ -45,7 +45,7 @@ export default function TabLayout() {
           title: 'Play',
           tabBarItemStyle: { marginLeft: 20 },
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="dice-multiple" size={size + 2} color={color} />
+            <MaterialCommunityIcons name="dice-5" size={size + 2} color={color} />
           ),
         }}
       />
