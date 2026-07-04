@@ -344,7 +344,16 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   const play = useCallback((name: SoundName, rate: number = 1) => {
     if (!enabledRef.current) return;
     const pool = poolsRef.current[name];
-    if (!pool || pool.length === 0) return;
+    if (!pool || pool.length === 0) {
+      // Pool never finished loading in time (e.g. cold-launch resource
+      // contention with Music's own asset loading) — opportunistically
+      // retry in the background so it's ready soon, without needing the
+      // user to manually toggle a setting to "kick" it.
+      if (!loadingRef.current) {
+        buildPool(soundPackRef.current, () => false);
+      }
+      return;
+    }
     const next = ((idxRef.current[name] ?? 0) + 1) % pool.length;
     idxRef.current[name] = next;
     const snd = pool[next];
