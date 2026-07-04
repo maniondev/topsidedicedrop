@@ -1,14 +1,30 @@
 import { NativeModules, Platform } from 'react-native';
 
-export type AppIconId = 'default' | 'AppIcon-WarmSerenity' | 'AppIcon-Cream';
+export type AppIconId =
+  | 'default'
+  | 'AppIcon-Cream'
+  | 'AppIcon-Neon'
+  | 'AppIcon-Blue'
+  | 'AppIcon-IconBrown'
+  | 'AppIcon-IconCream'
+  | 'AppIcon-IconNeon'
+  | 'AppIcon-IconBlue';
 
 export const APP_ICON_META: Record<AppIconId, { label: string }> = {
-  'default':              { label: 'Default' },
-  'AppIcon-WarmSerenity': { label: 'Warm Serenity' },
-  'AppIcon-Cream':        { label: 'Cream' },
+  'default':            { label: 'Brown' },
+  'AppIcon-Cream':      { label: 'Cream' },
+  'AppIcon-Neon':       { label: 'Neon' },
+  'AppIcon-Blue':       { label: 'Blue' },
+  'AppIcon-IconBrown':  { label: 'Icon Brown' },
+  'AppIcon-IconCream':  { label: 'Icon Cream' },
+  'AppIcon-IconNeon':   { label: 'Icon Neon' },
+  'AppIcon-IconBlue':   { label: 'Icon Blue' },
 };
 
-export const APP_ICON_IDS: AppIconId[] = ['default', 'AppIcon-WarmSerenity', 'AppIcon-Cream'];
+export const APP_ICON_IDS: AppIconId[] = [
+  'default', 'AppIcon-Cream', 'AppIcon-Neon', 'AppIcon-Blue',
+  'AppIcon-IconBrown', 'AppIcon-IconCream', 'AppIcon-IconNeon', 'AppIcon-IconBlue',
+];
 
 // iOS-only for now — Android's equivalent (activity-alias) needs a persistent
 // native project + config plugin, which this app doesn't have (Android is
