@@ -7,7 +7,7 @@ import { ThemeId, THEME_IDS, ThemeMeta, Themes } from '@/constants/theme';
 import { makeSettingsStyles, SettingsSubHeader } from '@/components/settings/SettingsShared';
 import PremiumModal from '@/components/PremiumModal';
 
-const FREE_THEMES: ThemeId[] = ['dicedrop', 'light', 'dark'];
+const FREE_THEMES: ThemeId[] = ['dicedrop', 'dice', 'light', 'dark'];
 
 export default function ThemeScreen() {
   const { colors, themeId, setTheme } = useTheme();

@@ -85,9 +85,9 @@ export type ThemeId = 'dicedrop' | 'light' | 'dark' | 'dice' | 'pastel' | 'grays
 
 export const ThemeMeta: Record<ThemeId, { label: string; swatches: [string, string, string] }> = {
   dicedrop:  { label: 'Dice Drop', swatches: ['#1C1008', '#2E1A0C', '#D94050'] },
+  dice:      { label: 'Classic',   swatches: ['#F4EDDD', '#F8F3E8', '#F08A2C'] },
   light:     { label: 'Light',     swatches: ['#F4F4F8', '#FFFFFF', '#5558EF'] },
   dark:      { label: 'Dark',      swatches: ['#0A0A14', '#1E1E32', '#6C63FF'] },
-  dice:      { label: 'Topside',   swatches: ['#F4EDDD', '#F8F3E8', '#F08A2C'] },
   pastel:    { label: 'Pastel',    swatches: ['#F3EEF9', '#FEFBFF', '#9B72E0'] },
   grayscale: { label: 'Grayscale', swatches: ['#F8F8F8', '#FFFFFF', '#222222'] },
   ocean:     { label: 'Ocean',     swatches: ['#0A1828', '#112238', '#00C4B4'] },
@@ -95,7 +95,7 @@ export const ThemeMeta: Record<ThemeId, { label: string; swatches: [string, stri
   neon:      { label: 'Neon',      swatches: ['#000005', '#0A0A1E', '#00FFFF'] },
 };
 
-export const THEME_IDS: ThemeId[] = ['dicedrop', 'light', 'dark', 'dice', 'pastel', 'grayscale', 'ocean', 'forest', 'neon'];
+export const THEME_IDS: ThemeId[] = ['dicedrop', 'dice', 'light', 'dark', 'pastel', 'grayscale', 'ocean', 'forest', 'neon'];
 
 export const Themes: Record<ThemeId, ThemeColors> = {
   dice: {
@@ -459,6 +459,33 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     adBorder:      '#4A2018',
     statusBar:     'light',
     invertLogoGradient: true,
+    darkenFaceColors: ['red', 'orange', 'yellow', 'green', 'blue', 'purple'],
+    darkenFaceColorsDot: {
+      red:    '#14100C',
+      orange: '#14100C',
+      yellow: '#14100C',
+      green:  '#14100C',
+      blue:   '#14100C',
+      purple: '#14100C',
+    },
+    gameColors: {
+      red:    '#E5384A',
+      orange: '#F08A2C',
+      yellow: '#F1C84B',
+      green:  '#3DAE5C',
+      blue:   '#3A8DE0',
+      purple: '#9B5DE5',
+      black:  '#1A0E08',
+    },
+    gameColorsDim: {
+      red:    '#721C25',
+      orange: '#784516',
+      yellow: '#786425',
+      green:  '#1E572E',
+      blue:   '#1D4670',
+      purple: '#4D2E72',
+      black:  '#0E0806',
+    },
   },
 };
 
