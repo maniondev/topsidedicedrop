@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSound } from '@/contexts/SoundContext';
+import { useMusic } from '@/contexts/MusicContext';
 
 interface Props {
   visible: boolean;
@@ -18,6 +19,7 @@ interface Props {
 export default function PauseModal({ visible, onResume, onContinueLater, onQuitAndLog, onQuitDiscard, hasProgress = true }: Props) {
   const { colors } = useTheme();
   const { soundEnabled, setSoundEnabled } = useSound();
+  const { musicEnabled, setMusicEnabled, devMusicIncluded } = useMusic();
   const [confirming, setConfirming] = useState(false);
 
   // Reset confirmation step whenever modal closes
@@ -68,17 +70,32 @@ export default function PauseModal({ visible, onResume, onContinueLater, onQuitA
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleRequestClose}>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <TouchableOpacity
-            style={[styles.muteBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
-            onPress={() => setSoundEnabled(!soundEnabled)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons
-              name={soundEnabled ? 'volume-high' : 'volume-mute'}
-              size={18}
-              color={soundEnabled ? colors.accent : colors.textDim}
-            />
-          </TouchableOpacity>
+          <View style={styles.topBtnRow}>
+            <TouchableOpacity
+              style={[styles.muteBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              onPress={() => setSoundEnabled(!soundEnabled)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons
+                name={soundEnabled ? 'volume-high' : 'volume-mute'}
+                size={18}
+                color={soundEnabled ? colors.accent : colors.textDim}
+              />
+            </TouchableOpacity>
+            {devMusicIncluded && (
+              <TouchableOpacity
+                style={[styles.muteBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                onPress={() => setMusicEnabled(!musicEnabled)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons
+                  name="musical-notes"
+                  size={18}
+                  color={musicEnabled ? colors.accent : colors.textDim}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
 
           <Text style={[styles.title, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
             Paused
@@ -110,7 +127,8 @@ export default function PauseModal({ visible, onResume, onContinueLater, onQuitA
 const styles = StyleSheet.create({
   overlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'center', alignItems: 'center', padding: 40 },
   card:       { width: '100%', maxWidth: 440, borderRadius: 20, borderWidth: 1, padding: 28, alignItems: 'center', gap: 12, position: 'relative' },
-  muteBtn:    { position: 'absolute', top: 14, right: 14, width: 34, height: 34, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  topBtnRow:  { position: 'absolute', top: 14, right: 14, flexDirection: 'row', gap: 8 },
+  muteBtn:    { width: 34, height: 34, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   title:      { fontSize: 28, marginBottom: 4 },
   subtitle:   { fontSize: IS_LARGE ? 16 : 13, textAlign: 'center', lineHeight: IS_LARGE ? 22 : 18, marginBottom: 4 },
   btn:        { width: '100%', paddingVertical: IS_LARGE ? 20 : 14, borderRadius: 12, alignItems: 'center' },
