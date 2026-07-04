@@ -11,14 +11,14 @@ export type AppIconId =
   | 'AppIcon-IconBlue';
 
 export const APP_ICON_META: Record<AppIconId, { label: string }> = {
-  'default':            { label: 'Stack Brown' },
-  'AppIcon-Cream':      { label: 'Stack Cream' },
-  'AppIcon-Neon':       { label: 'Stack Neon' },
-  'AppIcon-Blue':       { label: 'Stack Blue' },
-  'AppIcon-IconBrown':  { label: 'Icon Brown' },
-  'AppIcon-IconCream':  { label: 'Icon Cream' },
-  'AppIcon-IconNeon':   { label: 'Icon Neon' },
-  'AppIcon-IconBlue':   { label: 'Icon Blue' },
+  'default':            { label: 'Brown Stack' },
+  'AppIcon-Cream':      { label: 'Cream Stack' },
+  'AppIcon-Neon':       { label: 'Neon Stack' },
+  'AppIcon-Blue':       { label: 'Blue Stack' },
+  'AppIcon-IconBrown':  { label: 'Brown Icon' },
+  'AppIcon-IconCream':  { label: 'Cream Icon' },
+  'AppIcon-IconNeon':   { label: 'Neon Icon' },
+  'AppIcon-IconBlue':   { label: 'Blue Icon' },
 };
 
 export const APP_ICON_IDS: AppIconId[] = [
