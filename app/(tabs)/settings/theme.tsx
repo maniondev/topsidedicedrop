@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePremium } from '@/contexts/PremiumContext';
-import { ThemeId, THEME_IDS, ThemeMeta } from '@/constants/theme';
-import { makeSettingsStyles, PickerRow, SettingsSubHeader } from '@/components/settings/SettingsShared';
+import { ThemeId, THEME_IDS, ThemeMeta, Themes } from '@/constants/theme';
+import { makeSettingsStyles, SettingsSubHeader } from '@/components/settings/SettingsShared';
 import PremiumModal from '@/components/PremiumModal';
 
 const FREE_THEMES: ThemeId[] = ['dicedrop', 'light', 'dark'];
@@ -17,35 +18,43 @@ export default function ThemeScreen() {
   return (
     <View style={[styles.safe]}>
       <SettingsSubHeader title="Theme" colors={colors} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={[styles.section, { marginBottom: 24 }]}>
-          <View style={styles.sectionCard}>
-            {THEME_IDS.map((id, i) => {
-              const meta = ThemeMeta[id];
-              const [bg, , accent] = meta.swatches;
-              const locked = !isPremium && !FREE_THEMES.includes(id);
-              return (
-                <PickerRow
-                  key={id}
-                  label={meta.label}
-                  selected={themeId === id}
-                  locked={locked}
-                  onSelect={() => {
-                    if (locked) { setPremiumModalOpen(true); return; }
-                    setTheme(id);
-                  }}
-                  swatchColor={bg}
-                  preview={<View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: accent }} />}
-                  isLast={i === THEME_IDS.length - 1}
-                  colors={colors}
-                  styles={styles}
-                />
-              );
-            })}
-          </View>
-        </View>
+      <ScrollView contentContainerStyle={[styles.content, { gap: 10 }]} showsVerticalScrollIndicator={false}>
+        {THEME_IDS.map(id => {
+          const meta = ThemeMeta[id];
+          const theme = Themes[id];
+          const selected = themeId === id;
+          const locked = !isPremium && !FREE_THEMES.includes(id);
+          return (
+            <TouchableOpacity
+              key={id}
+              style={[
+                rowStyles.row,
+                { backgroundColor: theme.background, borderColor: selected ? theme.accent : theme.border },
+                selected && { borderWidth: 2 },
+              ]}
+              activeOpacity={0.8}
+              onPress={() => {
+                if (locked) { setPremiumModalOpen(true); return; }
+                setTheme(id);
+              }}
+            >
+              <View style={[rowStyles.dot, { backgroundColor: theme.accent }]} />
+              <Text style={[rowStyles.label, { color: theme.text }]} numberOfLines={1}>{meta.label}</Text>
+              {locked
+                ? <Ionicons name="lock-closed" size={18} color={theme.accent} />
+                : selected && <Ionicons name="checkmark-circle" size={22} color={theme.accent} />
+              }
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
       <PremiumModal visible={premiumModalOpen} onClose={() => setPremiumModalOpen(false)} />
     </View>
   );
 }
+
+const rowStyles = StyleSheet.create({
+  row:   { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 14, borderWidth: 1, gap: 14 },
+  dot:   { width: 26, height: 26, borderRadius: 13 },
+  label: { flex: 1, fontSize: 16, fontWeight: '600' },
+});
