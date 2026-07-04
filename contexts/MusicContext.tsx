@@ -10,9 +10,10 @@ const DEV_MUSIC_INCLUDED_KEY = 'tm_dev_music_included';
 export type MusicTrack = 'menu' | 'game';
 
 const TRACK_SOURCES: Record<MusicTrack, any> = {
-  menu: require('@/assets/sounds/music/theme.mp3'),
-  game: require('@/assets/sounds/music/gameplay.mp3'),
+  menu: require('@/assets/sounds/music/theme.m4a'),
+  game: require('@/assets/sounds/music/gameplay.m4a'),
 };
+const LAUNCH_SOURCE = require('@/assets/sounds/music/launch.m4a');
 
 const CROSSFADE_MS = 800;
 const FADE_STEP_MS = 32;
@@ -24,6 +25,15 @@ function loadMusic(uri: string): Promise<Sound | null> {
       if (error) { resolve(null); return; }
       snd.setNumberOfLoops(-1);
       try { snd.setVolume(0); } catch {}
+      resolve(snd);
+    });
+  });
+}
+
+function loadOneShot(uri: string): Promise<Sound | null> {
+  return new Promise(resolve => {
+    const snd = new Sound(uri, '', error => {
+      if (error) { resolve(null); return; }
       resolve(snd);
     });
   });
@@ -61,6 +71,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   devIncludedRef.current = devMusicIncluded;
 
   const soundsRef = useRef<Partial<Record<MusicTrack, Sound>>>({});
+  const launchSoundRef = useRef<Sound | null>(null);
+  const hasPlayedLaunchRef = useRef(false);
   const currentTrackRef = useRef<MusicTrack>('menu');
   const fadeIntervalsRef = useRef<Partial<Record<MusicTrack, ReturnType<typeof setInterval>>>>({});
 
@@ -69,29 +81,39 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.getItem(DEV_MUSIC_INCLUDED_KEY).then(v => { if (v === '1') setDevMusicIncludedState(true); }).catch(() => {});
   }, []);
 
-  // Load both tracks once on mount.
+  // Load both loop tracks + the one-shot launch stinger once on mount.
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const entries = await Promise.all(
-        (Object.keys(TRACK_SOURCES) as MusicTrack[]).map(async track => {
-          const asset = Asset.fromModule(TRACK_SOURCES[track]);
+      const [entries, launchSnd] = await Promise.all([
+        Promise.all(
+          (Object.keys(TRACK_SOURCES) as MusicTrack[]).map(async track => {
+            const asset = Asset.fromModule(TRACK_SOURCES[track]);
+            await asset.downloadAsync();
+            const uri = asset.localUri || asset.uri;
+            const snd = await loadMusic(uri);
+            return [track, snd] as const;
+          }),
+        ),
+        (async () => {
+          const asset = Asset.fromModule(LAUNCH_SOURCE);
           await asset.downloadAsync();
           const uri = asset.localUri || asset.uri;
-          const snd = await loadMusic(uri);
-          return [track, snd] as const;
-        }),
-      );
+          return loadOneShot(uri);
+        })(),
+      ]);
       if (cancelled) return;
       for (const [track, snd] of entries) {
         if (snd) soundsRef.current[track] = snd;
       }
+      if (launchSnd) launchSoundRef.current = launchSnd;
       setTracksReady(true);
     })();
     return () => {
       cancelled = true;
       Object.values(fadeIntervalsRef.current).forEach(id => id && clearInterval(id));
       Object.values(soundsRef.current).forEach(s => { try { s.stop(); s.release(); } catch {} });
+      try { launchSoundRef.current?.stop(); launchSoundRef.current?.release(); } catch {}
     };
   }, []);
 
@@ -119,6 +141,28 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         onDone?.();
       }
     }, FADE_STEP_MS);
+  }, []);
+
+  // Cold-launch only: play the one-shot launch stinger, then start the menu
+  // track immediately at full volume — no fade in, unlike every other
+  // transition (including returning from background, which still fades).
+  const playLaunchSequence = useCallback(() => {
+    hasPlayedLaunchRef.current = true;
+    currentTrackRef.current = 'menu';
+    if (!enabledRef.current || !devIncludedRef.current) return;
+
+    try { launchSoundRef.current?.play(); } catch {}
+
+    const theme = soundsRef.current.menu;
+    if (theme) {
+      clearFade('menu');
+      try {
+        theme.setCurrentTime(0);
+        theme.setVolume(MUSIC_VOLUME);
+        theme.play();
+      } catch {}
+      (theme as any)._lastVolume = MUSIC_VOLUME;
+    }
   }, []);
 
   const playTrack = useCallback((track: MusicTrack) => {
@@ -192,26 +236,26 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     return () => sub.remove();
   }, [fadeTo]);
 
+  // Turning music ON is handled entirely by the effect below (so exactly one
+  // code path decides "launch sequence vs. normal fade-in", avoiding a race
+  // where this setter and the effect could both start playback back-to-back).
+  // Turning OFF is handled here directly since the effect only reacts to "on".
   const setMusicEnabled = useCallback((v: boolean) => {
     setMusicEnabledState(v);
     AsyncStorage.setItem(MUSIC_ENABLED_KEY, v ? '1' : '0').catch(() => {});
-    if (v) {
-      playTrack(currentTrackRef.current);
-    } else {
+    if (!v) {
       (Object.keys(soundsRef.current) as MusicTrack[]).forEach(track => {
         const snd = soundsRef.current[track];
         if (!snd) return;
         fadeTo(track, 0, () => { try { snd.pause(); } catch {} });
       });
     }
-  }, [fadeTo, playTrack]);
+  }, [fadeTo]);
 
   const setDevMusicIncluded = useCallback((v: boolean) => {
     setDevMusicIncludedState(v);
     AsyncStorage.setItem(DEV_MUSIC_INCLUDED_KEY, v ? '1' : '0').catch(() => {});
-    if (v && enabledRef.current) {
-      playTrack(currentTrackRef.current);
-    } else if (!v) {
+    if (!v) {
       (Object.keys(soundsRef.current) as MusicTrack[]).forEach(track => {
         const snd = soundsRef.current[track];
         if (!snd) return;
@@ -219,16 +263,23 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         try { snd.pause(); snd.setVolume(0); } catch {}
       });
     }
-  }, [playTrack]);
+  }, []);
 
   // Kick off playback once tracks finish loading, if settings were already on
   // by the time loading completes (covers both load-order races: settings
-  // resolving before or after the tracks themselves finish loading).
+  // resolving before or after the tracks themselves finish loading). Also
+  // fires whenever musicEnabled/devMusicIncluded flip on later. The very
+  // first activation of a session plays the launch stinger + an unfaded menu
+  // track start; anything after that uses the normal fade-based playTrack.
   useEffect(() => {
     if (tracksReady && musicEnabled && devMusicIncluded) {
-      playTrack(currentTrackRef.current);
+      if (!hasPlayedLaunchRef.current) {
+        playLaunchSequence();
+      } else {
+        playTrack(currentTrackRef.current);
+      }
     }
-  }, [tracksReady, musicEnabled, devMusicIncluded, playTrack]);
+  }, [tracksReady, musicEnabled, devMusicIncluded, playTrack, playLaunchSequence]);
 
   const value = useMemo(
     () => ({ musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic }),
