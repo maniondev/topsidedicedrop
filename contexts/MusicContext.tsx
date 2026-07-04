@@ -17,7 +17,12 @@ const LAUNCH_SOURCE = require('@/assets/sounds/music/launch.m4a');
 
 const CROSSFADE_MS = 800;
 const FADE_STEP_MS = 32;
-const MUSIC_VOLUME = 0.55; // ceiling volume so music sits under SFX
+// Ceiling volume per track so music sits under SFX. Gameplay is quieter
+// (65% of the menu level) so it doesn't compete with merge/chain SFX.
+const TRACK_VOLUME: Record<MusicTrack, number> = {
+  menu: 0.55,
+  game: 0.36, // 0.55 * 0.65
+};
 
 function loadMusic(uri: string): Promise<Sound | null> {
   return new Promise(resolve => {
@@ -129,7 +134,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     const steps = Math.max(1, Math.round(CROSSFADE_MS / FADE_STEP_MS));
     let step = 0;
     // @ts-ignore — react-native-sound doesn't expose a getter; track our own last-set volume via closure start point
-    const start = (snd as any)._lastVolume ?? (target > 0 ? 0 : MUSIC_VOLUME);
+    const start = (snd as any)._lastVolume ?? (target > 0 ? 0 : TRACK_VOLUME[track]);
     fadeIntervalsRef.current[track] = setInterval(() => {
       step++;
       const t = Math.min(1, step / steps);
@@ -158,10 +163,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       clearFade('menu');
       try {
         theme.setCurrentTime(0);
-        theme.setVolume(MUSIC_VOLUME);
+        theme.setVolume(TRACK_VOLUME.menu);
         theme.play();
       } catch {}
-      (theme as any)._lastVolume = MUSIC_VOLUME;
+      (theme as any)._lastVolume = TRACK_VOLUME.menu;
     }
   }, []);
 
@@ -179,7 +184,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         incoming.play();
       }
     });
-    fadeTo(track, MUSIC_VOLUME);
+    fadeTo(track, TRACK_VOLUME[track]);
 
     // Fade out and pause every other loaded track.
     (Object.keys(soundsRef.current) as MusicTrack[]).forEach(other => {
@@ -207,7 +212,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     const snd = soundsRef.current[track];
     if (!snd) return;
     snd.play();
-    fadeTo(track, MUSIC_VOLUME);
+    fadeTo(track, TRACK_VOLUME[track]);
   }, [fadeTo]);
 
   // Pause music the instant the app leaves the foreground (home button, app
@@ -221,7 +226,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
           const snd = soundsRef.current[currentTrackRef.current];
           if (snd) {
             snd.play();
-            fadeTo(currentTrackRef.current, MUSIC_VOLUME);
+            fadeTo(currentTrackRef.current, TRACK_VOLUME[currentTrackRef.current]);
           }
         }
       } else {
@@ -252,8 +257,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     clearFade(track);
     if (v) {
       if (hasPlayedLaunchRef.current) {
-        try { snd.setVolume(MUSIC_VOLUME); snd.play(); } catch {}
-        (snd as any)._lastVolume = MUSIC_VOLUME;
+        try { snd.setVolume(TRACK_VOLUME[track]); snd.play(); } catch {}
+        (snd as any)._lastVolume = TRACK_VOLUME[track];
       }
     } else {
       try { snd.pause(); } catch {}
@@ -270,8 +275,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     clearFade(track);
     if (v) {
       if (hasPlayedLaunchRef.current) {
-        try { snd.setVolume(MUSIC_VOLUME); snd.play(); } catch {}
-        (snd as any)._lastVolume = MUSIC_VOLUME;
+        try { snd.setVolume(TRACK_VOLUME[track]); snd.play(); } catch {}
+        (snd as any)._lastVolume = TRACK_VOLUME[track];
       }
     } else {
       try { snd.pause(); } catch {}
