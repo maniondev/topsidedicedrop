@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 import Sound from 'react-native-sound';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { restoreGameAudioSession, setAudioMode } from '@/lib/audioSession';
+import { restoreGameAudioSession, setAudioMode, ensureAudioSessionCategory } from '@/lib/audioSession';
 import { SOUND_KEY } from '@/lib/storage';
 
 const SOUND_MODE_KEY = 'tm_sound_mode';
@@ -263,6 +263,10 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     if (loadingRef.current) return;
     loadingRef.current = true;
     try {
+      // Shared/idempotent — avoids racing MusicContext's own category call
+      // while a large batch of SFX Sound instances is being constructed.
+      await ensureAudioSessionCategory();
+      if (cancelled()) return;
       if (soundModeRef.current === 'playback') {
         Sound.setCategory('Playback', true);
       } else {

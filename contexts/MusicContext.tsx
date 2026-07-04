@@ -3,29 +3,10 @@ import { AppState } from 'react-native';
 import Sound from 'react-native-sound';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ensureAudioSessionCategory } from '@/lib/audioSession';
 
 const MUSIC_ENABLED_KEY = 'tm_music_enabled';
 const DEV_MUSIC_INCLUDED_KEY = 'tm_dev_music_included';
-const SOUND_MODE_KEY = 'tm_sound_mode'; // shared with SoundContext — same persisted setting
-
-// SoundContext only sets the AVAudioSession category once its own async
-// buildPool() resolves. If music tries to construct/play Sound instances
-// before that happens, the session is still in its default (unconfigured)
-// state and playback is silent until something else forces a setCategory
-// call (e.g. toggling Break Through Silent Mode). Make music self-sufficient
-// by setting the category itself before touching any Sound instances.
-async function ensureAudioCategorySet(): Promise<void> {
-  try {
-    const mode = await AsyncStorage.getItem(SOUND_MODE_KEY);
-    if (mode === 'playback') {
-      Sound.setCategory('Playback', true);
-    } else {
-      Sound.setCategory('Ambient');
-    }
-  } catch {
-    try { Sound.setCategory('Ambient'); } catch {}
-  }
-}
 
 export type MusicTrack = 'menu' | 'game';
 
@@ -124,7 +105,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      await ensureAudioCategorySet();
+      await ensureAudioSessionCategory();
       if (cancelled) return;
       const [entries, launchSnd] = await Promise.all([
         Promise.all(
