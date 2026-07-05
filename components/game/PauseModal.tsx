@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
+const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSound } from '@/contexts/SoundContext';
 import { useMusic } from '@/contexts/MusicContext';

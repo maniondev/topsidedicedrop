@@ -54,7 +54,7 @@ export default function GameScreen() {
   const bestScore = statsFor(difficulty).bestScore;
   const bestUnassisted = statsFor(difficulty).bestUnassisted;
   const { width: rawWidth, height } = useWindowDimensions();
-  const isLargeScreen = Platform.isPad || rawWidth >= 600;
+  const isLargeScreen = (Platform as any).isPad || rawWidth >= 600;
   const width = isLargeScreen ? Math.min(rawWidth, 620) : rawWidth;
   const s2 = isLargeScreen ? 24 : S2;
   const hudH = isLargeScreen ? 120 : HUD_H;

@@ -5,7 +5,7 @@ import { HapticTab } from '@/components/haptic-tab';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
+const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 
 export default function TabLayout() {
   const { colors } = useTheme();

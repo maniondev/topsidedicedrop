@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View, Platform, Dimensions } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 
-const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
+const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 
 const HINTS = [
   { icon: '← →', label: 'Swipe to move' },

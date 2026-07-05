@@ -11,7 +11,7 @@ import { ThemeColors, ThemeId, ThemeMeta, Themes } from '@/constants/theme';
 import { AnimPackId } from '@/contexts/AnimationContext';
 import { DiceStyleId } from '@/contexts/DiceStyleContext';
 
-export const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
+export const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 
 // Custom header for Settings sub-screens — deliberately not the native header,
 // since iOS wraps native headerLeft buttons in a pill/capsule container that

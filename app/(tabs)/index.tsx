@@ -3,7 +3,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet, Modal, useWindowDimensions, Platform, Dimensions,
 } from 'react-native';
 
-const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
+const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';

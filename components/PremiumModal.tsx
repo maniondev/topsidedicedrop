@@ -3,7 +3,7 @@ import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions }
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePremium } from '@/contexts/PremiumContext';
 
-const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
+const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 import { PREMIUM_PRICE } from '@/constants/pricing';
 
 interface Props {

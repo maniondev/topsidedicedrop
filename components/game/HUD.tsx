@@ -15,7 +15,7 @@ const DOT_POSITIONS: Record<number, Array<[number, number]>> = {
   6: [[0.28, 0.22], [0.72, 0.22], [0.28, 0.50], [0.72, 0.50], [0.28, 0.78], [0.72, 0.78]],
 };
 
-const IS_LARGE = Platform.isPad || Dimensions.get('window').width >= 600;
+const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 const CS = IS_LARGE ? 26 : 18;
 const NEXT_CANVAS_W = IS_LARGE ? 90 : 64;
 const VALUE_AREA_H  = IS_LARGE ? 76 : 56;
