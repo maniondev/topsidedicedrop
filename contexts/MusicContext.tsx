@@ -3,16 +3,19 @@ import { AppState } from 'react-native';
 import Sound from 'react-native-sound';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ensureAudioSessionCategory } from '@/lib/audioSession';
+import { ensureAudioSessionCategory, reactivateAudioSessionOnResume } from '@/lib/audioSession';
 
 const MUSIC_ENABLED_KEY = 'tm_music_enabled';
 const DEV_MUSIC_INCLUDED_KEY = 'tm_dev_music_included';
 
 export type MusicTrack = 'menu' | 'game';
 
-const TRACK_SOURCES: Record<MusicTrack, any> = {
+// Single-track mode: gameplay.m4a is intentionally NOT required here — a
+// require() would bundle its ~2MB into both store binaries and decode it
+// into a player on every cold launch, and nothing plays it. Re-add the
+// entry when the two-track system returns.
+const TRACK_SOURCES: Partial<Record<MusicTrack, any>> = {
   menu: require('@/assets/sounds/music/theme.m4a'),
-  game: require('@/assets/sounds/music/gameplay.m4a'),
 };
 const LAUNCH_SOURCE = require('@/assets/sounds/music/launch.m4a');
 
@@ -26,22 +29,52 @@ const TRACK_VOLUME: Record<MusicTrack, number> = {
   game: 0.04,
 };
 
-function loadMusic(uri: string): Promise<Sound | null> {
+// BPM of each source track, for syncing UI motion (e.g. the home screen logo
+// swing) to the beat. 'menu' and 'game' point at the same file in
+// single-track mode, so they share a tempo until gameplay.m4a is measured.
+export const TRACK_BPM: Record<MusicTrack, number> = {
+  menu: 130,
+  game: 130,
+};
+
+function loadMusic(uri: string): Promise<{ sound: Sound; durationMs: number } | null> {
   return new Promise(resolve => {
-    const snd = new Sound(uri, '', error => {
+    const snd = new Sound(uri, '', (error, props) => {
       if (error) { resolve(null); return; }
       snd.setNumberOfLoops(-1);
       try { snd.setVolume(0); } catch {}
-      resolve(snd);
+      const seconds = props?.duration ?? snd.getDuration();
+      resolve({ sound: snd, durationMs: Math.max(0, Math.round((seconds || 0) * 1000)) });
     });
   });
 }
 
-function loadOneShot(uri: string): Promise<Sound | null> {
+// Polls actual playback position instead of guessing a fixed startup-latency
+// delay — a freshly constructed Sound's real audible start (after .play())
+// varies with device/format, so this waits for genuine confirmation that
+// the player has actually begun advancing before anything syncs to it.
+function waitForPlaybackStart(snd: Sound, timeoutMs = 500): Promise<void> {
   return new Promise(resolve => {
-    const snd = new Sound(uri, '', error => {
+    const start = Date.now();
+    const poll = () => {
+      snd.getCurrentTime(seconds => {
+        if (seconds > 0 || Date.now() - start > timeoutMs) {
+          resolve();
+        } else {
+          setTimeout(poll, 8);
+        }
+      });
+    };
+    poll();
+  });
+}
+
+function loadOneShot(uri: string): Promise<{ sound: Sound; durationMs: number } | null> {
+  return new Promise(resolve => {
+    const snd = new Sound(uri, '', (error, props) => {
       if (error) { resolve(null); return; }
-      resolve(snd);
+      const seconds = props?.duration ?? snd.getDuration();
+      resolve({ sound: snd, durationMs: Math.max(0, Math.round((seconds || 0) * 1000)) });
     });
   });
 }
@@ -56,6 +89,24 @@ interface MusicCtxType {
   playTrack: (track: MusicTrack) => void;
   pauseMusic: () => void;
   resumeMusic: () => void;
+  // Drives the LaunchIntroOverlay (splash-matching screen + loading bar
+  // shown only when the cold-launch stinger will actually play).
+  launchIntroActive: boolean;
+  launchPlaybackStarted: boolean;
+  launchStingerDurationMs: number | null;
+  // BPM of the currently active track, for syncing UI motion to the beat.
+  bpm: number;
+  // Increments each time the track actually restarts from position 0, so
+  // BPM-synced UI motion can reset its own timers to stay locked in.
+  musicSyncEpoch: number;
+  // Wall-clock timestamp of that restart — lets animations that activate
+  // well after the track started (idle-tier reveals) compute a phase-correct
+  // schedule against the true beat grid instead of their own activation time.
+  musicSyncStartedAt: number;
+  // Actual duration of the looping menu track, so consumers can predict when
+  // it next loops back to position 0 (musicSyncStartedAt + k * this, for the
+  // smallest k landing in the future) without a native "loop" event.
+  menuLoopDurationMs: number | null;
 }
 
 const MusicCtx = createContext<MusicCtxType>({
@@ -66,6 +117,13 @@ const MusicCtx = createContext<MusicCtxType>({
   playTrack: () => {},
   pauseMusic: () => {},
   resumeMusic: () => {},
+  launchIntroActive: false,
+  launchPlaybackStarted: false,
+  launchStingerDurationMs: null,
+  bpm: TRACK_BPM.menu,
+  musicSyncEpoch: 0,
+  musicSyncStartedAt: 0,
+  menuLoopDurationMs: null,
 });
 
 export function MusicProvider({ children }: { children: React.ReactNode }) {
@@ -73,6 +131,34 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const [devMusicIncluded, setDevMusicIncludedState] = useState(false);
   const [tracksReady, setTracksReady] = useState(false);
   const [settingsReady, setSettingsReady] = useState(false);
+  // Drives the LaunchIntroOverlay. Defaults to true (optimistic) so it
+  // covers the Home screen from the very first frame — settingsReady is an
+  // async AsyncStorage read, and waiting for it before showing the overlay
+  // left a real gap where the raw Home screen flashed underneath before the
+  // overlay ever appeared. The effect below clears it quickly once we know
+  // whether the launch sequence will actually play. launchPlaybackStarted
+  // flips true right as the stinger begins (so the loading bar knows when to
+  // start filling), and launchIntroActive flips false once the stinger
+  // finishes (theme starts) or once we know there's nothing to wait for.
+  const [launchIntroActive, setLaunchIntroActive] = useState(true);
+  const [launchPlaybackStarted, setLaunchPlaybackStarted] = useState(false);
+  const [launchStingerDurationMs, setLaunchStingerDurationMs] = useState<number | null>(null);
+  // Actual duration of the looping menu track — since it loops seamlessly
+  // (setNumberOfLoops(-1), no native "loop restarted" event), this is what
+  // lets consumers predict the wall-clock time of the track's next natural
+  // loop-around from musicSyncStartedAt, without needing a real callback.
+  const [menuLoopDurationMs, setMenuLoopDurationMs] = useState<number | null>(null);
+  // Bumped every time the menu track actually restarts from position 0
+  // (cold launch, or a reload after a long background) — BPM-synced UI
+  // motion (logo swing, word flip) resets its own timers off this so it
+  // stays locked to the beat instead of drifting from an old start point.
+  const [musicSyncEpoch, setMusicSyncEpoch] = useState(0);
+  // Wall-clock timestamp of the moment musicSyncEpoch last bumped. Lets any
+  // consumer compute "how far into the track are we" at any later point —
+  // needed for animations that activate well after the track started (e.g.
+  // an idle-tier reveal) but still need to land phase-correct on the beat
+  // grid, not just restart cleanly from whenever they happen to turn on.
+  const [musicSyncStartedAt, setMusicSyncStartedAt] = useState(0);
   const enabledRef = useRef(true);
   enabledRef.current = musicEnabled;
   const devIncludedRef = useRef(false);
@@ -83,12 +169,24 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const hasPlayedLaunchRef = useRef(false);
   const currentTrackRef = useRef<MusicTrack>('menu');
   const fadeIntervalsRef = useRef<Partial<Record<MusicTrack, ReturnType<typeof setInterval>>>>({});
+  // True from the moment playLaunchSequence starts until the theme actually
+  // starts (whether via the stinger's own completion or an abandonment —
+  // see completeLaunchOnResume). Lets the foreground handler detect "we
+  // backgrounded mid-stinger" and take over instead of leaving the intro
+  // overlay stuck forever.
+  const launchInFlightRef = useRef(false);
+  // Set once the launch sequence has been taken over by completeLaunchOnResume
+  // so a late-firing original stinger completion callback can't clobber it.
+  const launchAbandonedRef = useRef(false);
 
   // Wait for BOTH persisted settings to resolve before the launch-sequence
   // effect below makes its one-time "did music start on?" decision — reading
   // them independently (racing tracksReady) could catch musicEnabled/
   // devMusicIncluded still at their defaults instead of the real persisted
   // values.
+  const settingsReadyRef = useRef(false);
+  settingsReadyRef.current = settingsReady;
+
   useEffect(() => {
     (async () => {
       const [enabledVal, devVal] = await Promise.all([
@@ -100,6 +198,36 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       setSettingsReady(true);
     })();
   }, []);
+
+  // Unconditional escape hatch for the pre-settingsReady phase: the overlay
+  // starts visible for EVERY user, and normally the settings read resolves
+  // in well under a second and the effect below takes over. But if that read
+  // ever hangs or something throws before settingsReady flips, nothing else
+  // would clear the overlay — the app would be permanently covered. (The
+  // 8s safety below only arms after settingsReady, on the music path.)
+  useEffect(() => {
+    const failsafe = setTimeout(() => {
+      if (!settingsReadyRef.current) setLaunchIntroActive(false);
+    }, 4000);
+    return () => clearTimeout(failsafe);
+  }, []);
+
+  // The overlay starts shown by default (see launchIntroActive's declaration)
+  // to cover the very first frame. Once settingsReady resolves we know
+  // whether cold-launch music will actually play: if not, drop the overlay
+  // immediately; if so, keep it up with a safety timeout that force-clears
+  // it if something goes wrong (e.g. asset load failure), so the app never
+  // gets stuck behind it.
+  useEffect(() => {
+    if (!settingsReady) return;
+    if (!musicEnabled || !devMusicIncluded || hasPlayedLaunchRef.current) {
+      setLaunchIntroActive(false);
+      return;
+    }
+    setLaunchIntroActive(true);
+    const safety = setTimeout(() => setLaunchIntroActive(false), 8000);
+    return () => clearTimeout(safety);
+  }, [settingsReady, musicEnabled, devMusicIncluded]);
 
   // Load both loop tracks + the one-shot launch stinger once on mount.
   useEffect(() => {
@@ -126,9 +254,15 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       ]);
       if (cancelled) return;
       for (const [track, snd] of entries) {
-        if (snd) soundsRef.current[track] = snd;
+        if (snd) {
+          soundsRef.current[track] = snd.sound;
+          if (track === 'menu') setMenuLoopDurationMs(snd.durationMs);
+        }
       }
-      if (launchSnd) launchSoundRef.current = launchSnd;
+      if (launchSnd) {
+        launchSoundRef.current = launchSnd.sound;
+        setLaunchStingerDurationMs(launchSnd.durationMs);
+      }
       setTracksReady(true);
     })();
     return () => {
@@ -172,31 +306,88 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const playLaunchSequence = useCallback(() => {
     hasPlayedLaunchRef.current = true;
     currentTrackRef.current = 'menu';
-    if (!enabledRef.current || !devIncludedRef.current) return;
+    if (!enabledRef.current || !devIncludedRef.current) {
+      setLaunchIntroActive(false);
+      return;
+    }
 
-    const startTheme = () => {
+    launchInFlightRef.current = true;
+    launchAbandonedRef.current = false;
+
+    const startTheme = async () => {
+      // A background/foreground trip mid-stinger may have already handed
+      // this off to completeLaunchOnResume — don't clobber that.
+      if (launchAbandonedRef.current) return;
+      launchInFlightRef.current = false;
+      // User muted music while the stinger was playing — respect it rather
+      // than starting the theme against the toggle they just set.
+      if (!enabledRef.current || !devIncludedRef.current) {
+        setLaunchPlaybackStarted(false);
+        setLaunchIntroActive(false);
+        return;
+      }
       const theme = soundsRef.current.menu;
-      if (!theme) return;
-      clearFade('menu');
-      try {
-        theme.setCurrentTime(0);
-        theme.setVolume(TRACK_VOLUME.menu);
-        theme.play();
-      } catch {}
-      (theme as any)._lastVolume = TRACK_VOLUME.menu;
+      if (theme) {
+        clearFade('menu');
+        try {
+          theme.setCurrentTime(0);
+          theme.setVolume(TRACK_VOLUME.menu);
+          theme.play();
+        } catch {}
+        (theme as any)._lastVolume = TRACK_VOLUME.menu;
+        await waitForPlaybackStart(theme);
+        setMusicSyncStartedAt(Date.now());
+        setMusicSyncEpoch(e => e + 1);
+      }
+      // Theme has started — the intro overlay's job is done.
+      setLaunchIntroActive(false);
     };
 
     const launch = launchSoundRef.current;
     if (launch) {
       try {
         launch.setVolume(0.3);
+        setLaunchPlaybackStarted(true);
         launch.play(() => startTheme());
       } catch {
         startTheme();
       }
     } else {
+      // No stinger loaded — nothing for the overlay to show a bar for.
       startTheme();
     }
+  }, []);
+
+  // Backgrounding mid-stinger (app switcher during the launch intro) can
+  // leave playLaunchSequence's stinger playback stuck/interrupted — its
+  // completion callback may never fire, so launchIntroActive would never
+  // clear and the overlay hangs forever over a theme that never started.
+  // On foreground, if a launch sequence is still in flight, abandon the
+  // stinger and jump straight to a fresh theme start.
+  const completeLaunchOnResume = useCallback(async () => {
+    launchAbandonedRef.current = true;
+    launchInFlightRef.current = false;
+    try { launchSoundRef.current?.stop(); } catch {}
+    await reactivateAudioSessionOnResume();
+    const old = soundsRef.current.menu;
+    try { old?.stop(); old?.release(); } catch {}
+    const asset = Asset.fromModule(TRACK_SOURCES.menu);
+    await asset.downloadAsync();
+    const uri = asset.localUri || asset.uri;
+    const loaded = await loadMusic(uri);
+    if (loaded) {
+      const { sound: snd, durationMs } = loaded;
+      soundsRef.current.menu = snd;
+      setMenuLoopDurationMs(durationMs);
+      snd.setVolume(TRACK_VOLUME.menu);
+      snd.play();
+      (snd as any)._lastVolume = TRACK_VOLUME.menu;
+      await waitForPlaybackStart(snd);
+      setMusicSyncStartedAt(Date.now());
+      setMusicSyncEpoch(e => e + 1);
+    }
+    setLaunchPlaybackStarted(false);
+    setLaunchIntroActive(false);
   }, []);
 
   // Single-track mode: "switching" tracks just ducks/restores the one menu
@@ -231,6 +422,35 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     fadeTo('menu', TRACK_VOLUME[currentTrackRef.current]);
   }, [fadeTo]);
 
+  // A Sound instance that's been paused for a long background stretch can
+  // come back with a dead underlying AVAudioPlayer (iOS reclaims audio
+  // resources under memory pressure while suspended) — .play() then no-ops
+  // silently. SoundContext sidesteps this by fully rebuilding its SFX pool
+  // on every foreground event; do the same here for the menu track rather
+  // than reusing the possibly-stale instance.
+  const reloadMenuTrack = useCallback(async () => {
+    // Shared with SoundContext's own foreground handler — waits out
+    // whichever context's native setCategory/setActive call is in flight
+    // before either constructs new Sound instances, avoiding the same
+    // concurrent-construction race that broke cold-launch playback.
+    await reactivateAudioSessionOnResume();
+    const old = soundsRef.current.menu;
+    try { old?.stop(); old?.release(); } catch {}
+    const asset = Asset.fromModule(TRACK_SOURCES.menu);
+    await asset.downloadAsync(); // already local; just resolves the cached uri
+    const uri = asset.localUri || asset.uri;
+    const loaded = await loadMusic(uri);
+    if (!loaded) return;
+    const { sound: snd, durationMs } = loaded;
+    soundsRef.current.menu = snd;
+    setMenuLoopDurationMs(durationMs);
+    snd.play();
+    fadeTo('menu', TRACK_VOLUME[currentTrackRef.current]);
+    await waitForPlaybackStart(snd);
+    setMusicSyncStartedAt(Date.now());
+    setMusicSyncEpoch(e => e + 1);
+  }, [fadeTo]);
+
   // Pause music the instant the app leaves the foreground (home button, app
   // switcher, incoming call, etc.) and resume the current track on return —
   // otherwise it keeps playing in the background regardless of audio-session
@@ -239,13 +459,20 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     const sub = AppState.addEventListener('change', state => {
       if (state === 'active') {
         if (enabledRef.current && devIncludedRef.current) {
-          const snd = soundsRef.current.menu;
-          if (snd) {
-            snd.play();
-            fadeTo('menu', TRACK_VOLUME[currentTrackRef.current]);
+          if (launchInFlightRef.current) {
+            completeLaunchOnResume();
+          } else {
+            reloadMenuTrack();
           }
         }
       } else {
+        // Also silence an in-flight launch stinger — it's a separate Sound
+        // from the tracks below, and with the Playback category it would
+        // otherwise keep playing audibly in the background. The foreground
+        // handler's completeLaunchOnResume path takes over from here.
+        if (launchInFlightRef.current) {
+          try { launchSoundRef.current?.pause(); } catch {}
+        }
         (Object.keys(soundsRef.current) as MusicTrack[]).forEach(track => {
           const snd = soundsRef.current[track];
           if (!snd) return;
@@ -255,7 +482,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       }
     });
     return () => sub.remove();
-  }, [fadeTo]);
+  }, [fadeTo, reloadMenuTrack, completeLaunchOnResume]);
 
   // Plain on/off mute toggles (Settings, home screen, pause menu) are instant
   // — no fade — since they're a mute switch, not a track transition. The
@@ -263,10 +490,23 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   // dev flag/toggle is flipped on) instead goes through the launch-sequence
   // effect below; these setters skip playback in that case and let the
   // effect handle it (stinger + unfaded start).
+  // Turning music off while the launch stinger is still playing must kill
+  // the stinger too — the menu-track pause below doesn't touch it, and its
+  // completion callback would otherwise start the theme against the toggle.
+  const stopInFlightLaunch = () => {
+    if (!launchInFlightRef.current) return;
+    launchAbandonedRef.current = true;
+    launchInFlightRef.current = false;
+    try { launchSoundRef.current?.stop(); } catch {}
+    setLaunchPlaybackStarted(false);
+    setLaunchIntroActive(false);
+  };
+
   const setMusicEnabled = useCallback((v: boolean) => {
     setMusicEnabledState(v);
     AsyncStorage.setItem(MUSIC_ENABLED_KEY, v ? '1' : '0').catch(() => {});
     if (!devIncludedRef.current) return;
+    if (!v) stopInFlightLaunch();
     const snd = soundsRef.current.menu;
     if (!snd) return;
     clearFade('menu');
@@ -285,6 +525,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     setDevMusicIncludedState(v);
     AsyncStorage.setItem(DEV_MUSIC_INCLUDED_KEY, v ? '1' : '0').catch(() => {});
     if (!enabledRef.current) return;
+    if (!v) stopInFlightLaunch();
     const snd = soundsRef.current.menu;
     if (!snd) return;
     clearFade('menu');
@@ -315,8 +556,16 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   }, [tracksReady, settingsReady, musicEnabled, devMusicIncluded, playLaunchSequence]);
 
   const value = useMemo(
-    () => ({ musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic }),
-    [musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic],
+    () => ({
+      musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic,
+      launchIntroActive, launchPlaybackStarted, launchStingerDurationMs,
+      bpm: TRACK_BPM.menu, musicSyncEpoch, musicSyncStartedAt, menuLoopDurationMs,
+    }),
+    [
+      musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic,
+      launchIntroActive, launchPlaybackStarted, launchStingerDurationMs, musicSyncEpoch, musicSyncStartedAt,
+      menuLoopDurationMs,
+    ],
   );
 
   return <MusicCtx.Provider value={value}>{children}</MusicCtx.Provider>;

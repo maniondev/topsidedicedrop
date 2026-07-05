@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 import Sound from 'react-native-sound';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { restoreGameAudioSession, setAudioMode, ensureAudioSessionCategory } from '@/lib/audioSession';
+import { restoreGameAudioSession, setAudioMode, ensureAudioSessionCategory, reactivateAudioSessionOnResume } from '@/lib/audioSession';
 import { SOUND_KEY } from '@/lib/storage';
 
 const SOUND_MODE_KEY = 'tm_sound_mode';
@@ -267,11 +267,10 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       // while a large batch of SFX Sound instances is being constructed.
       await ensureAudioSessionCategory();
       if (cancelled()) return;
-      if (soundModeRef.current === 'playback') {
-        Sound.setCategory('Playback', true);
-      } else {
-        Sound.setCategory('Ambient');
-      }
+      // Re-applies the *current* mode (ensureAudioSessionCategory only
+      // guarantees the cold-launch value) and reactivates the AVAudioSession,
+      // which iOS deactivates on backgrounding.
+      setAudioMode(soundModeRef.current);
 
       const sources = SOUND_PACKS[pack];
       const assets  = SOUND_NAMES.map(name => ({ name, asset: Asset.fromModule(sources[name]) }));
@@ -320,7 +319,14 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       // Rebuild the pool on foreground — Sound objects become stale after audio
       // session interruption (backgrounding, calls, Siri). Assets are cached
       // locally so this completes in ~200-500ms without blocking gameplay.
-      buildPool(soundPackRef.current, () => false);
+      // Shared with MusicContext's own foreground reload — both wait out
+      // whichever context's native setCategory/setActive call is in flight
+      // before either constructs new Sound instances, so the two batches of
+      // player construction never race each other on resume.
+      (async () => {
+        await reactivateAudioSessionOnResume();
+        buildPool(soundPackRef.current, () => false);
+      })();
     });
     return () => sub.remove();
   }, []);

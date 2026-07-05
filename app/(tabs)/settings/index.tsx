@@ -62,7 +62,7 @@ export default function SettingsScreen() {
         soundTapCountRef.current = 0;
         clearSoundResetTimer();
         setDevMusicIncluded(!devMusicIncluded);
-        Alert.alert('Dev Toggle', devMusicIncluded ? 'Music testing UI disabled' : 'Music testing UI enabled');
+        Alert.alert('Music', devMusicIncluded ? 'Music hidden' : 'Music unlocked');
       }, 2000);
     }
   };
@@ -203,6 +203,16 @@ export default function SettingsScreen() {
             <Text style={styles.sectionLabel}>Sound</Text>
           </Pressable>
           <View style={styles.sectionCard}>
+            {soundEnabled && (
+              <ToggleRow
+                label="Break Through Silent Mode"
+                sublabel="May pause streaming music"
+                value={soundMode === 'playback'}
+                onValueChange={v => setSoundMode(v ? 'playback' : 'ambient')}
+                colors={colors}
+                styles={styles}
+              />
+            )}
             <ToggleRow
               label="Sound Effects"
               value={soundEnabled}
@@ -215,16 +225,6 @@ export default function SettingsScreen() {
                 label="Music"
                 value={musicEnabled}
                 onValueChange={setMusicEnabled}
-                colors={colors}
-                styles={styles}
-              />
-            )}
-            {soundEnabled && (
-              <ToggleRow
-                label="Break Through Silent Mode"
-                sublabel="May pause streaming music"
-                value={soundMode === 'playback'}
-                onValueChange={v => setSoundMode(v ? 'playback' : 'ambient')}
                 colors={colors}
                 styles={styles}
               />

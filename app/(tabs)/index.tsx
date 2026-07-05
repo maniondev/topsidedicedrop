@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Modal, useWindowDimensions, Platform, Dimensions,
 } from 'react-native';
@@ -17,8 +17,12 @@ import { useMusic } from '@/contexts/MusicContext';
 import AppLogo from '@/components/AppLogo';
 import HowToPlayModal from '@/components/HowToPlayModal';
 import PremiumModal from '@/components/PremiumModal';
+import SpinningLabel from '@/components/SpinningLabel';
+import PulsingCard from '@/components/PulsingCard';
+import FlyingTitleUnit from '@/components/FlyingTitleUnit';
 import { loadSavedGame } from '@/lib/storage';
 import { useInterstitialAd } from '@/hooks/useInterstitialAd';
+import { useMusicIdleTier } from '@/hooks/useMusicIdleTier';
 import { isFirstRunOfSession, markFirstRunUsed } from '@/lib/sessionTracker';
 
 const DIFFICULTIES: { id: Difficulty; label: string }[] = [
@@ -27,18 +31,117 @@ const DIFFICULTIES: { id: Difficulty; label: string }[] = [
   { id: 'hard',   label: 'Hard'   },
 ];
 
+// "Topside: Dice Drop" as eighth-note-timed flying units: T-o-p-s-i-d-e:
+// letter by letter, an eighth-note rest, "Dice" as one unit, a 3-eighth-note
+// rest, "Drop" as one unit, then a 3-eighth-note rest before the loop
+// repeats. Each word's leading space rides along with it so the
+// reconstructed string reads correctly.
+const TITLE_TOTAL_SLOTS = 16;
+const TITLE_UNITS: { index: number; text: string; kind: 'topside' | 'diceDrop' }[] = [
+  { index: 0, text: 'T',  kind: 'topside' },
+  { index: 1, text: 'o',  kind: 'topside' },
+  { index: 2, text: 'p',  kind: 'topside' },
+  { index: 3, text: 's',  kind: 'topside' },
+  { index: 4, text: 'i',  kind: 'topside' },
+  { index: 5, text: 'd',  kind: 'topside' },
+  { index: 6, text: 'e:', kind: 'topside' },
+  { index: 8, text: ' Dice', kind: 'diceDrop' },
+  { index: 12, text: ' Drop', kind: 'diceDrop' },
+];
+
 export default function LobbyScreen() {
   const { colors } = useTheme();
   const { statsFor, stats } = useStats();
   const { difficulty, setDifficulty } = useDifficulty();
   const { isPremium, upgrade } = usePremium();
   const { soundEnabled, setSoundEnabled } = useSound();
-  const { musicEnabled, setMusicEnabled, devMusicIncluded } = useMusic();
+  const { musicEnabled, setMusicEnabled, devMusicIncluded, musicSyncStartedAt, menuLoopDurationMs } = useMusic();
   const { top } = useSafeAreaInsets();
   const [hasSavedGame, setHasSavedGame] = useState(false);
   const [howToOpen, setHowToOpen] = useState(false);
   const [howToIsFirstOpen, setHowToIsFirstOpen] = useState(false);
   const { showInterstitial } = useInterstitialAd();
+
+  // The idle-tier escalation (stats pulse, title fly) shares this epoch +
+  // active gate. Entering a game stops it immediately; returning waits for
+  // the track's next natural loop restart before bringing it back, so it
+  // resumes from a clean "beat 1" instead of wherever it got cut off. The
+  // logo swing and word flip are NOT gated by this — they run constantly,
+  // keyed off the track's own musicSyncEpoch (real restarts only).
+  const [homeAnimEpoch, setHomeAnimEpoch] = useState(musicSyncStartedAt);
+  const [homeAnimActive, setHomeAnimActive] = useState(true);
+  const wasBlurredRef = useRef(false);
+  // Distinguishes "blurred because the user entered a game" (wait for the
+  // next loop boundary before resuming, per design) from "blurred because
+  // they peeked at another tab" (resume instantly — the animations anchor
+  // to absolute epoch time, so they come back still phase-locked).
+  const enteredGameRef = useRef(false);
+  // The musicSyncStartedAt value the current homeAnimEpoch derives from —
+  // lets the tab-switch resume path detect "the track restarted while this
+  // screen was blurred" (epoch stale, must re-sync) without resetting the
+  // idle-tier escalation on ordinary tab hops where nothing changed.
+  const epochBaseRef = useRef(0);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Mirrored in refs so the useFocusEffect callback below never changes
+  // identity — react-navigation treats a changed callback like a
+  // blur+refocus, and these two values legitimately change during the
+  // cold-launch sequence *while the Home screen stays focused the whole
+  // time*, which was wrongly triggering a full suspend-and-wait-for-loop.
+  const musicSyncStartedAtRef = useRef(musicSyncStartedAt);
+  musicSyncStartedAtRef.current = musicSyncStartedAt;
+  const menuLoopDurationMsRef = useRef(menuLoopDurationMs);
+  menuLoopDurationMsRef.current = menuLoopDurationMs;
+
+  useEffect(() => {
+    if (!wasBlurredRef.current) {
+      setHomeAnimEpoch(musicSyncStartedAt);
+      epochBaseRef.current = musicSyncStartedAt;
+    }
+  }, [musicSyncStartedAt]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (resumeTimerRef.current) { clearTimeout(resumeTimerRef.current); resumeTimerRef.current = null; }
+
+      if (wasBlurredRef.current) {
+        wasBlurredRef.current = false;
+        const startedAt = musicSyncStartedAtRef.current;
+        const loopMs = menuLoopDurationMsRef.current;
+        const cameFromGame = enteredGameRef.current;
+        enteredGameRef.current = false;
+        if (cameFromGame && startedAt && loopMs) {
+          const elapsed = Date.now() - startedAt;
+          const nextLoopStart = startedAt + Math.ceil(elapsed / loopMs) * loopMs;
+          const delay = Math.max(0, nextLoopStart - Date.now());
+          resumeTimerRef.current = setTimeout(() => {
+            setHomeAnimEpoch(nextLoopStart);
+            epochBaseRef.current = startedAt;
+            setHomeAnimActive(true);
+          }, delay);
+        } else {
+          // Tab switch (or no music playing) — resume immediately. Keep the
+          // epoch unless the track restarted while blurred (backgrounding
+          // from another tab), in which case re-sync to the new start.
+          if (epochBaseRef.current !== startedAt) {
+            setHomeAnimEpoch(startedAt);
+            epochBaseRef.current = startedAt;
+          }
+          setHomeAnimActive(true);
+        }
+      }
+
+      return () => {
+        // Losing focus (game or tab switch) — stop everything immediately.
+        wasBlurredRef.current = true;
+        setHomeAnimActive(false);
+        if (resumeTimerRef.current) { clearTimeout(resumeTimerRef.current); resumeTimerRef.current = null; }
+      };
+    }, []),
+  );
+
+  const idleTier = useMusicIdleTier(homeAnimEpoch);
+  const statsPulseActive = idleTier >= 1 && homeAnimActive;
+  const titleFlyActive = idleTier >= 2 && homeAnimActive;
 
   useEffect(() => {
     AsyncStorage.getItem('tm_seen_how_to_play').then(v => {
@@ -100,6 +203,7 @@ export default function LobbyScreen() {
   }, [difficulty]));
 
   const handleContinue = useCallback(() => {
+    enteredGameRef.current = true;
     router.push('/game');
   }, []);
 
@@ -109,6 +213,7 @@ export default function LobbyScreen() {
     } else {
       const isFirst = isFirstRunOfSession();
       markFirstRunUsed();
+      enteredGameRef.current = true;
       if (!isPremium && !isFirst) {
         showInterstitial(() => router.push({ pathname: '/game', params: { fresh: '1' } }));
       } else {
@@ -120,6 +225,7 @@ export default function LobbyScreen() {
   const handleNewGameConfirmed = useCallback(() => {
     setNewGameConfirmOpen(false);
     markFirstRunUsed();
+    enteredGameRef.current = true;
     router.push({ pathname: '/game', params: { fresh: '1' } });
   }, []);
 
@@ -129,13 +235,26 @@ export default function LobbyScreen() {
       {/* TOP — logo, difficulty, play */}
       <View style={[styles.topBlock, { paddingTop: f(16), gap: f(12) }]}>
         <View style={[styles.titleRow, { marginLeft: -f(8) }]}>
-          <AppLogo size={f(62)} />
+          <AppLogo size={f(62)} animated />
           <View style={[styles.titleTextBlock, { marginLeft: f(4) }]}>
-            <Text style={[styles.titleText, { fontSize: f(30), lineHeight: f(34) }]} numberOfLines={1} adjustsFontSizeToFit includeFontPadding={false}>
-              <Text style={[styles.titleTopside, { color: colors.titleColor ?? colors.text, fontSize: f(30) }]}>Topside</Text>
-              <Text style={[styles.titleColon, { color: colors.titleColor ?? colors.text, fontSize: f(30) }]}>: </Text>
-              <Text style={[styles.titleDiceDrop, { color: colors.accent, fontSize: f(28) }]}>Dice Drop</Text>
-            </Text>
+            <View style={[styles.titleFlyRow, { minHeight: f(34) }]}>
+              {TITLE_UNITS.map(unit => (
+                <FlyingTitleUnit
+                  key={unit.index}
+                  index={unit.index}
+                  totalSlots={TITLE_TOTAL_SLOTS}
+                  epoch={homeAnimEpoch}
+                  active={titleFlyActive}
+                  style={
+                    unit.kind === 'topside'
+                      ? [styles.titleTopside, { color: colors.titleColor ?? colors.text, fontSize: f(30) }]
+                      : [styles.titleDiceDrop, { color: colors.accent, fontSize: f(28) }]
+                  }
+                >
+                  {unit.text}
+                </FlyingTitleUnit>
+              ))}
+            </View>
             <Text style={[styles.subtitleText, { color: colors.textSecondary, fontSize: f(13), marginTop: Platform.OS === 'android' ? 1 : f(3) }]}>
               A drop and merge game.
             </Text>
@@ -177,9 +296,9 @@ export default function LobbyScreen() {
                 style={[styles.playBtn, { width: continueW, height: rowH, borderRadius: r14, backgroundColor: colors.accent }]}
                 onPress={handleContinue}
               >
-                <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'Rubik_700Bold', fontSize: f(24) }]}>
+                <SpinningLabel style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'Rubik_700Bold', fontSize: f(24) }]}>
                   Continue
-                </Text>
+                </SpinningLabel>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.diffBtn, { width: newGameW, height: rowH, borderRadius: r14, backgroundColor: colors.card, borderColor: colors.border }]}
@@ -193,9 +312,9 @@ export default function LobbyScreen() {
               style={[styles.playBtn, { height: rowH, borderRadius: r14, backgroundColor: colors.accent }]}
               onPress={handleNewGame}
             >
-              <Text style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'Rubik_700Bold', fontSize: f(24) }]}>
+              <SpinningLabel style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'Rubik_700Bold', fontSize: f(24) }]}>
                 Play
-              </Text>
+              </SpinningLabel>
             </TouchableOpacity>
           )}
         </View>
@@ -209,36 +328,36 @@ export default function LobbyScreen() {
       {/* MIDDLE — 2x2 stat grid */}
       <View style={[styles.statsGrid, { gap: f(12) }]}>
         <View style={[styles.statsRow, { gap: f(12) }]}>
-          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
+          <PulsingCard beatIndex={0} epoch={homeAnimEpoch} active={statsPulseActive} style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
             <Ionicons name="star-outline" size={f(22)} color={colors.accent} />
             <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
               {dstats.bestUnassisted > 0 ? dstats.bestUnassisted.toLocaleString() : '—'}
             </Text>
             <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>BEST UNASSISTED</Text>
-          </View>
-          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
+          </PulsingCard>
+          <PulsingCard beatIndex={1} epoch={homeAnimEpoch} active={statsPulseActive} style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
             <Ionicons name="trophy-outline" size={f(22)} color={colors.accent} />
             <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
               {dstats.bestScore > 0 ? dstats.bestScore.toLocaleString() : '—'}
             </Text>
             <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>BEST OVERALL</Text>
-          </View>
+          </PulsingCard>
         </View>
         <View style={[styles.statsRow, { gap: f(12) }]}>
-          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
+          <PulsingCard beatIndex={2} epoch={homeAnimEpoch} active={statsPulseActive} style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
             <Ionicons name="timer-outline" size={f(22)} color={colors.textSecondary} />
             <Text style={[styles.heroValue, { color: colors.textSecondary, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
               {lastRunScore > 0 ? lastRunScore.toLocaleString() : '—'}
             </Text>
             <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>LAST RUN</Text>
-          </View>
-          <View style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
+          </PulsingCard>
+          <PulsingCard beatIndex={3} epoch={homeAnimEpoch} active={statsPulseActive} style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
             <Ionicons name="flame-outline" size={f(22)} color={colors.textSecondary} />
             <Text style={[styles.heroValue, { color: colors.textSecondary, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
               {currentStreak > 0 ? currentStreak.toLocaleString() : '—'}
             </Text>
             <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>DAY STREAK</Text>
-          </View>
+          </PulsingCard>
         </View>
       </View>
 
@@ -384,6 +503,7 @@ const styles = StyleSheet.create({
   titleRow:       { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
   titleTextBlock: { flex: 1 },
   titleText:      {},
+  titleFlyRow:    { flexDirection: 'row', alignItems: 'baseline' },
   titleTopside:   { fontFamily: 'PlayfairDisplay_700Bold', letterSpacing: 0.5 },
   titleColon:     { fontFamily: 'PlayfairDisplay_700Bold' },
   titleDiceDrop:  { fontFamily: 'Rubik_700Bold', letterSpacing: 0.5 },

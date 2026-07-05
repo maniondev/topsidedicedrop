@@ -23,6 +23,7 @@ import { DifficultyProvider } from '@/contexts/DifficultyContext';
 import { GameStatusProvider } from '@/contexts/GameStatusContext';
 import { AnimationProvider } from '@/contexts/AnimationContext';
 import { DiceStyleProvider } from '@/contexts/DiceStyleContext';
+import LaunchIntroOverlay from '@/components/LaunchIntroOverlay';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,6 +39,7 @@ function AppShell() {
         />
       </Stack>
       <StatusBar style={colors.statusBar} />
+      <LaunchIntroOverlay />
     </>
   );
 }

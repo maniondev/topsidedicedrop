@@ -12,6 +12,11 @@ function applyCategory(mode: 'ambient' | 'playback') {
     } else {
       Sound.setCategory('Ambient');
     }
+    // iOS deactivates the shared AVAudioSession on backgrounding; nothing
+    // else in the app calls setActive again afterward (removed from every
+    // play() call by patches/react-native-sound+0.13.0.patch for perf), so
+    // without this, playback silently no-ops after an app-switcher trip.
+    Sound.setActive(true);
   } catch {}
 }
 
@@ -45,4 +50,24 @@ export function restoreGameAudioSession(delayMs = 200) {
   setTimeout(() => {
     applyCategory(_mode);
   }, delayMs);
+}
+
+// Foregrounding (app switcher, incoming call, etc.) can leave iOS's shared
+// AVAudioSession deactivated. SoundContext and MusicContext both react to
+// the same 'active' AppState event and each reconstruct their own batch of
+// Sound/AVAudioPlayer instances — the same concurrent-native-call race that
+// ensureAudioSessionCategory() fixed for cold launch reappears here unless
+// both go through one shared, awaited reactivation first. Coalesces callers
+// that overlap in time into a single real native call; resets once resolved
+// so the *next* foreground event runs it fresh.
+let resumePromise: Promise<void> | null = null;
+export function reactivateAudioSessionOnResume(): Promise<void> {
+  if (!resumePromise) {
+    resumePromise = (async () => {
+      applyCategory(_mode);
+    })().finally(() => {
+      resumePromise = null;
+    });
+  }
+  return resumePromise;
 }
