@@ -3,6 +3,11 @@ import { supabase } from './supabase';
 import { getPlayerIdentity } from './playerIdentity';
 
 const QUEUE_KEY      = 'td_score_queue';
+// Write-ahead marker for a leaderboard reset that couldn't reach Supabase
+// (user reset stats while offline). Holds the playerId to clear. Every
+// submission path flushes this FIRST, which guarantees a delayed reset can
+// never land after newer legitimate scores and wipe them.
+const PENDING_RESET_KEY = 'td_pending_remote_reset';
 const TIMEOUT_MS     = 6000;
 
 // PromiseLike (not Promise) because supabase.rpc() returns a thenable
@@ -49,8 +54,26 @@ async function saveQueue(queue: QueuedScore[]): Promise<void> {
   } catch {}
 }
 
+// Completes any pending remote reset before other leaderboard writes.
+// Throws if the reset can't complete — callers treat that like any other
+// network failure (queue the score locally, retry later), preserving
+// reset-before-scores ordering.
+async function flushPendingRemoteReset(): Promise<void> {
+  let playerId: string | null = null;
+  try {
+    playerId = await AsyncStorage.getItem(PENDING_RESET_KEY);
+  } catch {
+    return; // can't read the flag — don't block submissions on it
+  }
+  if (!playerId) return;
+  const { error } = await withTimeout(supabase.rpc('reset_player_scores', { p_player_id: playerId }));
+  if (error) throw error;
+  await AsyncStorage.removeItem(PENDING_RESET_KEY);
+}
+
 export async function submitScore(params: Omit<QueuedScore, 'queued_at'>): Promise<void> {
   try {
+    await flushPendingRemoteReset();
     const { error } = await withTimeout(supabase.rpc('submit_score', params));
     if (error) throw error;
   } catch {
@@ -89,6 +112,7 @@ export async function updateBestUnassistedForCurrentPlayer(params: {
   p_difficulty: string;
 }): Promise<void> {
   try {
+    await flushPendingRemoteReset();
     const { playerId, displayName } = await getPlayerIdentity();
     await withTimeout(supabase.rpc('update_best_unassisted', {
       p_player_id:    playerId,
@@ -100,11 +124,36 @@ export async function updateBestUnassistedForCurrentPlayer(params: {
 }
 
 export async function clearRemoteScores(playerId: string): Promise<void> {
-  await withTimeout(supabase.rpc('reset_player_scores', { p_player_id: playerId }));
+  // Queued-but-unsent scores predate the reset — they die with it.
   await AsyncStorage.removeItem(QUEUE_KEY);
+  // Write-ahead: mark the reset as pending BEFORE attempting it, so an
+  // offline reset (or a crash mid-flight) is retried by the next
+  // submission or queue replay instead of silently leaving the player's
+  // "deleted" scores on the leaderboard. reset_player_scores only touches
+  // this player's own rows and is idempotent, so a redundant retry after
+  // an already-successful reset is harmless — and because every submit
+  // flushes the pending reset first, a late retry can never wipe scores
+  // posted after the reset.
+  try { await AsyncStorage.setItem(PENDING_RESET_KEY, playerId); } catch {}
+  try {
+    const { error } = await withTimeout(supabase.rpc('reset_player_scores', { p_player_id: playerId }));
+    if (error) throw error;
+    await AsyncStorage.removeItem(PENDING_RESET_KEY);
+  } catch {
+    // Stays pending; flushPendingRemoteReset retries on the next
+    // submission or replayQueue pass.
+  }
 }
 
 export async function replayQueue(): Promise<void> {
+  // A pending reset MUST land before any queued scores are replayed —
+  // if it still can't complete, don't replay anything this pass.
+  try {
+    await flushPendingRemoteReset();
+  } catch {
+    return;
+  }
+
   const queue = await loadQueue();
   if (queue.length === 0) return;
 

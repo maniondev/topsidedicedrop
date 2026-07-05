@@ -13,7 +13,11 @@ const SWING_DEG = 4;
 
 export default function AppLogo({ size = 48, animated = false }: Props) {
   const logoSize = Math.round(size * 1.25);
-  const { bpm, musicSyncStartedAt } = useMusic();
+  const { bpm, musicSyncStartedAt, musicLoopStartedAt } = useMusic();
+  // Anchor to the current audio loop's start (re-anchored every wrap) so
+  // sway-vs-audio drift can't accumulate; falls back to the track's
+  // original start if the loop duration was unavailable.
+  const anchorTs = musicLoopStartedAt || musicSyncStartedAt;
   const rotation = useSharedValue(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -48,27 +52,31 @@ export default function AppLogo({ size = 48, animated = false }: Props) {
       );
     };
 
-    if (!musicSyncStartedAt) {
+    if (!anchorTs) {
       // No known track start yet (e.g. music disabled) — just start now.
       startSwing();
       return;
     }
 
-    // Anchored to the track's true start rather than to whenever this effect
-    // happens to fire — that gap (React render/effect scheduling) was
-    // enough to visibly drift the swing off the beat grid. Delaying to the
-    // next real bar boundary before kicking off the (otherwise identical)
-    // sequence fixes it; once started, the sequence's own fixed durations
-    // keep it locked without further correction.
+    // Anchored to the current loop's start rather than to whenever this
+    // effect happens to fire — that gap (React render/effect scheduling)
+    // was enough to visibly drift the swing off the beat grid. Delaying to
+    // the next real bar boundary before kicking off the (otherwise
+    // identical) sequence fixes it; once started, the sequence's own fixed
+    // durations keep it locked until the next loop wrap re-runs this.
     const now = Date.now();
-    const nextBarBoundary = musicSyncStartedAt + Math.ceil((now - musicSyncStartedAt) / barMs) * barMs;
+    // The loop-wrap re-run lands a few ms AFTER the boundary — treat
+    // "just past a boundary" as that boundary rather than freezing at
+    // center for a whole extra bar waiting for the next one.
+    const k = Math.max(0, Math.ceil((now - anchorTs - 150) / barMs));
+    const nextBarBoundary = anchorTs + k * barMs;
     const delay = Math.max(0, nextBarBoundary - now);
     timerRef.current = setTimeout(startSwing, delay);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [animated, bpm, musicSyncStartedAt]);
+  }, [animated, bpm, anchorTs]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value * SWING_DEG}deg` }],

@@ -64,10 +64,23 @@ let resumePromise: Promise<void> | null = null;
 export function reactivateAudioSessionOnResume(): Promise<void> {
   if (!resumePromise) {
     resumePromise = (async () => {
+      // iOS often rejects setActive:YES if called the instant the app
+      // foregrounds, while the system transition is still in flight — and
+      // the native call swallows the error, so playback then silently dies.
+      // A short settle delay makes activation reliable (same reasoning as
+      // restoreGameAudioSession's 200ms default).
+      await new Promise(r => setTimeout(r, 200));
       applyCategory(_mode);
     })().finally(() => {
       resumePromise = null;
     });
   }
   return resumePromise;
+}
+
+// Synchronous re-apply for retry paths: if playback verifiably failed to
+// start after a resume (session activation was likely rejected), callers
+// re-apply the category/activation and try playing again.
+export function forceReapplyAudioSessionCategory() {
+  applyCategory(_mode);
 }

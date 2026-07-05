@@ -10,7 +10,10 @@ const SPLASH_BG = '#1C1008';
 const SPLASH_LOGO = Platform.OS === 'android'
   ? require('@/assets/images/splash-logo-android.png')
   : require('@/assets/images/splash-logo.png');
-const LOGO_WIDTH = 280;
+// ~90% of each platform's native splash logo size (iOS imageWidth 400,
+// Android 280 in app.json) — deliberately a touch smaller than the splash
+// so the handoff reads as a subtle intentional step, not a mismatch.
+const LOGO_WIDTH = Platform.OS === 'android' ? 252 : 360;
 
 export default function LaunchIntroOverlay() {
   const { launchIntroActive, launchPlaybackStarted, launchStingerDurationMs } = useMusic();

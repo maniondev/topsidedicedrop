@@ -8,17 +8,12 @@ interface Props {
   style?: StyleProp<TextStyle>;
   // Gate on/off — e.g. the Home screen pauses this while a game is active.
   active?: boolean;
-  // Overrides the default musicSyncEpoch-based reset trigger — e.g. the Home
-  // screen passes the track's next natural loop-around after a game, so the
-  // flip restarts fresh there instead of wherever it happened to be paused.
-  epoch?: number;
 }
 
 const FLIP_DURATION_MS = 200;
 
-export default function SpinningLabel({ children, style, active = true, epoch }: Props) {
-  const { bpm, musicSyncEpoch } = useMusic();
-  const resetKey = epoch ?? musicSyncEpoch;
+export default function SpinningLabel({ children, style, active = true }: Props) {
+  const { bpm, musicLoopStartedAt } = useMusic();
   const rotation = useSharedValue(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -28,16 +23,16 @@ export default function SpinningLabel({ children, style, active = true, epoch }:
       return;
     }
     // A full vertical flip every 2 whole notes (8 beats) at the current
-    // track's BPM, with the flip itself taking a fixed 200ms. Each cycle is
-    // scheduled against the absolute start time (startTime + n * cycleMs)
-    // rather than chained relative delays, so per-frame timing slop can't
-    // accumulate into audible/visible drift over a long session. Restarting
-    // on resetKey keeps it locked whenever the track itself restarts from
-    // position 0, or the Home screen forces a fresh reset point.
+    // track's BPM, with the flip itself taking a fixed 200ms. Anchored to
+    // the CURRENT audio loop's start timestamp (re-anchored every wrap by
+    // MusicContext) so animation-vs-audio drift can't accumulate — the
+    // track's real loop length runs slightly longer than its nominal beat
+    // grid, which used to desync the flip over long sessions. When no music
+    // is playing (musicLoopStartedAt 0), free-runs from now.
     const wholeNoteMs = (60000 / bpm) * 4;
     const cycleMs = wholeNoteMs * 2;
-    const startTime = Date.now();
-    let cycleCount = 0;
+    const startTime = musicLoopStartedAt || Date.now();
+    let cycleCount = Math.max(0, Math.floor((Date.now() - startTime) / cycleMs));
 
     // Restarting this effect (bpm or musicSyncEpoch change) can land mid-flip.
     // Assigning a plain number cancels any in-flight withTiming animation and
@@ -62,7 +57,7 @@ export default function SpinningLabel({ children, style, active = true, epoch }:
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [active, bpm, resetKey]);
+  }, [active, bpm, musicLoopStartedAt]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ perspective: 800 }, { rotateX: `${rotation.value}deg` }],

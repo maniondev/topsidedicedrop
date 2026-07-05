@@ -201,6 +201,32 @@ export default function GameScreen() {
     return () => sub.remove();
   }, []);
 
+  // Rolling autosave: whenever the board settles (each new piece about to
+  // spawn — a guaranteed-consistent snapshot, chains fully resolved), save
+  // the run silently. An app kill or crash mid-game then costs at most the
+  // piece in flight, instead of the whole run — previously only the
+  // explicit Save & Quit ever wrote a save. Cleared at game over (below)
+  // and on both deliberate quit paths, so finished/abandoned runs don't
+  // resurrect a stale Continue button.
+  const prevAutosavePhaseRef = useRef(game.phase);
+  useEffect(() => {
+    const prev = prevAutosavePhaseRef.current;
+    prevAutosavePhaseRef.current = game.phase;
+    if (game.phase === 'spawning' && prev !== 'spawning') {
+      const exported = game.exportState();
+      saveGame({
+        board: exported.board as any,
+        score: exported.score,
+        queue: exported.queue as any,
+        activePiece: exported.activePiece as any,
+        runBestChain: exported.runBestChain,
+        difficulty,
+        savedAt: Date.now(),
+      }).catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game.phase]);
+
   // Floating chain/score popups ─────────────────────────────────────────────
   const addFloatingLabel = useCallback((
     type: 'chain' | 'score',
@@ -310,6 +336,9 @@ export default function GameScreen() {
   useEffect(() => {
     if (game.phase !== 'gameOver') return;
     play('gameover');
+    // The run is over — drop the rolling autosave so the home screen
+    // doesn't offer to Continue a dead game.
+    clearSavedGame(difficulty);
     // Only capture prevBest on the first game-over of the run; a continue + second death
     // must not overwrite it (bestScore is stale until submitRun is called on New Game).
     if (!prevBestLockedRef.current) {

@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 import Sound from 'react-native-sound';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ensureAudioSessionCategory, reactivateAudioSessionOnResume } from '@/lib/audioSession';
+import { ensureAudioSessionCategory, reactivateAudioSessionOnResume, forceReapplyAudioSessionCategory } from '@/lib/audioSession';
 
 const MUSIC_ENABLED_KEY = 'tm_music_enabled';
 const DEV_MUSIC_INCLUDED_KEY = 'tm_dev_music_included';
@@ -53,13 +53,19 @@ function loadMusic(uri: string): Promise<{ sound: Sound; durationMs: number } | 
 // delay — a freshly constructed Sound's real audible start (after .play())
 // varies with device/format, so this waits for genuine confirmation that
 // the player has actually begun advancing before anything syncs to it.
-function waitForPlaybackStart(snd: Sound, timeoutMs = 500): Promise<void> {
+// Resolves true once playback verifiably started, false on timeout — a
+// false is the signal that the audio session wasn't actually live (e.g.
+// activation rejected during an app-foreground transition) and the caller
+// should re-apply the session and retry.
+function waitForPlaybackStart(snd: Sound, timeoutMs = 500): Promise<boolean> {
   return new Promise(resolve => {
     const start = Date.now();
     const poll = () => {
       snd.getCurrentTime(seconds => {
-        if (seconds > 0 || Date.now() - start > timeoutMs) {
-          resolve();
+        if (seconds > 0) {
+          resolve(true);
+        } else if (Date.now() - start > timeoutMs) {
+          resolve(false);
         } else {
           setTimeout(poll, 8);
         }
@@ -107,6 +113,10 @@ interface MusicCtxType {
   // it next loops back to position 0 (musicSyncStartedAt + k * this, for the
   // smallest k landing in the future) without a native "loop" event.
   menuLoopDurationMs: number | null;
+  // Wall-clock start of the CURRENT audio loop — re-anchored every wrap.
+  // Beat-synced animations anchor here (not musicSyncStartedAt) so
+  // animation-vs-audio drift can't accumulate across loops.
+  musicLoopStartedAt: number;
 }
 
 const MusicCtx = createContext<MusicCtxType>({
@@ -124,6 +134,7 @@ const MusicCtx = createContext<MusicCtxType>({
   musicSyncEpoch: 0,
   musicSyncStartedAt: 0,
   menuLoopDurationMs: null,
+  musicLoopStartedAt: 0,
 });
 
 export function MusicProvider({ children }: { children: React.ReactNode }) {
@@ -159,6 +170,15 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   // an idle-tier reveal) but still need to land phase-correct on the beat
   // grid, not just restart cleanly from whenever they happen to turn on.
   const [musicSyncStartedAt, setMusicSyncStartedAt] = useState(0);
+  // Wall-clock timestamp of the CURRENT loop's start — re-anchored at every
+  // predicted loop boundary (startedAt + k * loopDuration), not just real
+  // restarts. Beat-synced animations must anchor to this, not to
+  // musicSyncStartedAt: the track's real loop length (59.118s) is ~41ms
+  // longer than its nominal beat-grid length (128 beats @ 130bpm =
+  // 59.077s), so anchoring to the original start accumulates ~41ms of
+  // animation-vs-audio drift per loop — visibly out of sync after a long
+  // session. Re-anchoring each loop caps drift at one loop's worth.
+  const [musicLoopStartedAt, setMusicLoopStartedAt] = useState(0);
   const enabledRef = useRef(true);
   enabledRef.current = musicEnabled;
   const devIncludedRef = useRef(false);
@@ -382,9 +402,18 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       snd.setVolume(TRACK_VOLUME.menu);
       snd.play();
       (snd as any)._lastVolume = TRACK_VOLUME.menu;
-      await waitForPlaybackStart(snd);
-      setMusicSyncStartedAt(Date.now());
-      setMusicSyncEpoch(e => e + 1);
+      let started = await waitForPlaybackStart(snd);
+      if (!started && AppState.currentState === 'active') {
+        // Same session-activation-rejected-on-foreground case as
+        // reloadMenuTrack — re-apply and retry once.
+        forceReapplyAudioSessionCategory();
+        try { snd.play(); } catch {}
+        started = await waitForPlaybackStart(snd);
+      }
+      if (started) {
+        setMusicSyncStartedAt(Date.now());
+        setMusicSyncEpoch(e => e + 1);
+      }
     }
     setLaunchPlaybackStarted(false);
     setLaunchIntroActive(false);
@@ -428,12 +457,20 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   // silently. SoundContext sidesteps this by fully rebuilding its SFX pool
   // on every foreground event; do the same here for the menu track rather
   // than reusing the possibly-stale instance.
+  // Guards against overlapping reloads from rapid background/foreground
+  // flapping (app-switcher peeks fire inactive→active in quick succession):
+  // each reload takes a generation number, and any await-crossing that
+  // discovers a newer generation abandons its work.
+  const reloadGenRef = useRef(0);
+
   const reloadMenuTrack = useCallback(async () => {
+    const gen = ++reloadGenRef.current;
     // Shared with SoundContext's own foreground handler — waits out
     // whichever context's native setCategory/setActive call is in flight
     // before either constructs new Sound instances, avoiding the same
     // concurrent-construction race that broke cold-launch playback.
     await reactivateAudioSessionOnResume();
+    if (gen !== reloadGenRef.current) return;
     const old = soundsRef.current.menu;
     try { old?.stop(); old?.release(); } catch {}
     const asset = Asset.fromModule(TRACK_SOURCES.menu);
@@ -442,13 +479,35 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     const loaded = await loadMusic(uri);
     if (!loaded) return;
     const { sound: snd, durationMs } = loaded;
+    if (gen !== reloadGenRef.current) {
+      // A newer resume superseded this one mid-load — discard quietly.
+      try { snd.release(); } catch {}
+      return;
+    }
     soundsRef.current.menu = snd;
     setMenuLoopDurationMs(durationMs);
+    if (AppState.currentState !== 'active') {
+      // App re-backgrounded while we were loading — keep the fresh instance
+      // for the next resume, but don't start playback into the background.
+      return;
+    }
     snd.play();
     fadeTo('menu', TRACK_VOLUME[currentTrackRef.current]);
-    await waitForPlaybackStart(snd);
-    setMusicSyncStartedAt(Date.now());
-    setMusicSyncEpoch(e => e + 1);
+    let started = await waitForPlaybackStart(snd);
+    if (!started && gen === reloadGenRef.current && AppState.currentState === 'active') {
+      // Playback verifiably didn't start — iOS most likely rejected the
+      // session activation during the foreground transition. Re-apply the
+      // session and try once more; this is the case that used to require
+      // the user to background/foreground a second time by hand.
+      forceReapplyAudioSessionCategory();
+      try { snd.play(); } catch {}
+      started = await waitForPlaybackStart(snd);
+    }
+    if (gen !== reloadGenRef.current) return;
+    if (started) {
+      setMusicSyncStartedAt(Date.now());
+      setMusicSyncEpoch(e => e + 1);
+    }
   }, [fadeTo]);
 
   // Pause music the instant the app leaves the foreground (home button, app
@@ -555,16 +614,42 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }
   }, [tracksReady, settingsReady, musicEnabled, devMusicIncluded, playLaunchSequence]);
 
+  // Loop-boundary ticker: fires at each predicted wrap of the looping menu
+  // track, re-anchoring musicLoopStartedAt so beat-synced animations reset
+  // in step with the actual audio loop instead of drifting (see the state's
+  // declaration comment). Re-runs whenever the track genuinely restarts
+  // (musicSyncStartedAt changes), which also re-anchors after resumes.
+  // While the app is backgrounded the audio is paused but this wall-clock
+  // ticker keeps running — that's fine: animations are suspended in the
+  // background, and every foreground resume reloads the track and resets
+  // musicSyncStartedAt anyway.
+  useEffect(() => {
+    if (!musicSyncStartedAt || !menuLoopDurationMs) return;
+    setMusicLoopStartedAt(musicSyncStartedAt);
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleNext = () => {
+      const now = Date.now();
+      const k = Math.floor((now - musicSyncStartedAt) / menuLoopDurationMs) + 1;
+      const next = musicSyncStartedAt + k * menuLoopDurationMs;
+      timer = setTimeout(() => {
+        setMusicLoopStartedAt(next);
+        scheduleNext();
+      }, Math.max(0, next - now));
+    };
+    scheduleNext();
+    return () => { if (timer) clearTimeout(timer); };
+  }, [musicSyncStartedAt, menuLoopDurationMs]);
+
   const value = useMemo(
     () => ({
       musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic,
       launchIntroActive, launchPlaybackStarted, launchStingerDurationMs,
-      bpm: TRACK_BPM.menu, musicSyncEpoch, musicSyncStartedAt, menuLoopDurationMs,
+      bpm: TRACK_BPM.menu, musicSyncEpoch, musicSyncStartedAt, menuLoopDurationMs, musicLoopStartedAt,
     }),
     [
       musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic,
       launchIntroActive, launchPlaybackStarted, launchStingerDurationMs, musicSyncEpoch, musicSyncStartedAt,
-      menuLoopDurationMs,
+      menuLoopDurationMs, musicLoopStartedAt,
     ],
   );
 

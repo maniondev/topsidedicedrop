@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { ViewStyle, StyleProp, StyleSheet } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withSequence, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSequence, withTiming, withDelay, Easing } from 'react-native-reanimated';
 import { useMusic } from '@/contexts/MusicContext';
 
 interface Props {
@@ -16,6 +16,10 @@ interface Props {
 }
 
 const PULSE_SCALE = 1.05;
+// Arm each pulse this far before its attack starts, so the JS arming
+// timer's lateness can't eat into the attack window (same treatment as
+// FlyingTitleUnit's cycle arming).
+const SCHEDULE_AHEAD_MS = 150;
 
 export default function PulsingCard({ beatIndex, epoch, active, style, children }: Props) {
   const { bpm } = useMusic();
@@ -41,16 +45,26 @@ export default function PulsingCard({ beatIndex, epoch, active, style, children 
     const scheduleNext = () => {
       const beatTime = epoch + cycleCount * barMs + beatIndex * quarterNoteMs;
       // Start the growth early enough that the peak (not the start of the
-      // motion) lands exactly on the beat.
-      const delay = Math.max(0, beatTime - attackMs - Date.now());
+      // motion) lands exactly on the beat. The JS timer only ARMS the pulse,
+      // firing SCHEDULE_AHEAD_MS early; the precise wait runs on the UI
+      // thread via withDelay — otherwise every pulse inherits the JS
+      // timer's own lateness, and the beat-1 card's first pulse after tier
+      // activation (armed at a bar boundary, zero headroom) got its whole
+      // attack window clamped away entirely.
+      const attackStart = beatTime - attackMs;
+      const armDelay = Math.max(0, attackStart - SCHEDULE_AHEAD_MS - Date.now());
       timerRef.current = setTimeout(() => {
-        scale.value = withSequence(
-          withTiming(PULSE_SCALE, { duration: attackMs, easing: Easing.out(Easing.quad) }),
-          withTiming(1, { duration: decayMs, easing: Easing.in(Easing.quad) }),
+        const preciseDelay = Math.max(0, attackStart - Date.now());
+        scale.value = withDelay(
+          preciseDelay,
+          withSequence(
+            withTiming(PULSE_SCALE, { duration: attackMs, easing: Easing.out(Easing.quad) }),
+            withTiming(1, { duration: decayMs, easing: Easing.in(Easing.quad) }),
+          ),
         );
         cycleCount++;
         scheduleNext();
-      }, delay);
+      }, armDelay);
     };
     scheduleNext();
 

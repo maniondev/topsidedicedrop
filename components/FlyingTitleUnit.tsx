@@ -25,8 +25,14 @@ const FLY_OFFSET = 26;
 // (~16ms at 60fps), so an instant cut scheduled for exactly the beat time
 // still renders a frame or so late. Firing it this many ms early makes it
 // land on (or just ahead of) the beat instead — perceptually reads better
-// than lagging behind it.
-const EXIT_VISUAL_LEAD_MS = 40;
+// than lagging behind it. (Tuned by eye on device.)
+const EXIT_VISUAL_LEAD_MS = 70;
+// Each cycle's timers are armed this far BEFORE the cycle boundary. The
+// first unit's exit sits at offset 0, so if arming happened at the boundary
+// itself (via a JS timer that's already running late), its withDelay would
+// clamp to 0 and the whole visual lead would be eaten — which made the "T"
+// consistently cut later than every other letter.
+const SCHEDULE_AHEAD_MS = 150;
 
 export default function FlyingTitleUnit({ index, totalSlots, epoch, active, style, children }: Props) {
   const { bpm } = useMusic();
@@ -56,6 +62,19 @@ export default function FlyingTitleUnit({ index, totalSlots, epoch, active, styl
     // same epoch — stays phase-locked together.
     let cycleCount = Math.max(0, Math.floor((Date.now() - epoch) / cycleMs));
 
+    // (Re)activation can land anywhere in the cycle — set this unit's
+    // CURRENT phase-correct state explicitly. A unit whose exit already
+    // passed (and whose re-entrance hasn't) must start hidden: the stale
+    // exit event below is deliberately skipped, and leaving the unit at
+    // rest made it sit visibly frozen while its neighbors vanished (seen
+    // on a quick tab-away-and-back mid-exit-phase).
+    {
+      const tNow = Date.now() - (epoch + cycleCount * cycleMs);
+      const hiddenNow = tNow >= outOffset - EXIT_VISUAL_LEAD_MS && tNow < inOffset;
+      translateY.value = hiddenNow ? -FLY_OFFSET : 0;
+      opacity.value = hiddenNow ? 0 : 1;
+    }
+
     const scheduleCycle = () => {
       const cycleStart = epoch + cycleCount * cycleMs;
       const timers: ReturnType<typeof setTimeout>[] = [];
@@ -68,17 +87,31 @@ export default function FlyingTitleUnit({ index, totalSlots, epoch, active, styl
       // Entrance still starts animMs early via JS timer so its snap (with
       // overshoot) *lands* exactly on the beat instead of just starting
       // there — the longer real duration there absorbs typical jitter fine.
-      const outDelay = Math.max(0, cycleStart + outOffset - EXIT_VISUAL_LEAD_MS - Date.now());
-      translateY.value = withDelay(outDelay, withTiming(-FLY_OFFSET, { duration: 0 }));
-      opacity.value = withDelay(outDelay, withTiming(0, { duration: 0 }));
+      // Events more than a beat in the past are SKIPPED, not fired
+      // immediately — activation can land mid-cycle (the tier flip leads
+      // its boundary), and replaying a stale cycle's events would flicker
+      // every letter at once.
+      const skipOlderThanMs = -(60000 / bpm);
+      const outTime = cycleStart + outOffset - EXIT_VISUAL_LEAD_MS;
+      if (outTime - Date.now() > skipOlderThanMs) {
+        const outDelay = Math.max(0, outTime - Date.now());
+        translateY.value = withDelay(outDelay, withTiming(-FLY_OFFSET, { duration: 0 }));
+        opacity.value = withDelay(outDelay, withTiming(0, { duration: 0 }));
+      }
 
-      timers.push(setTimeout(() => {
-        translateY.value = withTiming(0, { duration: animMs, easing: Easing.out(Easing.back(1.8)) });
-        opacity.value = withTiming(1, { duration: animMs * 0.6, easing: Easing.out(Easing.cubic) });
-      }, Math.max(0, cycleStart + inOffset - animMs - Date.now())));
+      const inFireTime = cycleStart + inOffset - animMs;
+      if (inFireTime - Date.now() > skipOlderThanMs) {
+        timers.push(setTimeout(() => {
+          translateY.value = withTiming(0, { duration: animMs, easing: Easing.out(Easing.back(1.8)) });
+          opacity.value = withTiming(1, { duration: animMs * 0.6, easing: Easing.out(Easing.cubic) });
+        }, Math.max(0, inFireTime - Date.now())));
+      }
 
       cycleCount++;
-      timers.push(setTimeout(scheduleCycle, Math.max(0, cycleStart + cycleMs - Date.now())));
+      // Arm the next cycle ahead of its boundary (see SCHEDULE_AHEAD_MS) —
+      // safe because all of this cycle's animations finish well before then,
+      // and withDelay just holds the resting value until its delay elapses.
+      timers.push(setTimeout(scheduleCycle, Math.max(0, cycleStart + cycleMs - SCHEDULE_AHEAD_MS - Date.now())));
       timersRef.current = timers;
     };
     scheduleCycle();

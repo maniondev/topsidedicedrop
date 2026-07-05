@@ -77,7 +77,13 @@ function FloatingLabelItem({
           Animated.timing(opacity,  { toValue: 0,       duration: 480,           useNativeDriver: true }),
         ]),
       ]),
-    ]).start(({ finished }) => { if (finished) onDone(); });
+    // onDone unconditionally: a `finished: false` callback while still
+    // mounted (native-driver animations killed by backgrounding, system
+    // interruptions) previously left the label mounted FOREVER — an
+    // invisible or half-faded component with up to 9 stroked Text copies,
+    // accumulating across a long session. Either way the label's lifetime
+    // is over; removing an already-unmounted id is a harmless no-op.
+    ]).start(() => onDone());
   }, []);
 
   const anchorStyle = (centerHorizontally || centerH)
