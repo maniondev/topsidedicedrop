@@ -5,7 +5,10 @@ import { getPlayerIdentity } from './playerIdentity';
 const QUEUE_KEY      = 'td_score_queue';
 const TIMEOUT_MS     = 6000;
 
-function withTimeout<T>(promise: Promise<T>, ms: number = TIMEOUT_MS): Promise<T> {
+// PromiseLike (not Promise) because supabase.rpc() returns a thenable
+// builder, not a real Promise — Promise.race accepts either at runtime;
+// this just makes the types agree.
+function withTimeout<T>(promise: PromiseLike<T>, ms: number = TIMEOUT_MS): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
