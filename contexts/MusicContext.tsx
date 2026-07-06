@@ -14,18 +14,20 @@ export type MusicTrack = 'menu' | 'game';
 // Which SONG is loaded into the 'menu' slot — orthogonal to MusicTrack
 // (which is a duck-volume level, not a track choice). All three share the
 // same 130bpm tempo, so TRACK_BPM below doesn't need to vary by selection.
-export type SoundtrackId = 'dicedrop' | 'underwater' | 'classic';
-export const SOUNDTRACK_IDS: SoundtrackId[] = ['dicedrop', 'classic', 'underwater'];
+export type SoundtrackId = 'dicedrop' | 'underwater' | 'classic' | 'neon';
+export const SOUNDTRACK_IDS: SoundtrackId[] = ['dicedrop', 'classic', 'neon', 'underwater'];
 export const SoundtrackMeta: Record<SoundtrackId, { label: string }> = {
   dicedrop:   { label: 'Dice Drop' },
   classic:    { label: 'Classic' },
-  underwater: { label: 'Underwater' },
+  neon:       { label: 'Neon' },
+  underwater: { label: 'Ocean' },
 };
 const DEFAULT_SOUNDTRACK: SoundtrackId = 'dicedrop';
 const SOUNDTRACK_SOURCES: Record<SoundtrackId, any> = {
   dicedrop:   require('@/assets/sounds/music/theme.m4a'),
   underwater: require('@/assets/sounds/music/underwater.m4a'),
   classic:    require('@/assets/sounds/music/classic.m4a'),
+  neon:       require('@/assets/sounds/music/neon.m4a'),
 };
 
 // Single-track mode: gameplay.m4a is intentionally NOT required here — a
