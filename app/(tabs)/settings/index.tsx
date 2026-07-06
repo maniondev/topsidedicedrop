@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSound, SoundPackMeta } from '@/contexts/SoundContext';
-import { useMusic } from '@/contexts/MusicContext';
+import { useMusic, SoundtrackMeta } from '@/contexts/MusicContext';
 import { useAnimation, AnimPackMeta } from '@/contexts/AnimationContext';
 import { useDiceStyle, DiceStyleMeta } from '@/contexts/DiceStyleContext';
 import { usePremium } from '@/contexts/PremiumContext';
@@ -18,13 +18,14 @@ import { ThemeMeta } from '@/constants/theme';
 import { openNativeReview, getHasRated } from '@/lib/reviewPrompt';
 import { Section, RowItem, ToggleRow, makeSettingsStyles } from '@/components/settings/SettingsShared';
 import { getAppIcon, getCurrentAppIconLabel, APP_ICON_SUPPORTED } from '@/lib/appIcon';
+import { COMPOSER_CREDIT_LABEL, openComposerIG } from '@/lib/composer';
 
 export default function SettingsScreen() {
   const { top } = useSafeAreaInsets();
   const { colors, themeId } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   const { soundEnabled, setSoundEnabled, soundPack, soundMode, setSoundMode } = useSound();
-  const { musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded } = useMusic();
+  const { musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, soundtrackId } = useMusic();
   const { animPack, performanceMode, setPerformanceMode, showChainPopups, setShowChainPopups } = useAnimation();
   const { diceStyle } = useDiceStyle();
   const { isPremium, restorePurchases, devToggle } = usePremium();
@@ -222,7 +223,7 @@ export default function SettingsScreen() {
             />
             {devMusicIncluded && (
               <ToggleRow
-                label="Music"
+                label="Soundtrack"
                 value={musicEnabled}
                 onValueChange={setMusicEnabled}
                 colors={colors}
@@ -235,7 +236,10 @@ export default function SettingsScreen() {
         {/* Customize */}
         <Section label="Customize" styles={styles}>
           <RowItem label="Theme" value={ThemeMeta[themeId].label} onPress={() => router.push('/settings/theme')} colors={colors} styles={styles} />
-          <RowItem label="Sound Pack" value={SoundPackMeta[soundPack].label} onPress={() => router.push('/settings/sound-pack')} colors={colors} styles={styles} />
+          {devMusicIncluded && (
+            <RowItem label="Soundtrack" value={SoundtrackMeta[soundtrackId].label} onPress={() => router.push('/settings/soundtrack')} colors={colors} styles={styles} />
+          )}
+          <RowItem label="Sound Effects" value={SoundPackMeta[soundPack].label} onPress={() => router.push('/settings/sound-pack')} colors={colors} styles={styles} />
           <RowItem label="Animation Pack" value={AnimPackMeta[animPack].label} onPress={() => router.push('/settings/animation-pack')} colors={colors} styles={styles} />
           <RowItem label="Dice Style" value={DiceStyleMeta[diceStyle].label} onPress={() => router.push('/settings/dice-style')} colors={colors} styles={styles} />
           {APP_ICON_SUPPORTED && (
@@ -273,6 +277,9 @@ export default function SettingsScreen() {
             <RowItem label="Rate Topside: Dice Drop ★" colors={colors} styles={styles} onPress={openNativeReview} />
           )}
           <RowItem label="More Games by Topside" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games')} />
+          {devMusicIncluded && (
+            <RowItem label={COMPOSER_CREDIT_LABEL} colors={colors} styles={styles} onPress={openComposerIG} />
+          )}
           <RowItem label="Privacy Policy" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/dicedrop/privacy')} />
           <RowItem label="Terms of Service" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/dicedrop/tos')} />
           <RowItem label="Contact" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/contact')} />

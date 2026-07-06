@@ -134,7 +134,12 @@ export default function LobbyScreen() {
   useEffect(() => {
     const sub = AppState.addEventListener('change', state => {
       if (state !== 'active') {
-        if (musicWillResumeRef.current) setAppResuming(true);
+        // Always suspend on background, music or not — so returning never
+        // lands mid-animation. With music on, the release waits for the
+        // track to restart (below); with music off, the constant anims
+        // (sway, flip) restart fresh from now the moment we resume, because
+        // their active/animated prop flips off→on and re-runs their effect.
+        setAppResuming(true);
       } else {
         if (!musicWillResumeRef.current) {
           setAppResuming(false);

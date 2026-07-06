@@ -7,16 +7,31 @@ import { ensureAudioSessionCategory, reactivateAudioSessionOnResume, forceReappl
 
 const MUSIC_ENABLED_KEY = 'tm_music_enabled';
 const DEV_MUSIC_INCLUDED_KEY = 'tm_dev_music_included';
+const SOUNDTRACK_KEY = 'tm_soundtrack_id';
 
 export type MusicTrack = 'menu' | 'game';
+
+// Which SONG is loaded into the 'menu' slot — orthogonal to MusicTrack
+// (which is a duck-volume level, not a track choice). All three share the
+// same 130bpm tempo, so TRACK_BPM below doesn't need to vary by selection.
+export type SoundtrackId = 'dicedrop' | 'underwater' | 'classic';
+export const SOUNDTRACK_IDS: SoundtrackId[] = ['dicedrop', 'classic', 'underwater'];
+export const SoundtrackMeta: Record<SoundtrackId, { label: string }> = {
+  dicedrop:   { label: 'Dice Drop' },
+  classic:    { label: 'Classic' },
+  underwater: { label: 'Underwater' },
+};
+const DEFAULT_SOUNDTRACK: SoundtrackId = 'dicedrop';
+const SOUNDTRACK_SOURCES: Record<SoundtrackId, any> = {
+  dicedrop:   require('@/assets/sounds/music/theme.m4a'),
+  underwater: require('@/assets/sounds/music/underwater.m4a'),
+  classic:    require('@/assets/sounds/music/classic.m4a'),
+};
 
 // Single-track mode: gameplay.m4a is intentionally NOT required here — a
 // require() would bundle its ~2MB into both store binaries and decode it
 // into a player on every cold launch, and nothing plays it. Re-add the
 // entry when the two-track system returns.
-const TRACK_SOURCES: Partial<Record<MusicTrack, any>> = {
-  menu: require('@/assets/sounds/music/theme.m4a'),
-};
 const LAUNCH_SOURCE = require('@/assets/sounds/music/launch.m4a');
 
 const CROSSFADE_MS = 800;
@@ -117,6 +132,11 @@ interface MusicCtxType {
   // Beat-synced animations anchor here (not musicSyncStartedAt) so
   // animation-vs-audio drift can't accumulate across loops.
   musicLoopStartedAt: number;
+  // Which song is loaded. Switching reloads the track, restarts it from 0,
+  // and bumps musicSyncStartedAt/Epoch — same "fresh restart" signal as a
+  // cold launch, which is what makes beat-synced UI restart in step.
+  soundtrackId: SoundtrackId;
+  setSoundtrack: (id: SoundtrackId) => void;
 }
 
 const MusicCtx = createContext<MusicCtxType>({
@@ -135,11 +155,14 @@ const MusicCtx = createContext<MusicCtxType>({
   musicSyncStartedAt: 0,
   menuLoopDurationMs: null,
   musicLoopStartedAt: 0,
+  soundtrackId: DEFAULT_SOUNDTRACK,
+  setSoundtrack: () => {},
 });
 
 export function MusicProvider({ children }: { children: React.ReactNode }) {
   const [musicEnabled, setMusicEnabledState] = useState(true);
   const [devMusicIncluded, setDevMusicIncludedState] = useState(false);
+  const [soundtrackId, setSoundtrackIdState] = useState<SoundtrackId>(DEFAULT_SOUNDTRACK);
   const [tracksReady, setTracksReady] = useState(false);
   const [settingsReady, setSettingsReady] = useState(false);
   // Drives the LaunchIntroOverlay. Defaults to true (optimistic) so it
@@ -206,15 +229,31 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   // values.
   const settingsReadyRef = useRef(false);
   settingsReadyRef.current = settingsReady;
+  const tracksReadyRef = useRef(false);
+  tracksReadyRef.current = tracksReady;
+  // Read by the mount-time track-loading effect below so it loads the
+  // correct song on the first try instead of loading the default then
+  // immediately reloading — kept in sync via a plain assignment (same
+  // pattern as enabledRef/devIncludedRef), which is safe here because
+  // React commits state updates before effects run, so by the time the
+  // loading effect's body executes this ref already reflects the value
+  // set in the same settingsReady-flipping render.
+  const soundtrackIdRef = useRef<SoundtrackId>(DEFAULT_SOUNDTRACK);
+  soundtrackIdRef.current = soundtrackId;
 
   useEffect(() => {
     (async () => {
-      const [enabledVal, devVal] = await Promise.all([
+      const [enabledVal, devVal, soundtrackVal] = await Promise.all([
         AsyncStorage.getItem(MUSIC_ENABLED_KEY).catch(() => null),
         AsyncStorage.getItem(DEV_MUSIC_INCLUDED_KEY).catch(() => null),
+        AsyncStorage.getItem(SOUNDTRACK_KEY).catch(() => null),
       ]);
       if (enabledVal === '0') setMusicEnabledState(false);
       if (devVal === '1') setDevMusicIncludedState(true);
+      if (soundtrackVal && SOUNDTRACK_IDS.includes(soundtrackVal as SoundtrackId)) {
+        setSoundtrackIdState(soundtrackVal as SoundtrackId);
+        soundtrackIdRef.current = soundtrackVal as SoundtrackId;
+      }
       setSettingsReady(true);
     })();
   }, []);
@@ -249,22 +288,22 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(safety);
   }, [settingsReady, musicEnabled, devMusicIncluded]);
 
-  // Load both loop tracks + the one-shot launch stinger once on mount.
+  // Load the selected soundtrack + the one-shot launch stinger once settings
+  // (including which soundtrack is selected) are known — waiting the extra
+  // beat avoids loading the default song and then immediately reloading.
   useEffect(() => {
+    if (!settingsReady) return;
     let cancelled = false;
     (async () => {
       await ensureAudioSessionCategory();
       if (cancelled) return;
-      const [entries, launchSnd] = await Promise.all([
-        Promise.all(
-          (Object.keys(TRACK_SOURCES) as MusicTrack[]).map(async track => {
-            const asset = Asset.fromModule(TRACK_SOURCES[track]);
-            await asset.downloadAsync();
-            const uri = asset.localUri || asset.uri;
-            const snd = await loadMusic(uri);
-            return [track, snd] as const;
-          }),
-        ),
+      const [menuSnd, launchSnd] = await Promise.all([
+        (async () => {
+          const asset = Asset.fromModule(SOUNDTRACK_SOURCES[soundtrackIdRef.current]);
+          await asset.downloadAsync();
+          const uri = asset.localUri || asset.uri;
+          return loadMusic(uri);
+        })(),
         (async () => {
           const asset = Asset.fromModule(LAUNCH_SOURCE);
           await asset.downloadAsync();
@@ -273,11 +312,9 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         })(),
       ]);
       if (cancelled) return;
-      for (const [track, snd] of entries) {
-        if (snd) {
-          soundsRef.current[track] = snd.sound;
-          if (track === 'menu') setMenuLoopDurationMs(snd.durationMs);
-        }
+      if (menuSnd) {
+        soundsRef.current.menu = menuSnd.sound;
+        setMenuLoopDurationMs(menuSnd.durationMs);
       }
       if (launchSnd) {
         launchSoundRef.current = launchSnd.sound;
@@ -291,7 +328,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       Object.values(soundsRef.current).forEach(s => { try { s.stop(); s.release(); } catch {} });
       try { launchSoundRef.current?.stop(); launchSoundRef.current?.release(); } catch {}
     };
-  }, []);
+  }, [settingsReady]);
 
   const clearFade = (track: MusicTrack) => {
     const id = fadeIntervalsRef.current[track];
@@ -334,6 +371,15 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     launchInFlightRef.current = true;
     launchAbandonedRef.current = false;
 
+    // Cold launch: force the AVAudioSession active+categorized right before
+    // playing. The mount-time ensureAudioSessionCategory() may not have fully
+    // taken effect yet — most visibly on the iOS Simulator — and playing into
+    // an inactive session silently no-ops (the "no launch sound / no music
+    // until I toggle Break Through Silent Mode or trigger a SFX" bug: both of
+    // those just happen to re-activate the session). This is the same
+    // reactivation those actions do, done proactively.
+    forceReapplyAudioSessionCategory();
+
     const startTheme = async () => {
       // A background/foreground trip mid-stinger may have already handed
       // this off to completeLaunchOnResume — don't clobber that.
@@ -349,15 +395,27 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       const theme = soundsRef.current.menu;
       if (theme) {
         clearFade('menu');
-        try {
-          theme.setCurrentTime(0);
-          theme.setVolume(TRACK_VOLUME.menu);
-          theme.play();
-        } catch {}
-        (theme as any)._lastVolume = TRACK_VOLUME.menu;
-        await waitForPlaybackStart(theme);
-        setMusicSyncStartedAt(Date.now());
-        setMusicSyncEpoch(e => e + 1);
+        const playTheme = () => {
+          try {
+            theme.setCurrentTime(0);
+            theme.setVolume(TRACK_VOLUME.menu);
+            theme.play();
+          } catch {}
+          (theme as any)._lastVolume = TRACK_VOLUME.menu;
+        };
+        playTheme();
+        let started = await waitForPlaybackStart(theme);
+        if (!started) {
+          // Session still wasn't live — re-activate and try once more, the
+          // same recovery the resume paths use.
+          forceReapplyAudioSessionCategory();
+          playTheme();
+          started = await waitForPlaybackStart(theme);
+        }
+        if (started) {
+          setMusicSyncStartedAt(Date.now());
+          setMusicSyncEpoch(e => e + 1);
+        }
       }
       // Theme has started — the intro overlay's job is done.
       setLaunchIntroActive(false);
@@ -369,6 +427,17 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         launch.setVolume(0.3);
         setLaunchPlaybackStarted(true);
         launch.play(() => startTheme());
+        // Verify the stinger actually began; if it didn't (inactive session
+        // on cold launch), re-activate and replay it once. If it still won't
+        // start, the play() completion callback drives startTheme, which has
+        // its own retry — so the music recovers either way.
+        (async () => {
+          const started = await waitForPlaybackStart(launch, 400);
+          if (!started && launchInFlightRef.current && !launchAbandonedRef.current) {
+            forceReapplyAudioSessionCategory();
+            try { launch.setCurrentTime(0); launch.play(() => startTheme()); } catch {}
+          }
+        })();
       } catch {
         startTheme();
       }
@@ -391,7 +460,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     await reactivateAudioSessionOnResume();
     const old = soundsRef.current.menu;
     try { old?.stop(); old?.release(); } catch {}
-    const asset = Asset.fromModule(TRACK_SOURCES.menu);
+    const asset = Asset.fromModule(SOUNDTRACK_SOURCES[soundtrackIdRef.current]);
     await asset.downloadAsync();
     const uri = asset.localUri || asset.uri;
     const loaded = await loadMusic(uri);
@@ -473,7 +542,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     if (gen !== reloadGenRef.current) return;
     const old = soundsRef.current.menu;
     try { old?.stop(); old?.release(); } catch {}
-    const asset = Asset.fromModule(TRACK_SOURCES.menu);
+    const asset = Asset.fromModule(SOUNDTRACK_SOURCES[soundtrackIdRef.current]);
     await asset.downloadAsync(); // already local; just resolves the cached uri
     const uri = asset.localUri || asset.uri;
     const loaded = await loadMusic(uri);
@@ -508,6 +577,49 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       setMusicSyncStartedAt(Date.now());
       setMusicSyncEpoch(e => e + 1);
     }
+  }, [fadeTo]);
+
+  // User picked a different song in Settings. Shares reloadGenRef with
+  // reloadMenuTrack so a soundtrack switch mid-resume (or vice versa) can't
+  // race — whichever started last wins, the other discards its load. Always
+  // bumps musicSyncStartedAt/Epoch on success, same "fresh restart" signal
+  // as a cold launch, which is what makes beat-synced UI restart together.
+  const setSoundtrack = useCallback((id: SoundtrackId) => {
+    if (id === soundtrackIdRef.current) return;
+    soundtrackIdRef.current = id;
+    setSoundtrackIdState(id);
+    AsyncStorage.setItem(SOUNDTRACK_KEY, id).catch(() => {});
+    if (!devIncludedRef.current || !tracksReadyRef.current) return;
+
+    // Load the new track into the slot regardless of the on/off toggle — so
+    // switching while music is OFF still swaps the actual file, and a later
+    // toggle-on plays the right song. Only start playback + re-anchor the
+    // beat grid when music is currently on.
+    const shouldPlay = enabledRef.current;
+    const gen = ++reloadGenRef.current;
+    (async () => {
+      const old = soundsRef.current.menu;
+      try { old?.stop(); old?.release(); } catch {}
+      const asset = Asset.fromModule(SOUNDTRACK_SOURCES[id]);
+      await asset.downloadAsync();
+      const uri = asset.localUri || asset.uri;
+      const loaded = await loadMusic(uri);
+      if (!loaded) return;
+      const { sound: snd, durationMs } = loaded;
+      if (gen !== reloadGenRef.current) {
+        try { snd.release(); } catch {}
+        return;
+      }
+      soundsRef.current.menu = snd;
+      setMenuLoopDurationMs(durationMs);
+      if (!shouldPlay) return; // loaded (volume 0, paused) — ready for toggle-on
+      snd.play();
+      fadeTo('menu', TRACK_VOLUME[currentTrackRef.current]);
+      const started = await waitForPlaybackStart(snd);
+      if (gen !== reloadGenRef.current || !started) return;
+      setMusicSyncStartedAt(Date.now());
+      setMusicSyncEpoch(e => e + 1);
+    })();
   }, [fadeTo]);
 
   // Pause music the instant the app leaves the foreground (home button, app
@@ -561,6 +673,29 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     setLaunchIntroActive(false);
   };
 
+  // Re-enabling music restarts the loop from the TOP and re-anchors the beat
+  // grid, rather than resuming from the paused position. While music is off
+  // the wall-clock animation grid keeps advancing, so a resume-from-pause
+  // would leave the track behind the animations (out of sync). Starting
+  // fresh and bumping the sync epoch keeps everything locked together.
+  const restartMenuFromTop = () => {
+    const snd = soundsRef.current.menu;
+    if (!snd) return;
+    clearFade('menu');
+    const vol = TRACK_VOLUME[currentTrackRef.current];
+    try {
+      snd.setCurrentTime(0);
+      snd.setVolume(vol);
+      snd.play();
+    } catch {}
+    (snd as any)._lastVolume = vol;
+    waitForPlaybackStart(snd).then(started => {
+      if (!started || !enabledRef.current || !devIncludedRef.current) return;
+      setMusicSyncStartedAt(Date.now());
+      setMusicSyncEpoch(e => e + 1);
+    });
+  };
+
   const setMusicEnabled = useCallback((v: boolean) => {
     setMusicEnabledState(v);
     AsyncStorage.setItem(MUSIC_ENABLED_KEY, v ? '1' : '0').catch(() => {});
@@ -570,11 +705,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     if (!snd) return;
     clearFade('menu');
     if (v) {
-      if (hasPlayedLaunchRef.current) {
-        const vol = TRACK_VOLUME[currentTrackRef.current];
-        try { snd.setVolume(vol); snd.play(); } catch {}
-        (snd as any)._lastVolume = vol;
-      }
+      if (hasPlayedLaunchRef.current) restartMenuFromTop();
     } else {
       try { snd.pause(); } catch {}
     }
@@ -589,11 +720,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     if (!snd) return;
     clearFade('menu');
     if (v) {
-      if (hasPlayedLaunchRef.current) {
-        const vol = TRACK_VOLUME[currentTrackRef.current];
-        try { snd.setVolume(vol); snd.play(); } catch {}
-        (snd as any)._lastVolume = vol;
-      }
+      if (hasPlayedLaunchRef.current) restartMenuFromTop();
     } else {
       try { snd.pause(); } catch {}
     }
@@ -645,11 +772,12 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic,
       launchIntroActive, launchPlaybackStarted, launchStingerDurationMs,
       bpm: TRACK_BPM.menu, musicSyncEpoch, musicSyncStartedAt, menuLoopDurationMs, musicLoopStartedAt,
+      soundtrackId, setSoundtrack,
     }),
     [
       musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic,
       launchIntroActive, launchPlaybackStarted, launchStingerDurationMs, musicSyncEpoch, musicSyncStartedAt,
-      menuLoopDurationMs, musicLoopStartedAt,
+      menuLoopDurationMs, musicLoopStartedAt, soundtrackId, setSoundtrack,
     ],
   );
 

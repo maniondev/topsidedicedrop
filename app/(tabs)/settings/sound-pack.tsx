@@ -17,7 +17,7 @@ export default function SoundPackScreen() {
 
   return (
     <View style={[styles.safe]}>
-      <SettingsSubHeader title="Sound Pack" colors={colors} />
+      <SettingsSubHeader title="Sound Effects" colors={colors} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.section, { marginBottom: 24 }]}>
           <View style={styles.sectionCard}>
