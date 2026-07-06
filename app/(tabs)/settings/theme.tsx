@@ -12,7 +12,7 @@ const FREE_THEMES: ThemeId[] = ['dicedrop', 'dice', 'light', 'dark'];
 export default function ThemeScreen() {
   const { colors, themeId, setTheme } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
-  const { isPremium } = usePremium();
+  const { hasCustomization } = usePremium();
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
 
   return (
@@ -23,7 +23,7 @@ export default function ThemeScreen() {
           const meta = ThemeMeta[id];
           const theme = Themes[id];
           const selected = themeId === id;
-          const locked = !isPremium && !FREE_THEMES.includes(id);
+          const locked = !hasCustomization && !FREE_THEMES.includes(id);
           return (
             <TouchableOpacity
               key={id}

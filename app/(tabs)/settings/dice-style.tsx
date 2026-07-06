@@ -9,7 +9,7 @@ import PremiumModal from '@/components/PremiumModal';
 export default function DiceStyleScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
-  const { isPremium } = usePremium();
+  const { hasCustomization } = usePremium();
   const { diceStyle, setDiceStyle } = useDiceStyle();
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
 
@@ -21,7 +21,7 @@ export default function DiceStyleScreen() {
           <View style={styles.sectionCard}>
             {DICE_STYLE_IDS.map((id, i) => {
               const meta = DiceStyleMeta[id];
-              const locked = !meta.free && !isPremium;
+              const locked = !meta.free && !hasCustomization;
               return (
                 <PickerRow
                   key={id}

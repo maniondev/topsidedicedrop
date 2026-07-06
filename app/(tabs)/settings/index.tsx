@@ -28,7 +28,8 @@ export default function SettingsScreen() {
   const { musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, soundtrackId } = useMusic();
   const { animPack, performanceMode, setPerformanceMode, showChainPopups, setShowChainPopups } = useAnimation();
   const { diceStyle } = useDiceStyle();
-  const { isPremium, restorePurchases, devToggle } = usePremium();
+  const { hasCustomization, hasNoAds, restorePurchases, redeemCode, devToggleCustomization, devToggleNoAds } = usePremium();
+  const isFullyUnlocked = hasCustomization && hasNoAds;
   const { resetStats } = useStats();
   const [devControlsRevealed, setDevControlsRevealed] = useState(false);
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
@@ -151,7 +152,7 @@ export default function SettingsScreen() {
 
         {/* Premium */}
         <Section label="Premium" styles={styles}>
-          {isPremium ? (
+          {isFullyUnlocked ? (
             <View style={styles.premiumActive}>
               <Ionicons name="star" size={20} color={colors.premiumGold} />
               <Text style={[styles.premiumTitle, { color: colors.premiumGold }]}>Premium Active</Text>
@@ -163,11 +164,16 @@ export default function SettingsScreen() {
               activeOpacity={0.85}
             >
               <Ionicons name="star" size={16} color="#fff" />
-              <Text style={[styles.upgradeBtnText, { color: '#fff' }]}>Unlock Premium</Text>
+              <Text style={[styles.upgradeBtnText, { color: '#fff' }]}>
+                {hasCustomization ? 'Remove All Ads' : hasNoAds ? 'Unlock Customization' : 'Unlock Premium'}
+              </Text>
             </TouchableOpacity>
           )}
-          {!isPremium && (
+          {!isFullyUnlocked && (
             <RowItem label="Restore Purchases" onPress={restorePurchases} colors={colors} styles={styles} />
+          )}
+          {!hasCustomization && (
+            <RowItem label="Redeem Code" onPress={redeemCode} colors={colors} styles={styles} />
           )}
           {__DEV__ && devControlsRevealed && (
             <RowItem
@@ -179,9 +185,18 @@ export default function SettingsScreen() {
           )}
           {__DEV__ && devControlsRevealed && (
             <RowItem
-              label={isPremium ? '⚙️ Dev: Remove Premium' : '⚙️ Dev: Enable Premium'}
-              onPress={devToggle}
-              danger={isPremium}
+              label={hasCustomization ? '⚙️ Dev: Remove Customization' : '⚙️ Dev: Enable Customization'}
+              onPress={devToggleCustomization}
+              danger={hasCustomization}
+              colors={colors}
+              styles={styles}
+            />
+          )}
+          {__DEV__ && devControlsRevealed && (
+            <RowItem
+              label={hasNoAds ? '⚙️ Dev: Remove No-Ads' : '⚙️ Dev: Enable No-Ads'}
+              onPress={devToggleNoAds}
+              danger={hasNoAds}
               colors={colors}
               styles={styles}
             />

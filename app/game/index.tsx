@@ -48,7 +48,7 @@ export default function GameScreen() {
   const { statsFor, submitRun, submitPreContinueRun } = useStats();
   const { play, soundPack } = useSound();
   const { playTrack } = useMusic();
-  const { isPremium } = usePremium();
+  const { hasNoAds } = usePremium();
   const { gravityMs, difficulty } = useDifficulty();
   const { showChainPopups } = useAnimation();
   const bestScore = statsFor(difficulty).bestScore;
@@ -88,8 +88,8 @@ export default function GameScreen() {
     setGameAreaH(e.nativeEvent.layout.height);
   }, []);
 
-  const bannerH       = isPremium ? 0 : BANNER_H;
-  const spacingH      = S1 + s2 + (isPremium ? 0 : s2); // fixed gaps between sections
+  const bannerH       = hasNoAds ? 0 : BANNER_H;
+  const spacingH      = S1 + s2 + (hasNoAds ? 0 : s2); // fixed gaps between sections
   const csW           = Math.floor((width - 32) / COLS);
   const approxBtnSize = Math.max(36, Math.floor((csW * COLS - CTRL_GAP * 4) / 5));
   // Use measured container height when available; fall back to dimension-based estimate for first frame.
@@ -455,12 +455,12 @@ export default function GameScreen() {
     const isFirst = isFirstRunOfSession();
     markFirstRunUsed();
 
-    if (!isPremium && !isFirst) {
+    if (!hasNoAds && !isFirst) {
       showInterstitial(() => game.resetGame());
     } else {
       game.resetGame();
     }
-  }, [game.score, game.runBestChain, difficulty, freeContinueUsed, adContinueUsed, submitRun, statsFor, game.resetGame, isPremium, showInterstitial]);
+  }, [game.score, game.runBestChain, difficulty, freeContinueUsed, adContinueUsed, submitRun, statsFor, game.resetGame, hasNoAds, showInterstitial]);
 
   const handleGoHome = useCallback(() => {
     const continueUsed = freeContinueUsed || adContinueUsed;
@@ -651,7 +651,7 @@ export default function GameScreen() {
     );
   }, [rotateWithSound, hardDropWithSound, game.moveLeft, game.moveRight, game.softDrop, cellSize]);
 
-  const freeContinueAvailable = isPremium;
+  const freeContinueAvailable = hasNoAds;
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
@@ -719,8 +719,8 @@ export default function GameScreen() {
           />
         </View>
 
-        {!isPremium && <View style={{ height: s2 }} />}
-        {!isPremium && <AdBanner />}
+        {!hasNoAds && <View style={{ height: s2 }} />}
+        {!hasNoAds && <AdBanner />}
       </View>
 
       <GameOverModal

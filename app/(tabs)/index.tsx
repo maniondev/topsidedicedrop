@@ -54,7 +54,7 @@ export default function LobbyScreen() {
   const { colors } = useTheme();
   const { statsFor, stats } = useStats();
   const { difficulty, setDifficulty } = useDifficulty();
-  const { isPremium, upgrade } = usePremium();
+  const { hasCustomization, hasNoAds } = usePremium();
   const { soundEnabled, setSoundEnabled } = useSound();
   const { musicEnabled, setMusicEnabled, devMusicIncluded, musicSyncStartedAt, menuLoopDurationMs, musicSyncEpoch, musicLoopStartedAt } = useMusic();
   const { top } = useSafeAreaInsets();
@@ -269,13 +269,13 @@ export default function LobbyScreen() {
     } else {
       const isFirst = isFirstRunOfSession();
       markFirstRunUsed();
-      if (!isPremium && !isFirst) {
+      if (!hasNoAds && !isFirst) {
         showInterstitial(() => router.push({ pathname: '/game', params: { fresh: '1' } }));
       } else {
         router.push({ pathname: '/game', params: { fresh: '1' } });
       }
     }
-  }, [hasSavedGame, isPremium, showInterstitial]);
+  }, [hasSavedGame, hasNoAds, showInterstitial]);
 
   const handleNewGameConfirmed = useCallback(() => {
     setNewGameConfirmOpen(false);
@@ -485,15 +485,20 @@ export default function LobbyScreen() {
           )}
         </View>
 
-        {!isPremium && (
+        {!(hasCustomization && hasNoAds) && (
           <TouchableOpacity
             style={[styles.unlockBanner, { backgroundColor: colors.premiumGold, borderRadius: r12, paddingVertical: f(11), paddingHorizontal: f(16), gap: f(7) }]}
             onPress={() => setPremiumModalVisible(true)}
             activeOpacity={0.85}
           >
             <Ionicons name="star" size={f(14)} color={colors.accentText} />
-            <Text style={[styles.unlockBannerText, { color: colors.accentText, fontSize: f(13) }]}>
-              Unlock Sound Packs, Themes, and More
+            <Text
+              style={[styles.unlockBannerText, { color: colors.accentText, fontSize: f(13), flexShrink: 1 }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.75}
+            >
+              {hasCustomization ? 'Remove All Ads' : 'Unlock Sound Packs, Themes, and More'}
             </Text>
           </TouchableOpacity>
         )}

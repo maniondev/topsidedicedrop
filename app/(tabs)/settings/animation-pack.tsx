@@ -9,7 +9,7 @@ import PremiumModal from '@/components/PremiumModal';
 export default function AnimationPackScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
-  const { isPremium } = usePremium();
+  const { hasCustomization } = usePremium();
   const { animPack, setAnimPack } = useAnimation();
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
   const dieRefs = useRef<Partial<Record<AnimPackId, { play: () => void }>>>({});
@@ -24,7 +24,7 @@ export default function AnimationPackScreen() {
           <View style={styles.sectionCard}>
             {visibleIds.map((id, i) => {
               const meta = AnimPackMeta[id];
-              const locked = !meta.free && !isPremium;
+              const locked = !meta.free && !hasCustomization;
               return (
                 <PickerRow
                   key={id}

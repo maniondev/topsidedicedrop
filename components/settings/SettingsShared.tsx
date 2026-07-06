@@ -125,7 +125,7 @@ export function PickerRow({ label, selected, locked, onSelect, icon, preview, sw
       </View>
       <Text style={[styles.rowLabel, { marginLeft: 12 }]} numberOfLines={1}>{label}</Text>
       {locked
-        ? <Ionicons name="lock-closed" size={16} color={colors.accent} />
+        ? <Ionicons name="lock-closed" size={16} color={colors.textSecondary} />
         : selected && <Ionicons name="checkmark-circle" size={20} color={colors.accent} />
       }
     </TouchableOpacity>

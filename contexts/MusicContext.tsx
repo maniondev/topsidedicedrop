@@ -613,14 +613,18 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       soundsRef.current.menu = snd;
       setMenuLoopDurationMs(durationMs);
       if (!shouldPlay) return; // loaded (volume 0, paused) — ready for toggle-on
+      // No fade — picking a new soundtrack should play it immediately at
+      // full volume, unlike other transitions (resume, duck) which fade.
+      const vol = TRACK_VOLUME[currentTrackRef.current];
+      snd.setVolume(vol);
       snd.play();
-      fadeTo('menu', TRACK_VOLUME[currentTrackRef.current]);
+      (snd as any)._lastVolume = vol;
       const started = await waitForPlaybackStart(snd);
       if (gen !== reloadGenRef.current || !started) return;
       setMusicSyncStartedAt(Date.now());
       setMusicSyncEpoch(e => e + 1);
     })();
-  }, [fadeTo]);
+  }, []);
 
   // Pause music the instant the app leaves the foreground (home button, app
   // switcher, incoming call, etc.) and resume the current track on return —
@@ -699,8 +703,16 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const setMusicEnabled = useCallback((v: boolean) => {
     setMusicEnabledState(v);
     AsyncStorage.setItem(MUSIC_ENABLED_KEY, v ? '1' : '0').catch(() => {});
+    if (!v) {
+      stopInFlightLaunch();
+      // Clear the stale sync timestamp so idle-tier-gated UI (stats pulse,
+      // title fly, divider comets) actually stops instead of continuing to
+      // animate off a "restart" that happened before music was turned off —
+      // the constant logo/word animations fall back to free-running with no
+      // music, which is the intended "only those two" behavior.
+      setMusicSyncStartedAt(0);
+    }
     if (!devIncludedRef.current) return;
-    if (!v) stopInFlightLaunch();
     const snd = soundsRef.current.menu;
     if (!snd) return;
     clearFade('menu');
@@ -714,8 +726,12 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const setDevMusicIncluded = useCallback((v: boolean) => {
     setDevMusicIncludedState(v);
     AsyncStorage.setItem(DEV_MUSIC_INCLUDED_KEY, v ? '1' : '0').catch(() => {});
+    if (!v) {
+      stopInFlightLaunch();
+      // Same reset as setMusicEnabled(false) — see comment there.
+      setMusicSyncStartedAt(0);
+    }
     if (!enabledRef.current) return;
-    if (!v) stopInFlightLaunch();
     const snd = soundsRef.current.menu;
     if (!snd) return;
     clearFade('menu');
@@ -751,7 +767,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   // background, and every foreground resume reloads the track and resets
   // musicSyncStartedAt anyway.
   useEffect(() => {
-    if (!musicSyncStartedAt || !menuLoopDurationMs) return;
+    if (!musicSyncStartedAt || !menuLoopDurationMs) {
+      setMusicLoopStartedAt(0);
+      return;
+    }
     setMusicLoopStartedAt(musicSyncStartedAt);
     let timer: ReturnType<typeof setTimeout> | null = null;
     const scheduleNext = () => {

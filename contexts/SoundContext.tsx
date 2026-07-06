@@ -220,7 +220,11 @@ interface SoundCtxType {
   soundEnabled: boolean;
   setSoundEnabled: (v: boolean) => void;
   soundPack: SoundPackId;
-  setSoundPack: (p: SoundPackId) => void;
+  // Resolves once the pack's Sound pool has actually finished (re)loading —
+  // callers that need to play a preview immediately after switching must
+  // await this, or they'll hear the previous pack (its pool is still live
+  // until the async rebuild completes and swaps it in).
+  setSoundPack: (p: SoundPackId) => Promise<void>;
   soundMode: 'ambient' | 'playback';
   setSoundMode: (m: 'ambient' | 'playback') => void;
   play: (name: SoundName, rate?: number) => void;
@@ -230,7 +234,7 @@ const SoundCtx = createContext<SoundCtxType>({
   soundEnabled: true,
   setSoundEnabled: () => {},
   soundPack: 'topside',
-  setSoundPack: () => {},
+  setSoundPack: async () => {},
   soundMode: 'ambient',
   setSoundMode: () => {},
   play: () => {},
@@ -249,6 +253,14 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   const poolsRef      = useRef<Partial<Record<SoundName, Sound[]>>>({});
   const idxRef        = useRef<Partial<Record<SoundName, number>>>({});
   const loadingRef  = useRef(false);
+  // A build request that arrives while another is already in flight used to
+  // just no-op (silently dropped) — that let soundPack state and the actual
+  // loaded pool disagree permanently if two packs were selected in quick
+  // succession (the second request vanished instead of ever running). Now
+  // it's coalesced here instead: only the LATEST pending pack is kept, and
+  // once the in-flight build finishes, a follow-up build runs for it before
+  // any waiters (callers awaiting buildPool) are resolved.
+  const pendingBuildRef = useRef<{ pack: SoundPackId; waiters: (() => void)[] } | null>(null);
 
   // Load persisted settings
   useEffect(() => {
@@ -259,8 +271,20 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     }).catch(() => {});
   }, []);
 
-  async function buildPool(pack: SoundPackId, cancelled: () => boolean) {
-    if (loadingRef.current) return;
+  async function buildPool(pack: SoundPackId, cancelled: () => boolean): Promise<void> {
+    if (loadingRef.current) {
+      // Coalesce: only the most recently requested pack matters. If two
+      // callers are both waiting, they both resolve once that final pack
+      // actually finishes loading — never silently dropped.
+      return new Promise<void>(resolve => {
+        if (pendingBuildRef.current) {
+          pendingBuildRef.current.pack = pack;
+          pendingBuildRef.current.waiters.push(resolve);
+        } else {
+          pendingBuildRef.current = { pack, waiters: [resolve] };
+        }
+      });
+    }
     loadingRef.current = true;
     try {
       // Shared/idempotent — avoids racing MusicContext's own category call
@@ -296,6 +320,16 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       poolsRef.current = pools;
     } finally {
       loadingRef.current = false;
+      const pending = pendingBuildRef.current;
+      pendingBuildRef.current = null;
+      if (pending) {
+        // A newer request arrived while this build was running — run it
+        // next, then release everyone (including this call's own
+        // superseded requesters) once IT settles.
+        buildPool(pending.pack, () => false).then(() => {
+          pending.waiters.forEach(w => w());
+        });
+      }
     }
   }
 
@@ -336,9 +370,16 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     AsyncStorage.setItem(SOUND_KEY, v ? '1' : '0').catch(() => {});
   }, []);
 
-  const setSoundPack = useCallback((p: SoundPackId) => {
+  const setSoundPack = useCallback(async (p: SoundPackId) => {
     setSoundPackState(p);
     AsyncStorage.setItem(SOUND_PACK_KEY, p).catch(() => {});
+    // Build right now and await it, rather than relying solely on the
+    // [soundPack, soundMode] effect below — that only fires after React
+    // commits the state update, which is one tick too late for a caller
+    // that wants to play a preview immediately after this resolves. The
+    // effect's own buildPool call becomes a harmless no-op (guarded by
+    // loadingRef) once it does fire, since this one is already in flight.
+    await buildPool(p, () => false);
   }, []);
 
   const setSoundMode = useCallback((m: 'ambient' | 'playback') => {
