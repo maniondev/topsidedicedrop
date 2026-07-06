@@ -633,6 +633,15 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const sub = AppState.addEventListener('change', state => {
       if (state === 'active') {
+        // Cold-launch startup belongs to the launch-sequence effect, NOT
+        // this handler. iOS fires an 'active' AppState event during app
+        // startup (and permission dialogs like ATT/consent flap
+        // inactive->active on top of that) — before the one-time launch
+        // decision has run, that early event used to fall through to
+        // reloadMenuTrack(), starting the theme UNDER the launch stinger
+        // and double-playing on every cold start. (Same reason
+        // app/_layout.tsx skips its own first 'active' event.)
+        if (!hasPlayedLaunchRef.current) return;
         if (enabledRef.current && devIncludedRef.current) {
           if (launchInFlightRef.current) {
             completeLaunchOnResume();
