@@ -11,7 +11,9 @@ import { useAnimation, AnimPackMeta } from '@/contexts/AnimationContext';
 import { useDiceStyle, DiceStyleMeta } from '@/contexts/DiceStyleContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useStats } from '@/contexts/StatsContext';
-import { CONTROLS_SEEN_KEY } from '@/lib/storage';
+import { CONTROLS_SEEN_KEY, saveGame } from '@/lib/storage';
+import { buildDemoSave } from '@/lib/demoBoard';
+import { useDifficulty } from '@/contexts/DifficultyContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PremiumModal from '@/components/PremiumModal';
 import { ThemeMeta } from '@/constants/theme';
@@ -31,6 +33,7 @@ export default function SettingsScreen() {
   const { hasCustomization, hasNoAds, restorePurchases, redeemCode, devToggleCustomization, devToggleNoAds } = usePremium();
   const isFullyUnlocked = hasCustomization && hasNoAds;
   const { resetStats } = useStats();
+  const { difficulty } = useDifficulty();
   const [devControlsRevealed, setDevControlsRevealed] = useState(false);
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
   const [hasRated, setHasRatedState] = useState(false);
@@ -207,6 +210,36 @@ export default function SettingsScreen() {
               sublabel="Simulates a shipped track to test the Sound/Music split UI"
               value={devMusicIncluded}
               onValueChange={setDevMusicIncluded}
+              colors={colors}
+              styles={styles}
+            />
+          )}
+          {__DEV__ && devControlsRevealed && (
+            <RowItem
+              label="⚙️ Dev: Demo Board 1 (twin towers)"
+              onPress={() => {
+                saveGame(buildDemoSave(difficulty, 1)).then(() => {
+                  Alert.alert(
+                    'Demo Board 1 Loaded',
+                    `Tap Continue on the Home tab (difficulty: ${difficulty}). The 1-6-1 triple spawns in position — just hard-drop it. Demo runs never touch stats or the leaderboard.`,
+                  );
+                });
+              }}
+              colors={colors}
+              styles={styles}
+            />
+          )}
+          {__DEV__ && devControlsRevealed && (
+            <RowItem
+              label="⚙️ Dev: Demo Board 2 (organic)"
+              onPress={() => {
+                saveGame(buildDemoSave(difficulty, 2)).then(() => {
+                  Alert.alert(
+                    'Demo Board 2 Loaded',
+                    `Tap Continue on the Home tab (difficulty: ${difficulty}). Move the vertical 4-3-4 triple ONE column RIGHT and drop (7-pass full clear, two 6-pair clears). Demo runs never touch stats or the leaderboard.`,
+                  );
+                });
+              }}
               colors={colors}
               styles={styles}
             />

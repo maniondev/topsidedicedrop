@@ -124,6 +124,12 @@ export default function GameScreen() {
     return () => playTrack('menu');
   }, [playTrack]);
 
+  // True when this run was loaded from a dev demo save (preset board for
+  // App Store preview capture). Demo runs NEVER touch stats, pending-run
+  // records, or the leaderboard — every submit/persist path below checks
+  // this ref. Normal (non-demo) games are completely unaffected.
+  const demoRunRef = useRef(false);
+
   // On mount: start fresh if ?fresh=1, otherwise resume a saved game if one exists
   useEffect(() => {
     if (fresh === '1') {
@@ -134,6 +140,7 @@ export default function GameScreen() {
     loadSavedGame(difficulty).then(saved => {
       if (saved && Array.isArray(saved.board) && Array.isArray(saved.queue)) {
         clearSavedGame(difficulty);
+        demoRunRef.current = !!saved.demo;
         game.loadSaved(saved.board as any, saved.score, saved.queue as any, saved.runBestChain, saved.activePiece as any);
       } else {
         game.startGame();
@@ -222,6 +229,7 @@ export default function GameScreen() {
         runBestChain: exported.runBestChain,
         difficulty,
         savedAt: Date.now(),
+        demo: demoRunRef.current,
       }).catch(() => {});
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -319,7 +327,7 @@ export default function GameScreen() {
   const { showAdWithFallback } = useRewardedAd(useCallback(() => {
     // Ad rewarded — submit pre-continue score as unassisted (if no continue was used before)
     const pre = preContinueRef.current;
-    if (pre && !pre.alreadyUsedContinue) {
+    if (pre && !pre.alreadyUsedContinue && !demoRunRef.current) {
       submitPreContinueRun(pre.score, pre.chain, difficulty);
       if (pre.score > 0) {
         updateBestUnassistedForCurrentPlayer({ p_score: pre.score, p_difficulty: difficulty });
@@ -347,13 +355,16 @@ export default function GameScreen() {
     }
     // Persist to AsyncStorage so a score is never lost if the app is killed before
     // the player taps New Game. Consumed on next launch by StatsContext.
-    savePendingRun({
-      score:             game.score,
-      chain:             game.runBestChain,
-      difficulty,
-      continueUsed:      freeContinueUsed || adContinueUsed,
-      preContinueScore:  preContinueScoreRef.current || undefined,
-    });
+    // Demo runs skip this — their scores must never reach stats/leaderboard.
+    if (!demoRunRef.current) {
+      savePendingRun({
+        score:             game.score,
+        chain:             game.runBestChain,
+        difficulty,
+        continueUsed:      freeContinueUsed || adContinueUsed,
+        preContinueScore:  preContinueScoreRef.current || undefined,
+      });
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.phase]);
 
@@ -401,7 +412,7 @@ export default function GameScreen() {
     const alreadyUsedContinue = freeContinueUsed || adContinueUsed;
     // Only update bestUnassisted and submit to unassisted leaderboard on the first continue —
     // scores earned after a continue are no longer unassisted.
-    if (!alreadyUsedContinue) {
+    if (!alreadyUsedContinue && !demoRunRef.current) {
       submitPreContinueRun(game.score, game.runBestChain, difficulty);
       if (game.score > 0) {
         updateBestUnassistedForCurrentPlayer({ p_score: game.score, p_difficulty: difficulty });
@@ -423,12 +434,16 @@ export default function GameScreen() {
     setPaused(false);
     onRunComplete();
     const continueUsed = freeContinueUsed || adContinueUsed;
-    submitRun(game.score, game.runBestChain, difficulty, continueUsed, preContinueScoreRef.current || undefined);
-    if (game.score > 0) {
-      submitScoreForCurrentPlayer({ p_score: game.score, p_best_chain: game.runBestChain, p_difficulty: difficulty, p_used_continue: continueUsed, p_pre_continue_score: preContinueScoreRef.current || 0 });
+    if (!demoRunRef.current) {
+      submitRun(game.score, game.runBestChain, difficulty, continueUsed, preContinueScoreRef.current || undefined);
+      if (game.score > 0) {
+        submitScoreForCurrentPlayer({ p_score: game.score, p_best_chain: game.runBestChain, p_difficulty: difficulty, p_used_continue: continueUsed, p_pre_continue_score: preContinueScoreRef.current || 0 });
+      }
     }
     clearPendingRun();
     preContinueScoreRef.current = 0;
+    // A New Game from the game-over modal is a normal run from here on.
+    demoRunRef.current = false;
 
     // Queue a review prompt for after the game-over modal closes. Two sources —
     // a run-count milestone, or a recent premium purchase — share one cooldown so
@@ -464,9 +479,11 @@ export default function GameScreen() {
 
   const handleGoHome = useCallback(() => {
     const continueUsed = freeContinueUsed || adContinueUsed;
-    submitRun(game.score, game.runBestChain, difficulty, continueUsed, preContinueScoreRef.current || undefined);
-    if (game.score > 0) {
-      submitScoreForCurrentPlayer({ p_score: game.score, p_best_chain: game.runBestChain, p_difficulty: difficulty, p_used_continue: continueUsed, p_pre_continue_score: preContinueScoreRef.current || 0 });
+    if (!demoRunRef.current) {
+      submitRun(game.score, game.runBestChain, difficulty, continueUsed, preContinueScoreRef.current || undefined);
+      if (game.score > 0) {
+        submitScoreForCurrentPlayer({ p_score: game.score, p_best_chain: game.runBestChain, p_difficulty: difficulty, p_used_continue: continueUsed, p_pre_continue_score: preContinueScoreRef.current || 0 });
+      }
     }
     clearPendingRun();
     preContinueScoreRef.current = 0;
@@ -535,6 +552,7 @@ export default function GameScreen() {
       runBestChain: exported.runBestChain,
       difficulty,
       savedAt: Date.now(),
+      demo: demoRunRef.current,
     });
     clearPendingRun();
     router.back();
@@ -542,7 +560,7 @@ export default function GameScreen() {
 
   // Quit without saving — commit the run right now, then leave.
   const handleQuitAndLog = useCallback(async () => {
-    if (game.score > 0) {
+    if (game.score > 0 && !demoRunRef.current) {
       const continueUsed = freeContinueUsed || adContinueUsed;
       await submitRun(game.score, game.runBestChain, difficulty, continueUsed, preContinueScoreRef.current || undefined);
       submitScoreForCurrentPlayer({ p_score: game.score, p_best_chain: game.runBestChain, p_difficulty: difficulty, p_used_continue: continueUsed, p_pre_continue_score: preContinueScoreRef.current || 0 });

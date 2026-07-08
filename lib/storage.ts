@@ -59,6 +59,10 @@ export interface SavedGame {
   runBestChain: number;
   difficulty: Difficulty;
   savedAt: number;
+  // Dev-only demo runs (preset boards for App Store preview capture). A demo
+  // run NEVER submits to stats or the leaderboard — the game screen checks
+  // this flag and skips every submit/persist path.
+  demo?: boolean;
 }
 
 export async function saveGame(game: SavedGame): Promise<void> {
