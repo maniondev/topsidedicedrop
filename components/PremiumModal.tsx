@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePremium, PurchaseTarget } from '@/contexts/PremiumContext';
@@ -18,6 +18,7 @@ const CUSTOMIZATION_PERKS = ['All themes & sound packs', 'All dice animations & 
 export default function PremiumModal({ visible, onClose }: Props) {
   const { colors } = useTheme();
   const { hasCustomization, hasNoAds, upgrade, restorePurchases } = usePremium();
+  const pendingTargetRef = useRef<PurchaseTarget | null>(null);
 
   // Four states: nothing yet, code-only (has customization, wants ads gone),
   // ads-only (has no_ads, wants customization — the fair upsell for someone
@@ -54,8 +55,30 @@ export default function PremiumModal({ visible, onClose }: Props) {
 
   const { title, perks, price, target } = config[offer];
 
+  // Start a purchase by first DISMISSING this modal, then triggering StoreKit
+  // once the modal has actually gone away. On iPad, presenting the native
+  // payment sheet on top of a still-open RN <Modal> silently fails to show —
+  // iOS can't present the sheet from a view controller that's already
+  // presenting one. (This passed iPhone testing but was rejected in iPad
+  // review: "in-app purchase did not trigger the payment window.") Deferring
+  // to the modal's onDismiss makes StoreKit present from the underlying
+  // screen. Android has no such presentation conflict, so it buys directly.
+  const startPurchase = (t: PurchaseTarget) => {
+    if (Platform.OS === 'ios') {
+      pendingTargetRef.current = t;
+      onClose(); // onDismiss (below) runs the purchase after the modal closes
+    } else {
+      onClose();
+      void upgrade(t);
+    }
+  };
+  const handleDismiss = () => {
+    const t = pendingTargetRef.current;
+    if (t) { pendingTargetRef.current = null; void upgrade(t); }
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} onDismiss={handleDismiss}>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
           <Text style={[styles.title, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>{title}</Text>
@@ -66,7 +89,7 @@ export default function PremiumModal({ visible, onClose }: Props) {
           </View>
           <TouchableOpacity
             style={[styles.btn, { backgroundColor: colors.accent }]}
-            onPress={async () => { await upgrade(target); onClose(); }}
+            onPress={() => startPurchase(target)}
           >
             <Text style={[styles.btnText, { color: colors.accentText }]}>
               {offer === 'allIn' ? `Upgrade — ${price}` : `${title} — ${price}`}
@@ -74,7 +97,7 @@ export default function PremiumModal({ visible, onClose }: Props) {
           </TouchableOpacity>
           {offer === 'allIn' && (
             <TouchableOpacity
-              onPress={async () => { await upgrade('removeAds'); onClose(); }}
+              onPress={() => startPurchase('removeAds')}
               hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
               style={styles.secondaryOfferBtn}
             >
