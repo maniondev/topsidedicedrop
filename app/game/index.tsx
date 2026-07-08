@@ -38,7 +38,11 @@ import ReviewPromptModal from '@/components/ReviewPromptModal';
 // No tab bar in this screen — more space for the board
 const HUD_H    = 96;
 const BANNER_H = 60; // matches BANNER_RESERVED_H in AdBanner
-const CTRL_GAP = 6;  // must match GAP in Controls.tsx
+// Control-row height ≈ the main buttons' size. Must match `mainSize` in
+// Controls.tsx (Math.floor(boardW * 0.19), min 52) so we reserve the right
+// vertical space for the controls when sizing the board.
+const CTRL_MAIN_RATIO = 0.19;
+const CTRL_MAIN_MIN = 52;
 const S1       = 8;  // HUD → board (fixed px — board resizes, gaps don't)
 const S2       = 12; // board → controls, controls → ad (scaled per-instance in component)
 
@@ -91,7 +95,7 @@ export default function GameScreen() {
   const bannerH       = hasNoAds ? 0 : BANNER_H;
   const spacingH      = S1 + s2 + (hasNoAds ? 0 : s2); // fixed gaps between sections
   const csW           = Math.floor((width - 32) / COLS);
-  const approxBtnSize = Math.max(36, Math.floor((csW * COLS - CTRL_GAP * 4) / 5));
+  const approxBtnSize = Math.max(CTRL_MAIN_MIN, Math.floor(csW * COLS * CTRL_MAIN_RATIO));
   // Use measured container height when available; fall back to dimension-based estimate for first frame.
   const nonBoardH     = hudH + approxBtnSize + bannerH + spacingH;
   const effectiveH    = gameAreaH > 0 ? gameAreaH : Math.max(0, height - safeTop - safeBottom);
@@ -306,7 +310,11 @@ export default function GameScreen() {
     }
     allClearCountRef.current = game.allClearCount;
     const cx = boardW / 2;
-    const cy = (cellSize * ROWS) / 2 - cellSize;
+    // Anchor for the stacked All/Clear/+500 labels. Nudged DOWN from a full-cell
+    // up-shift to ~a third of a cell so the top "All" label clears the newly
+    // spawned dice at the top of the board (they were overlapping). Increase the
+    // 0.35 toward 1 to raise it again, toward 0 to drop it further.
+    const cy = (cellSize * ROWS) / 2 - cellSize * 0.15;
     const id1 = String(floatingLabelIdRef.current++);
     const id2 = String(floatingLabelIdRef.current++);
     const id3 = String(floatingLabelIdRef.current++);
