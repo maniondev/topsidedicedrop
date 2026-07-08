@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 import Sound from 'react-native-sound';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ensureAudioSessionCategory, reactivateAudioSessionOnResume, forceReapplyAudioSessionCategory } from '@/lib/audioSession';
+import { ensureAudioSessionCategory, reactivateAudioSessionOnResume, forceReapplyAudioSessionCategory, isAdInterrupting } from '@/lib/audioSession';
 
 const MUSIC_ENABLED_KEY = 'tm_music_enabled';
 const DEV_MUSIC_INCLUDED_KEY = 'tm_dev_music_included';
@@ -112,6 +112,10 @@ interface MusicCtxType {
   playTrack: (track: MusicTrack) => void;
   pauseMusic: () => void;
   resumeMusic: () => void;
+  // Restart the track from position 0 and re-anchor the beat grid. Used after
+  // a full-screen ad (iOS) interrupts playback, so music and beat-synced UI
+  // both resume cleanly in step instead of drifting.
+  restartMusicFromTop: () => void;
   // Drives the LaunchIntroOverlay (splash-matching screen + loading bar
   // shown only when the cold-launch stinger will actually play).
   launchIntroActive: boolean;
@@ -149,6 +153,7 @@ const MusicCtx = createContext<MusicCtxType>({
   playTrack: () => {},
   pauseMusic: () => {},
   resumeMusic: () => {},
+  restartMusicFromTop: () => {},
   launchIntroActive: false,
   launchPlaybackStarted: false,
   launchStingerDurationMs: null,
@@ -644,6 +649,13 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         // and double-playing on every cold start. (Same reason
         // app/_layout.tsx skips its own first 'active' event.)
         if (!hasPlayedLaunchRef.current) return;
+        // A full-screen ad backgrounds the app, then foregrounds it again when
+        // dismissed (and on any click-through/Control-Center trip mid-ad). Do
+        // NOT restart the music here while an ad owns the audio, or just after
+        // it closed — the ad's own CLOSED handler restores and restarts the
+        // track once (see useInterstitialAd/useRewardedAd). Without this, the
+        // music would restart underneath a still-open ad or double-restart.
+        if (isAdInterrupting()) return;
         if (enabledRef.current && devIncludedRef.current) {
           if (launchInFlightRef.current) {
             completeLaunchOnResume();
@@ -710,6 +722,20 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       setMusicSyncEpoch(e => e + 1);
     });
   };
+
+  // Stable public wrapper over restartMenuFromTop (which is redefined each
+  // render). Consumers like the ad hooks can hold this in a ref without
+  // churning their one-time event listeners, and it's safe to memoize in the
+  // context value below.
+  const restartMenuFromTopRef = useRef(restartMenuFromTop);
+  restartMenuFromTopRef.current = restartMenuFromTop;
+  const restartMusicFromTop = useCallback(() => {
+    // No-op when music is off/not included — restartMenuFromTop calls play()
+    // unconditionally, so without this guard an ad closing would start music
+    // the user has disabled.
+    if (!enabledRef.current || !devIncludedRef.current) return;
+    restartMenuFromTopRef.current();
+  }, []);
 
   const setMusicEnabled = useCallback((v: boolean) => {
     setMusicEnabledState(v);
@@ -800,12 +826,14 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo(
     () => ({
       musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic,
+      restartMusicFromTop,
       launchIntroActive, launchPlaybackStarted, launchStingerDurationMs,
       bpm: TRACK_BPM.menu, musicSyncEpoch, musicSyncStartedAt, menuLoopDurationMs, musicLoopStartedAt,
       soundtrackId, setSoundtrack,
     }),
     [
       musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic,
+      restartMusicFromTop,
       launchIntroActive, launchPlaybackStarted, launchStingerDurationMs, musicSyncEpoch, musicSyncStartedAt,
       menuLoopDurationMs, musicLoopStartedAt, soundtrackId, setSoundtrack,
     ],

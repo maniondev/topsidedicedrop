@@ -84,3 +84,40 @@ export function reactivateAudioSessionOnResume(): Promise<void> {
 export function forceReapplyAudioSessionCategory() {
   applyCategory(_mode);
 }
+
+// ── Ad audio coordination (iOS) ───────────────────────────────────────────────
+// While a full-screen ad is on screen we force the silent-switch-respecting
+// Ambient category — regardless of the user's "break through silent mode"
+// setting — so ad audio NEVER plays on a muted phone, and we flag that an ad
+// currently owns the audio. The flag lets the AppState resume handler skip its
+// normal music restart while an ad is still up or was just dismissed, so a
+// background→foreground trip mid-ad (click-through to the App Store, Control
+// Center pull-down, incoming call, etc.) can't restart the soundtrack
+// underneath the ad or fight the restore. A short grace window after dismissal
+// covers the 'active' event that arrives alongside the ad closing.
+let _adPresenting = false;
+let _adEndedAt = 0;
+const AD_GRACE_MS = 800;
+
+export function isAdInterrupting(): boolean {
+  return _adPresenting || Date.now() - _adEndedAt < AD_GRACE_MS;
+}
+
+// Call right BEFORE presenting an ad (so the category is set before the ad's
+// player starts). Best-effort — never throws into the caller.
+export function enterAdAudioSession() {
+  _adPresenting = true;
+  try {
+    Sound.setCategory('Ambient');
+    Sound.setActive(true);
+  } catch {}
+}
+
+// Call when the ad is dismissed OR when show() failed (so we never leave the
+// music paused or the category stuck on Ambient). Restores the user's real
+// category after the usual settle delay and opens the grace window.
+export function exitAdAudioSession() {
+  _adPresenting = false;
+  _adEndedAt = Date.now();
+  restoreGameAudioSession();
+}

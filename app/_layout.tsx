@@ -87,14 +87,19 @@ export default function RootLayout() {
       initSessionTracker();
 
       await mobileAds().initialize();
-      // Silence all ad creatives. Video interstitial/rewarded ads (and their
-      // preload buffering) would otherwise bleed audio over our soundtrack —
-      // the audio session mixes rather than ducks, so ad sound plays right on
-      // top of the music. The app has its own music + SFX and never relies on
-      // ad audio, so a global mute is the clean fix (rewarded ads still grant
-      // their reward silently). Policy-compliant.
-      mobileAds().setAppMuted(true);
-      mobileAds().setAppVolume(0);
+      // Android ONLY: silence ad creatives. Android AdMob has a long-standing
+      // bug where interactive/video interstitials bleed audio the moment they
+      // PRELOAD (before being shown) — over the top of our soundtrack, since
+      // the audio session mixes rather than ducks. setAppMuted alone doesn't
+      // stop it; setAppVolume(0) is the community mitigation (partial — a few
+      // creatives still leak, but it kills most). iOS has no such preload bug,
+      // so we leave iOS unmuted for full video-ad eligibility (best revenue)
+      // and instead pause/duck our own music around shown ads (see the ad
+      // hooks) so nothing overlaps. Muting is AdMob-policy-compliant.
+      if (Platform.OS === 'android') {
+        mobileAds().setAppMuted(true);
+        mobileAds().setAppVolume(0);
+      }
       preloadAllAds();
       replayQueue().catch(() => {});
     })();
