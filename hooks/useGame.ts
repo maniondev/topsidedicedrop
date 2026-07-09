@@ -1,5 +1,5 @@
 import { useReducer, useEffect, useRef, useCallback } from 'react';
-import { PIECES, PIECE_MAP } from '@/lib/pieces';
+import { PIECE_MAP } from '@/lib/pieces';
 import { Board, CellValue, emptyBoard, cloneBoard } from '@/lib/board';
 import { MergeEvent, resolveMerges } from '@/lib/merge';
 import { applyGravity } from '@/lib/gravity';
@@ -75,10 +75,6 @@ type Action =
   | { type: 'RESET'; initialQueue: QueuedPiece[] };
 
 // ── Pure helpers ─────────────────────────────────────────────────────────────
-
-function getBoardTiles(p: ActivePiece) {
-  return p.tiles.map(t => ({ r: p.anchorRow + t.dr, c: p.anchorCol + t.dc, value: t.value }));
-}
 
 function isLegal(board: Board, p: ActivePiece): boolean {
   for (const t of p.tiles) {

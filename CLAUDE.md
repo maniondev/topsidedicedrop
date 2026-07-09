@@ -47,7 +47,6 @@ hooks/
 contexts/
   AnimationContext.tsx
   DifficultyContext.tsx
-  GameStatusContext.tsx
   PremiumContext.tsx
   SoundContext.tsx         # Sound theme selection + playback
   StatsContext.tsx         # Lifetime stats (AsyncStorage)

@@ -13,7 +13,7 @@ export interface PieceShape {
 
 // All pieces have exactly 4 rotation states (90° CW each tap).
 // Symmetric pieces repeat states so 4 taps always cycles back to start.
-export const PIECES: PieceShape[] = [
+const PIECES: PieceShape[] = [
   {
     id: 'P1',
     rotations: [
