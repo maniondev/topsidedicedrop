@@ -26,6 +26,10 @@ export default function TabLayout() {
           headerShown: false,
           tabBarButton: HapticTab,
           tabBarAllowFontScaling: false,
+          // Leaving a tab pops its nested stack back to the root — so returning
+          // to Settings lands on the top-level list, not the sub-picker you
+          // last opened (Theme / Soundtrack / etc.).
+          popToTopOnBlur: true,
           sceneStyle: { backgroundColor: 'transparent' },
         tabBarStyle: {
           backgroundColor: colors.surface,
