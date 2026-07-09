@@ -38,16 +38,6 @@ function PreviewDie({ x, y, cs, value, faceColor, dotColor, diceStyle }: {
         </>
       );
 
-    case 'round':
-      return (
-        <>
-          <Circle cx={cx} cy={cy} r={rw / 2} color={faceColor} />
-          {dots.map(([xf, yf], i) => (
-            <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR * 0.92} color={dotColor} />
-          ))}
-        </>
-      );
-
     case 'pixel': {
       const pipSize = Math.max(cs * 0.16, 3.5);
       return (

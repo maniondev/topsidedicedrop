@@ -230,12 +230,6 @@ export function DiceStylePreview({ styleId, size = 20 }: { styleId: DiceStyleId;
           <Circle cx={cx} cy={cy} r={Math.max(cs * 0.13, 3.5)} color={fc} style="stroke" strokeWidth={2} />
         </>
       )}
-      {styleId === 'round' && (
-        <>
-          <Circle cx={cx} cy={cy} r={rw / 2} color={fc} />
-          <Circle cx={cx} cy={cy} r={dotR * 0.92} color={dc} />
-        </>
-      )}
       {styleId === 'pixel' && (
         <>
           <Rect x={rx} y={ry} width={rw} height={rw} color={fc} />
@@ -342,6 +336,30 @@ export function DiceStylePreview({ styleId, size = 20 }: { styleId: DiceStyleId;
             <Circle cx={cx} cy={cy + 0.7} r={dotR} color="rgba(70,60,90,0.20)" />
             <Circle cx={cx} cy={cy} r={dotR} color={dc} />
             <Circle cx={cx - dotR * 0.3} cy={cy - dotR * 0.3} r={dotR * 0.34} color="rgba(255,255,255,0.55)" />
+          </>
+        );
+      })()}
+      {styleId === 'comic' && (() => {
+        const clip = rrect(rect(rx, ry, rw, rw), 5, 5);
+        const ink = '#141018';
+        const step = rw / 3.2;
+        const grid: Array<[number, number]> = [];
+        for (let gy = ry + step * 0.6; gy < ry + rw; gy += step) {
+          for (let gx = rx + step * 0.6; gx < rx + rw; gx += step) {
+            grid.push([gx, gy]);
+          }
+        }
+        return (
+          <>
+            <Group clip={clip}>
+              <Rect x={rx} y={ry} width={rw} height={rw} color={fc} />
+              {grid.map(([gx, gy], i) => (
+                <Circle key={i} cx={gx} cy={gy} r={Math.max(1, rw * 0.05)} color="rgba(20,16,24,0.18)" />
+              ))}
+            </Group>
+            <RoundedRect x={rx} y={ry} width={rw} height={rw} r={5} color={ink} style="stroke" strokeWidth={Math.max(2, rw * 0.07)} />
+            <Circle cx={cx} cy={cy} r={dotR} color={dc} />
+            <Circle cx={cx} cy={cy} r={dotR} color={ink} style="stroke" strokeWidth={Math.max(1.6, dotR * 0.5)} />
           </>
         );
       })()}

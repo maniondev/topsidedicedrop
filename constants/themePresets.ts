@@ -24,14 +24,14 @@ export const THEME_PRESETS: Partial<Record<ThemeId, ThemePreset>> = {
   dicedrop:  { soundtrack: 'dicedrop',   soundPack: 'topside', animPack: 'classic', diceStyle: 'classic' },
   // "Classic" theme · Classic soundtrack · Classic SFX · Classic motion · Classic dice
   dice:      { soundtrack: 'classic',    soundPack: 'topside', animPack: 'classic', diceStyle: 'classic' },
-  // Light · Classic soundtrack · Snow SFX · Classic motion · Classic dice
-  light:     { soundtrack: 'classic',    soundPack: 'snow',    animPack: 'classic', diceStyle: 'classic' },
-  // Dark · Dice Drop soundtrack · Metal SFX · Shatter motion · 8-Bit dice
-  dark:      { soundtrack: 'dicedrop',   soundPack: 'metal',   animPack: 'shatter', diceStyle: 'pixel' },
+  // Light · Classic soundtrack · Snow SFX · Classic motion · 8-Bit dice
+  light:     { soundtrack: 'classic',    soundPack: 'snow',    animPack: 'classic', diceStyle: 'pixel' },
+  // Dark · Dice Drop soundtrack · Fight SFX · Shatter motion · Pop Art dice
+  dark:      { soundtrack: 'dicedrop',   soundPack: 'fight',   animPack: 'shatter', diceStyle: 'comic' },
   // Pastel · Forest soundtrack · Bubbles SFX · Extra motion · Jelly dice
   pastel:    { soundtrack: 'forest',     soundPack: 'bubbles', animPack: 'extra',   diceStyle: 'pastel' },
-  // Grayscale · Classic soundtrack · Marimba SFX · Twist motion · Round dice
-  grayscale: { soundtrack: 'classic',    soundPack: 'marimba', animPack: 'twist',   diceStyle: 'round' },
+  // Grayscale · Classic soundtrack · Marimba SFX · Twist motion · Classic dice
+  grayscale: { soundtrack: 'classic',    soundPack: 'marimba', animPack: 'twist',   diceStyle: 'classic' },
   // Ocean · Ocean soundtrack · Splash SFX · Extra motion · Sea Glass dice
   ocean:     { soundtrack: 'underwater', soundPack: 'splash',  animPack: 'extra',   diceStyle: 'ocean' },
   // Forest · Forest soundtrack · Dig SFX · Minimal motion · Wooden dice

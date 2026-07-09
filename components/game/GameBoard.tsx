@@ -164,25 +164,6 @@ function SketchDie({ x, y, cs, value, faceColor, dotColor }: {
   );
 }
 
-function RoundDie({ x, y, cs, value, faceColor, dotColor }: {
-  x: number; y: number; cs: number; value: CellValue; faceColor: string; dotColor: string;
-}) {
-  const pad = 2;
-  const rw = cs - pad * 2;
-  const rx = x + pad, ry = y + pad;
-  const cx = rx + rw / 2, cy = ry + rw / 2;
-  const dotR = Math.max(cs * 0.078, 2.8);
-  const dots = DOT_POSITIONS[value] ?? DOT_POSITIONS[1];
-  return (
-    <>
-      <Circle cx={cx} cy={cy} r={rw / 2} color={faceColor} />
-      {dots.map(([xf, yf], i) => (
-        <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR} color={dotColor} />
-      ))}
-    </>
-  );
-}
-
 function PixelDie({ x, y, cs, value, faceColor, dotColor }: {
   x: number; y: number; cs: number; value: CellValue; faceColor: string; dotColor: string;
 }) {
@@ -416,6 +397,50 @@ function PastelDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
   );
 }
 
+// Pop-art / comic book: flat bright fill, Ben-Day halftone dots, a bold black
+// ink outline, and chunky pips with black rings.
+function ComicDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
+  x: number; y: number; cs: number; value: CellValue; faceColor: string; dotColor: string; perfMode?: boolean;
+}) {
+  const pad = 2;
+  const rw = cs - pad * 2;
+  const rx = x + pad, ry = y + pad;
+  const dotR = Math.max(cs * 0.085, 3);
+  const dots = DOT_POSITIONS[value] ?? DOT_POSITIONS[1];
+  const clip = rrect(rect(rx, ry, rw, rw), 6, 6);
+  const ink = '#141018';
+  const halftone = perfMode ? null : (() => {
+    const p = Skia.Path.Make();
+    const step = Math.max(6, rw * 0.19);
+    const dr = Math.max(1.1, rw * 0.045);
+    for (let gy = ry + step * 0.5; gy < ry + rw; gy += step) {
+      for (let gx = rx + step * 0.5; gx < rx + rw; gx += step) {
+        p.addCircle(gx, gy, dr);
+      }
+    }
+    return p;
+  })();
+  return (
+    <>
+      <Group clip={clip}>
+        <Rect x={rx} y={ry} width={rw} height={rw} color={faceColor} />
+        {halftone && <Path path={halftone} color="rgba(20,16,24,0.16)" />}
+      </Group>
+      {/* bold comic ink outline */}
+      <RoundedRect x={rx} y={ry} width={rw} height={rw} r={6} color={ink} style="stroke" strokeWidth={Math.max(2.4, rw * 0.06)} />
+      {/* chunky pips: bright dot with a bold ink OUTLINE (not a filled ring) —
+          so the low-opacity falling shadow's pips read as the dot colour too,
+          matching the real dice instead of going dark */}
+      {dots.map(([xf, yf], i) => (
+        <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR} color={dotColor} />
+      ))}
+      {dots.map(([xf, yf], i) => (
+        <Circle key={`o${i}`} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR} color={ink} style="stroke" strokeWidth={Math.max(1.6, dotR * 0.5)} />
+      ))}
+    </>
+  );
+}
+
 const DiceFace = React.memo(function DiceFace({ x, y, cs, value, faceColor, dotColor, diceStyle, perfMode }: {
   x: number; y: number; cs: number; value: CellValue;
   faceColor: string; dotColor: string; diceStyle: DiceStyleId; perfMode?: boolean;
@@ -424,13 +449,13 @@ const DiceFace = React.memo(function DiceFace({ x, y, cs, value, faceColor, dotC
   if (perfMode) return <ClassicDie x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;
   switch (diceStyle) {
     case 'sketch':  return <SketchDie  x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;
-    case 'round':   return <RoundDie   x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;
     case 'pixel':   return <PixelDie   x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;
     case 'neon':    return <NeonDie    x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} perfMode={perfMode} />;
     case 'raised':  return <RaisedDie  x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} perfMode={perfMode} />;
     case 'wooden':  return <WoodenDie  x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} perfMode={perfMode} />;
     case 'ocean':   return <OceanDie   x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} perfMode={perfMode} />;
     case 'pastel':  return <PastelDie  x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} perfMode={perfMode} />;
+    case 'comic':   return <ComicDie   x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} perfMode={perfMode} />;
     default:        return <ClassicDie x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;
   }
 });
