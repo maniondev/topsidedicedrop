@@ -33,8 +33,9 @@ export const ATMOSPHERE: Partial<Record<ThemeId, Atmosphere>> = {
   },
   ocean: {
     background: 'ocean',
-    gradient: ['#07131F', '#0A1B2E', '#0E2A44'],
-    glow: '#155A6E',      // light shafts / caustic tint
+    // Real-ocean depth: lit teal surface up top, darkening into the deep.
+    gradient: ['#1A5568', '#0E3247', '#061019'],
+    glow: '#2E7E92',      // surface caustic light
     ambient: ['bubbles', 'caustics'],
     particle: '#CFEFFF',  // pale bubble sheen
   },
