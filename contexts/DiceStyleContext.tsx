@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export type DiceStyleId = 'classic' | 'sketch' | 'round' | 'pixel' | 'neon' | 'raised';
+export type DiceStyleId = 'classic' | 'sketch' | 'round' | 'pixel' | 'neon' | 'raised' | 'wooden' | 'ocean' | 'pastel';
 
-export const DICE_STYLE_IDS: DiceStyleId[] = ['classic', 'sketch', 'round', 'pixel', 'neon', 'raised'];
+export const DICE_STYLE_IDS: DiceStyleId[] = ['classic', 'sketch', 'round', 'pixel', 'neon', 'raised', 'wooden', 'ocean', 'pastel'];
 
 export const DiceStyleMeta: Record<DiceStyleId, { label: string; description: string; free: boolean }> = {
   classic: { label: 'Classic',  description: 'Solid fill, round corners',     free: true  },
@@ -12,6 +12,9 @@ export const DiceStyleMeta: Record<DiceStyleId, { label: string; description: st
   pixel:   { label: '8-Bit',    description: 'Hard edges, square pips',       free: false },
   neon:    { label: 'Neon',     description: 'Dark fill with glowing edges',  free: false },
   raised:  { label: 'Raised',   description: 'Beveled 3D look with shading', free: false },
+  wooden:  { label: 'Wooden',   description: 'Carved wood grain, engraved pips', free: false },
+  ocean:   { label: 'Sea Glass', description: 'Smooth glossy sea glass',       free: false },
+  pastel:  { label: 'Jelly',     description: 'Soft puffy candy jelly',        free: false },
 };
 
 const DICE_STYLE_KEY = 'tm_dice_style';

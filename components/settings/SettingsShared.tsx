@@ -282,6 +282,69 @@ export function DiceStylePreview({ styleId, size = 20 }: { styleId: DiceStyleId;
           </>
         );
       })()}
+      {styleId === 'wooden' && (() => {
+        const clip = rrect(rect(rx, ry, rw, rw), 6, 6);
+        return (
+          <>
+            <Group clip={clip}>
+              <Rect x={rx} y={ry} width={rw} height={rw} color={fc} />
+              {/* grain streaks (simple lines at preview size) */}
+              <Rect x={rx} y={ry + rw * 0.30} width={rw} height={Math.max(1, rw * 0.05)} color="rgba(46,26,10,0.16)" />
+              <Rect x={rx} y={ry + rw * 0.62} width={rw} height={Math.max(1, rw * 0.05)} color="rgba(46,26,10,0.16)" />
+              <Rect x={rx} y={ry} width={rw} height={rw * 0.14} color="rgba(255,240,214,0.18)" />
+              <Rect x={rx} y={ry + rw - rw * 0.14} width={rw} height={rw * 0.14} color="rgba(38,20,6,0.24)" />
+            </Group>
+            <RoundedRect x={rx} y={ry} width={rw} height={rw} r={6} color="rgba(44,24,8,0.5)" style="stroke" strokeWidth={1.5} />
+            <Circle cx={cx} cy={cy + 0.6} r={dotR} color="rgba(28,14,4,0.5)" />
+            <Circle cx={cx} cy={cy} r={dotR * 0.86} color={dc} />
+          </>
+        );
+      })()}
+      {styleId === 'ocean' && (() => {
+        const clip = rrect(rect(rx, ry, rw, rw), 7, 7);
+        return (
+          <>
+            <Group clip={clip}>
+              <Rect x={rx} y={ry} width={rw} height={rw} color={fc} />
+              <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
+                <RadialGradient c={vec(rx + rw * 0.5, ry - rw * 0.15)} r={rw * 1.15} colors={['rgba(255,255,255,0.5)', 'rgba(255,255,255,0)']} />
+              </Rect>
+              <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
+                <RadialGradient c={vec(rx + rw * 0.5, ry + rw * 1.15)} r={rw * 1.0} colors={['rgba(0,26,48,0.30)', 'rgba(0,26,48,0)']} />
+              </Rect>
+              <Circle cx={rx + rw * 0.34} cy={ry + rw * 0.24} r={rw * 0.17} color="rgba(255,255,255,0.6)">
+                <BlurMask blur={rw * 0.08} style="normal" />
+              </Circle>
+            </Group>
+            <RoundedRect x={rx} y={ry} width={rw} height={rw} r={7} color="rgba(255,255,255,0.22)" style="stroke" strokeWidth={1.2} />
+            <Circle cx={cx} cy={cy} r={dotR} color={dc} />
+            <Circle cx={cx - dotR * 0.3} cy={cy - dotR * 0.3} r={dotR * 0.34} color="rgba(255,255,255,0.7)" />
+          </>
+        );
+      })()}
+      {styleId === 'pastel' && (() => {
+        const clip = rrect(rect(rx, ry, rw, rw), 8, 8);
+        return (
+          <>
+            <Group clip={clip}>
+              <Rect x={rx} y={ry} width={rw} height={rw} color={fc} />
+              <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
+                <RadialGradient c={vec(rx + rw * 0.5, ry + rw * 0.02)} r={rw * 1.2} colors={['rgba(255,255,255,0.46)', 'rgba(255,255,255,0.05)', 'rgba(255,255,255,0)']} />
+              </Rect>
+              <Circle cx={rx + rw * 0.5} cy={ry} r={rw * 0.6} color="rgba(255,255,255,0.30)">
+                <BlurMask blur={rw * 0.2} style="normal" />
+              </Circle>
+              <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
+                <RadialGradient c={vec(rx + rw * 0.5, ry + rw * 0.5)} r={rw * 0.8} colors={['rgba(0,0,0,0)', 'rgba(78,68,98,0.14)']} />
+              </Rect>
+            </Group>
+            <RoundedRect x={rx} y={ry} width={rw} height={rw} r={8} color="rgba(255,255,255,0.5)" style="stroke" strokeWidth={1.2} />
+            <Circle cx={cx} cy={cy + 0.7} r={dotR} color="rgba(70,60,90,0.20)" />
+            <Circle cx={cx} cy={cy} r={dotR} color={dc} />
+            <Circle cx={cx - dotR * 0.3} cy={cy - dotR * 0.3} r={dotR * 0.34} color="rgba(255,255,255,0.55)" />
+          </>
+        );
+      })()}
     </Canvas>
   );
 }

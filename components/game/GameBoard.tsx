@@ -291,6 +291,130 @@ function RaisedDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
   );
 }
 
+// Stained-wood plank: keeps the value colour (so dice stay readable) but adds
+// wavy grain, a carved edge, plank light/shadow, and engraved (drilled) pips.
+function WoodenDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
+  x: number; y: number; cs: number; value: CellValue; faceColor: string; dotColor: string; perfMode?: boolean;
+}) {
+  const pad = 2;
+  const rw = cs - pad * 2;
+  const rx = x + pad, ry = y + pad;
+  const dotR = Math.max(cs * 0.085, 3);
+  const dots = DOT_POSITIONS[value] ?? DOT_POSITIONS[1];
+  const clip = rrect(rect(rx, ry, rw, rw), 7, 7);
+  return (
+    <>
+      <Group clip={clip}>
+        <Rect x={rx} y={ry} width={rw} height={rw} color={faceColor} />
+        {/* wood grain — a few soft wavy streaks */}
+        {!perfMode && [0.24, 0.5, 0.76].map((f, i) => {
+          const gy = ry + f * rw;
+          const p = Skia.Path.Make();
+          p.moveTo(rx, gy);
+          p.cubicTo(rx + rw * 0.32, gy - rw * 0.045, rx + rw * 0.68, gy + rw * 0.045, rx + rw, gy);
+          return <Path key={`g${i}`} path={p} color="rgba(46,26,10,0.16)" style="stroke" strokeWidth={Math.max(1, rw * 0.03)} />;
+        })}
+        {/* plank light (top) and shadow (bottom) for a carved feel */}
+        <Rect x={rx} y={ry} width={rw} height={rw * 0.13} color="rgba(255,240,214,0.16)" />
+        <Rect x={rx} y={ry + rw - rw * 0.13} width={rw} height={rw * 0.13} color="rgba(38,20,6,0.22)" />
+      </Group>
+      {/* darkened carved edge */}
+      <RoundedRect x={rx} y={ry} width={rw} height={rw} r={7} color="rgba(44,24,8,0.5)" style="stroke" strokeWidth={1.5} />
+      {/* engraved pips — a drilled shadow under a slightly inset dot */}
+      {dots.map(([xf, yf], i) => (
+        <Circle key={`sh${i}`} cx={rx + xf * rw} cy={ry + yf * rw + 0.6} r={dotR} color="rgba(28,14,4,0.5)" />
+      ))}
+      {dots.map(([xf, yf], i) => (
+        <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR * 0.86} color={dotColor} />
+      ))}
+    </>
+  );
+}
+
+
+// Glossy wet water-bead: keeps the value colour, adds a top gloss, a bluish
+// depth-shadow at the bottom, a specular highlight streak, and wet-bead pips.
+function OceanDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
+  x: number; y: number; cs: number; value: CellValue; faceColor: string; dotColor: string; perfMode?: boolean;
+}) {
+  const pad = 2;
+  const rw = cs - pad * 2;
+  const rx = x + pad, ry = y + pad;
+  const dotR = Math.max(cs * 0.085, 3);
+  const dots = DOT_POSITIONS[value] ?? DOT_POSITIONS[1];
+  const clip = rrect(rect(rx, ry, rw, rw), 10, 10);
+  return (
+    <>
+      <Group clip={clip}>
+        <Rect x={rx} y={ry} width={rw} height={rw} color={faceColor} />
+        {!perfMode && <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
+          <RadialGradient c={vec(rx + rw * 0.5, ry - rw * 0.15)} r={rw * 1.15} colors={['rgba(255,255,255,0.5)', 'rgba(255,255,255,0)']} />
+        </Rect>}
+        {!perfMode && <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
+          <RadialGradient c={vec(rx + rw * 0.5, ry + rw * 1.15)} r={rw * 1.0} colors={['rgba(0,26,48,0.30)', 'rgba(0,26,48,0)']} />
+        </Rect>}
+        {/* specular gloss streak */}
+        {!perfMode && <Circle cx={rx + rw * 0.34} cy={ry + rw * 0.24} r={rw * 0.17} color="rgba(255,255,255,0.62)">
+          <BlurMask blur={rw * 0.08} style="normal" />
+        </Circle>}
+      </Group>
+      {/* glossy rim */}
+      <RoundedRect x={rx} y={ry} width={rw} height={rw} r={10} color="rgba(255,255,255,0.22)" style="stroke" strokeWidth={1.2} />
+      {/* wet-bead pips: dot + tiny highlight */}
+      {dots.map(([xf, yf], i) => (
+        <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR} color={dotColor} />
+      ))}
+      {!perfMode && dots.map(([xf, yf], i) => (
+        <Circle key={`h${i}`} cx={rx + xf * rw - dotR * 0.3} cy={ry + yf * rw - dotR * 0.3} r={dotR * 0.34} color="rgba(255,255,255,0.7)" />
+      ))}
+    </>
+  );
+}
+
+// Soft puffy candy jelly: keeps the value colour, very rounded, with a big
+// diffuse gloss up top, a soft inner edge shade that inflates the form, and
+// pressed-in candy pips (shadow under a dot with a bright glint).
+function PastelDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
+  x: number; y: number; cs: number; value: CellValue; faceColor: string; dotColor: string; perfMode?: boolean;
+}) {
+  const pad = 2;
+  const rw = cs - pad * 2;
+  const rx = x + pad, ry = y + pad;
+  const dotR = Math.max(cs * 0.085, 3);
+  const dots = DOT_POSITIONS[value] ?? DOT_POSITIONS[1];
+  const clip = rrect(rect(rx, ry, rw, rw), 14, 14);
+  return (
+    <>
+      <Group clip={clip}>
+        <Rect x={rx} y={ry} width={rw} height={rw} color={faceColor} />
+        {/* candy sheen — bright toward the top */}
+        {!perfMode && <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
+          <RadialGradient c={vec(rx + rw * 0.5, ry + rw * 0.02)} r={rw * 1.2} colors={['rgba(255,255,255,0.46)', 'rgba(255,255,255,0.05)', 'rgba(255,255,255,0)']} />
+        </Rect>}
+        {/* big soft gloss blob for a puffy jelly look */}
+        {!perfMode && <Circle cx={rx + rw * 0.5} cy={ry} r={rw * 0.6} color="rgba(255,255,255,0.30)">
+          <BlurMask blur={rw * 0.2} style="normal" />
+        </Circle>}
+        {/* soft inner edge shade inflates the form */}
+        {!perfMode && <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
+          <RadialGradient c={vec(rx + rw * 0.5, ry + rw * 0.5)} r={rw * 0.8} colors={['rgba(0,0,0,0)', 'rgba(78,68,98,0.14)']} />
+        </Rect>}
+      </Group>
+      {/* soft bright rim */}
+      <RoundedRect x={rx} y={ry} width={rw} height={rw} r={14} color="rgba(255,255,255,0.5)" style="stroke" strokeWidth={1.2} />
+      {/* pressed candy pips: soft shadow + dot + bright glint */}
+      {!perfMode && dots.map(([xf, yf], i) => (
+        <Circle key={`sh${i}`} cx={rx + xf * rw} cy={ry + yf * rw + 0.7} r={dotR} color="rgba(70,60,90,0.20)" />
+      ))}
+      {dots.map(([xf, yf], i) => (
+        <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR} color={dotColor} />
+      ))}
+      {!perfMode && dots.map(([xf, yf], i) => (
+        <Circle key={`h${i}`} cx={rx + xf * rw - dotR * 0.3} cy={ry + yf * rw - dotR * 0.3} r={dotR * 0.34} color="rgba(255,255,255,0.55)" />
+      ))}
+    </>
+  );
+}
 
 const DiceFace = React.memo(function DiceFace({ x, y, cs, value, faceColor, dotColor, diceStyle, perfMode }: {
   x: number; y: number; cs: number; value: CellValue;
@@ -302,6 +426,9 @@ const DiceFace = React.memo(function DiceFace({ x, y, cs, value, faceColor, dotC
     case 'pixel':   return <PixelDie   x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;
     case 'neon':    return <NeonDie    x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} perfMode={perfMode} />;
     case 'raised':  return <RaisedDie  x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} perfMode={perfMode} />;
+    case 'wooden':  return <WoodenDie  x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} perfMode={perfMode} />;
+    case 'ocean':   return <OceanDie   x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} perfMode={perfMode} />;
+    case 'pastel':  return <PastelDie  x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} perfMode={perfMode} />;
     default:        return <ClassicDie x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;
   }
 });
