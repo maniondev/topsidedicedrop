@@ -113,7 +113,11 @@ export function useRewardedAd(onRewarded: () => void) {
 
     if (ad.loaded) {
       begin();
-      ad.show().catch(() => { undo(); ad.load(); });
+      // If show() rejects (rare), grant the reward instead of stranding the
+      // player — same "never stuck on a broken ad" philosophy as the fallback
+      // path below. This also moves the game phase / closes the game-over modal,
+      // which clears the modal's Continue latch (it has no other reset signal).
+      ad.show().catch(() => { undo(); callbackRef.current(); ad.load(); });
       return;
     }
 
