@@ -63,6 +63,7 @@ export default function LeaderboardScreen() {
   const { stats } = useStats();
   const { top } = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
+  const fetchGenRef = useRef(0);
 
   const [activeTab,       setActiveTab]       = useState<'yours' | 'leaderboard'>('yours');
   const [showInfo,        setShowInfo]        = useState(false);
@@ -168,6 +169,11 @@ export default function LeaderboardScreen() {
   }, []);
 
   const fetchLeaderboard = useCallback(async () => {
+    // Guard against overlapping fetches (rapid filter changes): a slower earlier
+    // request must not overwrite the results of a newer one. Each call claims a
+    // generation; after every await we bail if a newer call has since started.
+    const gen = ++fetchGenRef.current;
+    const isStale = () => gen !== fetchGenRef.current;
     setLbLoading(true);
     setLbError(null);
     setDbBestScore(0);
@@ -194,6 +200,7 @@ export default function LeaderboardScreen() {
         fetchTimeout,
       ]);
 
+      if (isStale()) return;
       if (bestRes.error)     throw bestRes.error;
       if (lifetimeRes.error) throw lifetimeRes.error;
       setBestEntries(bestRes.data     ?? []);
@@ -231,6 +238,7 @@ export default function LeaderboardScreen() {
           } catch {}
         }
 
+        if (isStale()) return;
         setDbBestScore(scoreForRank);
         setDbLifetimeScore(lifetimeForRank);
 
@@ -244,15 +252,18 @@ export default function LeaderboardScreen() {
             p_time_period: filterTime, p_follower_id: followerParam, p_unassisted: unassisted,
           }),
         ]);
+        if (isStale()) return;
         const bestRankData     = Array.isArray(bestRankRes.data)     ? bestRankRes.data[0]     : bestRankRes.data;
         const lifetimeRankData = Array.isArray(lifetimeRankRes.data) ? lifetimeRankRes.data[0] : lifetimeRankRes.data;
         setBestRankInfo(scoreForRank > 0    ? (bestRankData     ?? null) : null);
         setLifetimeRankInfo(lifetimeForRank > 0 ? (lifetimeRankData ?? null) : null);
       }
     } catch {
-      setLbError('Could not load leaderboard.');
+      if (!isStale()) setLbError('Could not load leaderboard.');
     } finally {
-      setLbLoading(false);
+      // Only the newest fetch owns the loading flag — a stale one finishing
+      // must not clear the spinner while a fresher request is still in flight.
+      if (!isStale()) setLbLoading(false);
     }
   }, [filterDifficulty, filterType, filterTime, playerId, lbScope]);
 

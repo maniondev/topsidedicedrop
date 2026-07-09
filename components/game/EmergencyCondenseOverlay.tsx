@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -15,16 +15,22 @@ interface Props {
 export default function EmergencyCondenseOverlay({ visible }: Props) {
   const { colors } = useTheme();
   const opacity = useRef(new Animated.Value(0)).current;
+  // Stay mounted through the fade-out — unmounting the instant `visible` flips
+  // false (the old `if (!visible) return null`) skipped the exit animation.
+  const [rendered, setRendered] = useState(visible);
 
   useEffect(() => {
+    if (visible) setRendered(true);
     Animated.timing(opacity, {
       toValue: visible ? 1 : 0,
       duration: visible ? 250 : 300,
       useNativeDriver: true,
-    }).start();
+    }).start(({ finished }) => {
+      if (!visible && finished) setRendered(false);
+    });
   }, [visible, opacity]);
 
-  if (!visible) return null;
+  if (!rendered) return null;
 
   return (
     <Animated.View style={[styles.overlay, { opacity }]} pointerEvents="none">
