@@ -369,7 +369,7 @@ export default function LeaderboardScreen() {
   );
 
   return (
-    <View style={[styles.safe, { backgroundColor: colors.background, paddingTop: top }]}>
+    <View style={[styles.safe, { paddingTop: top }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.titleColor ?? colors.text }]}>{activeTab === 'yours' ? 'Your Stats' : 'Leaderboard'}</Text>
         <TouchableOpacity onPress={() => setShowInfo(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>

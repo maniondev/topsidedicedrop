@@ -412,7 +412,9 @@ export const AnimatedDie = forwardRef(function AnimatedDie(
 
 export function makeSettingsStyles(c: ThemeColors) {
   return StyleSheet.create({
-    safe:           { flex: 1, backgroundColor: c.background },
+    // Transparent so the shared tab atmosphere shows through every settings
+    // screen; the tab navigator wrapper provides the base background.
+    safe:           { flex: 1 },
     content:        { paddingHorizontal: 20, paddingTop: 16 },
 
     screenTitle: {

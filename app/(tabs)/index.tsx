@@ -284,7 +284,7 @@ export default function LobbyScreen() {
   }, []);
 
   return (
-    <View style={[styles.safe, { backgroundColor: colors.background, paddingTop: top, paddingHorizontal: ph }]}>
+    <View style={[styles.safe, { paddingTop: top, paddingHorizontal: ph }]}>
 
       {/* TOP — logo, difficulty, play */}
       <View style={[styles.topBlock, { paddingTop: f(16), gap: f(12) }]}>

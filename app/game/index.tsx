@@ -21,6 +21,7 @@ import { isFirstRunOfSession, markFirstRunUsed, resetFirstRunForQuit } from '@/l
 import GameBoard from '@/components/game/GameBoard';
 import HUD from '@/components/game/HUD';
 import Controls from '@/components/game/Controls';
+import ThemeAtmosphere from '@/components/ThemeAtmosphere';
 import GameOverModal from '@/components/game/GameOverModal';
 import PauseModal from '@/components/game/PauseModal';
 import EmergencyCondenseOverlay from '@/components/game/EmergencyCondenseOverlay';
@@ -680,7 +681,9 @@ export default function GameScreen() {
   const freeContinueAvailable = hasNoAds;
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ThemeAtmosphere showAmbient={false} />
+      <SafeAreaView style={[styles.safe, { backgroundColor: 'transparent' }]}>
 
       {/* All game content in one column — equal flex spacers give identical gaps
           between every section (HUD ↔ board ↔ controls ↔ ad). When the ad is
@@ -793,7 +796,8 @@ export default function GameScreen() {
         }}
       />
 
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 

@@ -1,9 +1,10 @@
 import { Tabs } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Dimensions, Platform } from 'react-native';
+import { Dimensions, Platform, View } from 'react-native';
 import { HapticTab } from '@/components/haptic-tab';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ThemeAtmosphere from '@/components/ThemeAtmosphere';
 
 const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 
@@ -14,12 +15,18 @@ export default function TabLayout() {
   const bottomPad = isAndroid ? Math.max(bottom, 12) + 16 : Math.max(bottom, 8);
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarAllowFontScaling: false,
-        sceneStyle: { backgroundColor: colors.background },
+    // One shared atmosphere layer behind ALL tab scenes (Play / Stats /
+    // Settings). The wrapper carries the base background; the atmosphere fills
+    // it; scenes and screen roots are transparent so it shows through — full
+    // bleed, no per-screen padding seams.
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <ThemeAtmosphere />
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarButton: HapticTab,
+          tabBarAllowFontScaling: false,
+          sceneStyle: { backgroundColor: 'transparent' },
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
@@ -68,6 +75,7 @@ export default function TabLayout() {
           ),
         }}
       />
-    </Tabs>
+      </Tabs>
+    </View>
   );
 }
