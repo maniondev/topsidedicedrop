@@ -95,7 +95,8 @@ export const ThemeMeta: Record<ThemeId, { label: string; swatches: [string, stri
   neon:      { label: 'Neon',      swatches: ['#000005', '#0A0A1E', '#00FFFF'] },
 };
 
-export const THEME_IDS: ThemeId[] = ['dicedrop', 'dice', 'light', 'dark', 'pastel', 'grayscale', 'ocean', 'forest', 'neon'];
+// Display order in the theme picker.
+export const THEME_IDS: ThemeId[] = ['dicedrop', 'dice', 'dark', 'light', 'neon', 'pastel', 'ocean', 'grayscale', 'forest'];
 
 export const Themes: Record<ThemeId, ThemeColors> = {
   dice: {
