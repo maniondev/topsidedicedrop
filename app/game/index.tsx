@@ -27,7 +27,6 @@ import PauseModal from '@/components/game/PauseModal';
 import EmergencyCondenseOverlay from '@/components/game/EmergencyCondenseOverlay';
 import { FloatingLabelsOverlay, FloatingLabelData } from '@/components/game/FloatingLabels';
 import AdBanner from '@/components/AdBanner';
-import { onRunComplete } from '@/lib/adCounter';
 import { saveGame, loadSavedGame, clearSavedGame, savePendingRun, clearPendingRun, hasSeenControls, markControlsSeen } from '@/lib/storage';
 import TutorialOverlay from '@/components/game/TutorialOverlay';
 import { runMergePhase, computeClearSteps } from '@/lib/condense';
@@ -441,7 +440,6 @@ export default function GameScreen() {
 
   const handleNewGame = useCallback(() => {
     setPaused(false);
-    onRunComplete();
     const continueUsed = freeContinueUsed || adContinueUsed;
     if (!demoRunRef.current) {
       submitRun(game.score, game.runBestChain, difficulty, continueUsed, preContinueScoreRef.current || undefined);

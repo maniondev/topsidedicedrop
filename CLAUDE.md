@@ -35,7 +35,6 @@ components/
     PauseModal.tsx
     EmergencyCondenseOverlay.tsx
   AdBanner.tsx
-  AdInterstitial.tsx
   AppLogo.tsx
   HowToPlayModal.tsx
   PremiumModal.tsx
@@ -123,7 +122,7 @@ game/                      # (empty — reserved)
 
 - Banner ads shown to non-premium users only
 - Rewarded ads used for continues (every continue = one rewarded ad)
-- No interstitial ads
+- Interstitial shown to non-premium users on every New Game *except* the first run of a session (gated by `isFirstRunOfSession()` in `lib/sessionTracker.ts`; session resets after backgrounding). Registered once at module level in `hooks/useInterstitialAd.ts`.
 - Test app IDs (dev only): iOS `ca-app-pub-3940256099942544~1458002511`, Android `ca-app-pub-3940256099942544~3347511713`
 
 ## Commands
