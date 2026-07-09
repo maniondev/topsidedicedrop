@@ -484,6 +484,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     launchAbandonedRef.current = true;
     launchInFlightRef.current = false;
     try { launchSoundRef.current?.stop(); } catch {}
+    // Claim a generation like the other reload paths, so rapid background/
+    // foreground flapping can't run this concurrently with reloadMenuTrack and
+    // leave two menu Sound instances playing (one leaked).
+    const gen = ++reloadGenRef.current;
     await reactivateAudioSessionOnResume();
     const old = soundsRef.current.menu;
     try { old?.stop(); old?.release(); } catch {}
@@ -493,6 +497,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     const loaded = await loadMusic(uri);
     if (loaded) {
       const { sound: snd, durationMs } = loaded;
+      if (gen !== reloadGenRef.current) { try { snd.release(); } catch {} setLaunchPlaybackStarted(false); setLaunchIntroActive(false); return; }
       soundsRef.current.menu = snd;
       setMenuLoopDurationMs(durationMs);
       snd.setVolume(TRACK_VOLUME.menu);
@@ -506,7 +511,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         try { snd.play(); } catch {}
         started = await waitForPlaybackStart(snd);
       }
-      if (started) {
+      if (started && gen === reloadGenRef.current) {
         setMusicSyncStartedAt(Date.now());
         setMusicSyncEpoch(e => e + 1);
       }
@@ -771,10 +776,22 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       snd.play();
     } catch {}
     (snd as any)._lastVolume = vol;
-    waitForPlaybackStart(snd).then(started => {
-      if (!started || !enabledRef.current || !devIncludedRef.current) return;
-      setMusicSyncStartedAt(Date.now());
-      setMusicSyncEpoch(e => e + 1);
+    waitForPlaybackStart(snd).then(async started => {
+      if (!enabledRef.current || !devIncludedRef.current) return;
+      if (!started && AppState.currentState === 'active') {
+        // This runs on ad close (via endAdAudio), racing the 200ms-delayed
+        // category restore from exitAdAudioSession — if activation isn't live
+        // yet the play() no-ops and music stays dead until the next
+        // background/foreground. Re-apply + replay once, like every other
+        // (re)load path.
+        forceReapplyAudioSessionCategory();
+        try { snd.setCurrentTime(0); snd.setVolume(vol); snd.play(); } catch {}
+        started = await waitForPlaybackStart(snd);
+      }
+      if (started) {
+        setMusicSyncStartedAt(Date.now());
+        setMusicSyncEpoch(e => e + 1);
+      }
     });
   };
 

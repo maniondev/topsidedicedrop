@@ -19,8 +19,6 @@ export function useRewardedAd(onRewarded: () => void) {
   const musicRef = useRef({ pauseMusic, restartMusicFromTop });
   musicRef.current = { pauseMusic, restartMusicFromTop };
 
-  // Force our audio state for an ad about to present / just dismissed. iOS-only;
-  // Android ads are globally muted so there's nothing to juggle there.
   const beginAdAudio = () => {
     if (Platform.OS !== 'ios') return;
     try { musicRef.current.pauseMusic(); enterAdAudioSession(); } catch {}
@@ -33,10 +31,36 @@ export function useRewardedAd(onRewarded: () => void) {
   adAudioRef.current = { beginAdAudio, endAdAudio };
 
   const earnedRef = useRef(false);
-  const unsubLoadedRef = useRef<(() => void) | null>(null);
+  // True from the moment we begin presenting until the ad is fully dismissed —
+  // blocks a double-tap from calling show() twice (the 2nd rejects and would
+  // run the undo path, tearing down the audio session under the live ad).
+  const inFlightRef = useRef(false);
+  // Fallback (ad-not-loaded) wait: timer + the transient LOADED listener, so
+  // both can be cleaned up on a new attempt or unmount (they used to leak).
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fallbackUnsubRef = useRef<(() => void) | null>(null);
+  // Exponential backoff so a no-fill / offline device doesn't tight-loop
+  // load→fail→load for the whole session.
+  const retryRef = useRef(0);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cancelFallback = () => {
+    if (fallbackTimerRef.current) { clearTimeout(fallbackTimerRef.current); fallbackTimerRef.current = null; }
+    fallbackUnsubRef.current?.();
+    fallbackUnsubRef.current = null;
+  };
+  const scheduleReload = () => {
+    if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    const delay = Math.min(60000, 1000 * 2 ** retryRef.current); // 1s, 2s, 4s … cap 60s
+    retryRef.current += 1;
+    retryTimerRef.current = setTimeout(() => { ad.load(); }, delay);
+  };
 
   useEffect(() => {
-    const unsubLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => setAdLoaded(true));
+    const unsubLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
+      retryRef.current = 0; // success resets backoff
+      setAdLoaded(true);
+    });
 
     // Just FLAG the reward here — do NOT run game logic yet. EARNED_REWARD fires
     // while the ad is still on screen (app backgrounded); starting the condense
@@ -48,10 +72,9 @@ export function useRewardedAd(onRewarded: () => void) {
     // Fire the reward callback ONLY after the ad is fully dismissed and the app
     // is back in the foreground — so the resulting animations/timers run cleanly.
     // This CLOSED handler is the single source of truth for restoring audio,
-    // no matter HOW the ad was dismissed (X button, back, click-through return
-    // then close). On iOS endAdAudio restores the user's category + restarts
-    // music; on Android we only restore the game session.
+    // no matter HOW the ad was dismissed (X, back, click-through return then close).
     const unsubClosed = ad.addAdEventListener(AdEventType.CLOSED, () => {
+      inFlightRef.current = false;
       if (Platform.OS === 'ios') adAudioRef.current.endAdAudio();
       else restoreGameAudioSession();
       setAdLoaded(false);
@@ -65,48 +88,48 @@ export function useRewardedAd(onRewarded: () => void) {
 
     const unsubError = ad.addAdEventListener(AdEventType.ERROR, () => {
       earnedRef.current = false;
+      inFlightRef.current = false;
       setAdLoaded(false);
-      ad.load();
+      scheduleReload();
     });
 
     if (adsReady && !ad.loaded) ad.load();
 
-    return () => { unsubLoaded(); unsubEarned(); unsubClosed(); unsubError(); };
+    return () => {
+      unsubLoaded(); unsubEarned(); unsubClosed(); unsubError();
+      cancelFallback();
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    };
   }, []);
 
-  // If the ad isn't ready, trigger a load and wait up to 1.5s.
-  // If it loads in time we show it; otherwise we grant the reward for free
-  // so the player is never stuck on a broken ad.
+  // If the ad isn't ready, trigger a load and wait up to 1.5s; if it loads in
+  // time we show it, otherwise grant the reward for free so the player is never
+  // stuck on a broken ad.
   const showAdWithFallback = useCallback(() => {
-    const begin = () => adAudioRef.current.beginAdAudio();
-    // Undo audio changes if the ad never actually shows (show() rejected), so
-    // we don't strand the music paused or the category on Ambient. CLOSED
-    // won't fire in that case.
-    const undo = () => adAudioRef.current.endAdAudio();
+    if (inFlightRef.current) return; // guard against double-taps
+
+    const begin = () => { inFlightRef.current = true; adAudioRef.current.beginAdAudio(); };
+    const undo = () => { inFlightRef.current = false; adAudioRef.current.endAdAudio(); };
+
     if (ad.loaded) {
       begin();
       ad.show().catch(() => { undo(); ad.load(); });
       return;
     }
+
+    inFlightRef.current = true; // block re-taps during the wait
     ad.load();
-    const fallbackTimer = setTimeout(() => {
-      // Ad still didn't load — grant reward directly (no ad shown, no audio to undo)
-      unsubLoadedRef.current?.();
-      callbackRef.current();
+    cancelFallback();
+    fallbackTimerRef.current = setTimeout(() => {
+      cancelFallback();
+      inFlightRef.current = false;
+      callbackRef.current(); // grant free — no ad shown, no audio to undo
     }, 1500);
-    // If the ad loads in time, cancel the fallback and show it
-    const unsub = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
-      clearTimeout(fallbackTimer);
-      unsub();
+    fallbackUnsubRef.current = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
+      cancelFallback();
       begin();
-      ad.show().catch(() => {
-        // show() failed after load — undo audio and grant reward anyway
-        undo();
-        callbackRef.current();
-        ad.load();
-      });
+      ad.show().catch(() => { undo(); callbackRef.current(); ad.load(); });
     });
-    unsubLoadedRef.current = unsub;
   }, []);
 
   return { adLoaded, showAdWithFallback };

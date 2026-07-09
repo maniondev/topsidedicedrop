@@ -5,9 +5,20 @@ const SOUND_MODE_KEY = 'tm_sound_mode'; // shared with SoundContext
 
 let _mode: 'ambient' | 'playback' = 'ambient';
 
+// Ad-audio state — declared up here so applyCategory can honor it. While an ad
+// owns the audio we force silent-switch-respecting Ambient no matter what mode
+// a caller asks for, so a pool rebuild / session reactivation that fires
+// mid-ad (SoundContext's foreground handler, a Control-Center pull, a
+// click-through return) can never flip the session to Playback under a live
+// ad and defeat the "ad audio never plays on a muted phone" guarantee.
+let _adPresenting = false;
+let _adEndedAt = 0;
+const AD_GRACE_MS = 800;
+
 function applyCategory(mode: 'ambient' | 'playback') {
+  const effective = _adPresenting ? 'ambient' : mode;
   try {
-    if (mode === 'playback') {
+    if (effective === 'playback') {
       Sound.setCategory('Playback', true);
     } else {
       Sound.setCategory('Ambient');
@@ -95,10 +106,6 @@ export function forceReapplyAudioSessionCategory() {
 // Center pull-down, incoming call, etc.) can't restart the soundtrack
 // underneath the ad or fight the restore. A short grace window after dismissal
 // covers the 'active' event that arrives alongside the ad closing.
-let _adPresenting = false;
-let _adEndedAt = 0;
-const AD_GRACE_MS = 800;
-
 export function isAdInterrupting(): boolean {
   return _adPresenting || Date.now() - _adEndedAt < AD_GRACE_MS;
 }

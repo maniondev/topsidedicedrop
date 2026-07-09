@@ -24,6 +24,14 @@ export default function GameOverModal({
   const { colors } = useTheme();
   const isNewBest = score > prevBest && score > 0;
 
+  // Latch the first Continue tap so a fast double-tap can't fire the handler
+  // twice (the hook also guards show(), this stops the earlier duplicate call).
+  // Reset every time the modal reopens for a new game-over.
+  const [continuePending, setContinuePending] = React.useState(false);
+  React.useEffect(() => { if (visible) setContinuePending(false); }, [visible]);
+  const handleFreeContinue = () => { if (continuePending) return; setContinuePending(true); onFreeContinue(); };
+  const handleAdContinue = () => { if (continuePending) return; setContinuePending(true); onContinue(); };
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onNewGame}>
       <View style={styles.overlay}>
@@ -47,8 +55,9 @@ export default function GameOverModal({
 
           {freeContinueAvailable && (
             <TouchableOpacity
-              style={[styles.continueBtn, { backgroundColor: colors.accent }]}
-              onPress={onFreeContinue}
+              style={[styles.continueBtn, { backgroundColor: colors.accent, opacity: continuePending ? 0.6 : 1 }]}
+              onPress={handleFreeContinue}
+              disabled={continuePending}
             >
               <Text style={[styles.continueBtnText, { color: colors.accentText }]}>Continue</Text>
             </TouchableOpacity>
@@ -57,8 +66,9 @@ export default function GameOverModal({
           {/* Ad continue — always tappable; shows ad if ready, grants reward after 1.5s fallback if not */}
           {!freeContinueAvailable && (
             <TouchableOpacity
-              style={[styles.continueBtn, { backgroundColor: colors.accent }]}
-              onPress={onContinue}
+              style={[styles.continueBtn, { backgroundColor: colors.accent, opacity: continuePending ? 0.6 : 1 }]}
+              onPress={handleAdContinue}
+              disabled={continuePending}
             >
               <Text style={[styles.continueBtnText, { color: colors.accentText }]}>▶ Continue</Text>
               <Text style={[styles.continueSub, { color: colors.accentText }]}>Watch a longer ad</Text>
