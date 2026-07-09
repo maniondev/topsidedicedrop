@@ -90,15 +90,22 @@ function loadMusic(uri: string): Promise<{ sound: Sound; durationMs: number } | 
 // false is the signal that the audio session wasn't actually live (e.g.
 // activation rejected during an app-foreground transition) and the caller
 // should re-apply the session and retry.
-function waitForPlaybackStart(snd: Sound, timeoutMs = 500): Promise<boolean> {
+// Resolves with the wall-clock timestamp of the track's position 0 (a truthy
+// value callers use both as "playback started" AND as the sync anchor), or 0 if
+// playback never started before the timeout (the falsy "not live — retry"
+// signal). Crucially, the timestamp is back-dated by however far the track has
+// already advanced at first detection: a freshly loaded Sound can be ~200ms in
+// before its position first reads non-zero, so anchoring beat-synced animations
+// to a plain Date.now() here would plant the grid that far BEHIND the audio.
+function waitForPlaybackStart(snd: Sound, timeoutMs = 500): Promise<number> {
   return new Promise(resolve => {
     const start = Date.now();
     const poll = () => {
       snd.getCurrentTime(seconds => {
         if (seconds > 0) {
-          resolve(true);
+          resolve(Date.now() - Math.round(seconds * 1000));
         } else if (Date.now() - start > timeoutMs) {
-          resolve(false);
+          resolve(0);
         } else {
           setTimeout(poll, 8);
         }
@@ -454,7 +461,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
           started = await waitForPlaybackStart(theme);
         }
         if (started) {
-          setMusicSyncStartedAt(Date.now());
+          setMusicSyncStartedAt(started);
           setMusicSyncEpoch(e => e + 1);
         }
       }
@@ -535,7 +542,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         started = await waitForPlaybackStart(snd);
       }
       if (started && gen === reloadGenRef.current) {
-        setMusicSyncStartedAt(Date.now());
+        setMusicSyncStartedAt(started);
         setMusicSyncEpoch(e => e + 1);
       }
     }
@@ -635,7 +642,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }
     if (gen !== reloadGenRef.current) return;
     if (started) {
-      setMusicSyncStartedAt(Date.now());
+      setMusicSyncStartedAt(started);
       setMusicSyncEpoch(e => e + 1);
     }
   }, [fadeTo, refreshOtherAudio]);
@@ -682,7 +689,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       (snd as any)._lastVolume = vol;
       const started = await waitForPlaybackStart(snd);
       if (gen !== reloadGenRef.current || !started) return;
-      setMusicSyncStartedAt(Date.now());
+      setMusicSyncStartedAt(started);
       setMusicSyncEpoch(e => e + 1);
     })();
   }, []);
@@ -717,7 +724,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       (snd as any)._lastVolume = vol;
       const started = await waitForPlaybackStart(snd);
       if (gen !== reloadGenRef.current || !started) return;
-      setMusicSyncStartedAt(Date.now());
+      setMusicSyncStartedAt(started);
       setMusicSyncEpoch(e => e + 1);
     })();
   }, []);
@@ -818,7 +825,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         started = await waitForPlaybackStart(snd);
       }
       if (started) {
-        setMusicSyncStartedAt(Date.now());
+        setMusicSyncStartedAt(started);
         setMusicSyncEpoch(e => e + 1);
       }
     });
