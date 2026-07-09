@@ -24,8 +24,8 @@ export const THEME_PRESETS: Partial<Record<ThemeId, ThemePreset>> = {
   dicedrop:  { soundtrack: 'dicedrop',   soundPack: 'topside', animPack: 'classic', diceStyle: 'classic' },
   // "Classic" theme · Classic soundtrack · Classic SFX · Classic motion · Classic dice
   dice:      { soundtrack: 'classic',    soundPack: 'topside', animPack: 'classic', diceStyle: 'classic' },
-  // Light · Classic soundtrack · Snow SFX · Classic motion · 8-Bit dice
-  light:     { soundtrack: 'classic',    soundPack: 'snow',    animPack: 'classic', diceStyle: 'pixel' },
+  // Light · Classic soundtrack · Classic SFX · Classic motion · Classic dice
+  light:     { soundtrack: 'classic',    soundPack: 'topside', animPack: 'classic', diceStyle: 'classic' },
   // Dark · Dice Drop soundtrack · Fight SFX · Shatter motion · Pop Art dice
   dark:      { soundtrack: 'dicedrop',   soundPack: 'fight',   animPack: 'shatter', diceStyle: 'comic' },
   // Pastel · Forest soundtrack · Bubbles SFX · Extra motion · Jelly dice
@@ -36,6 +36,6 @@ export const THEME_PRESETS: Partial<Record<ThemeId, ThemePreset>> = {
   ocean:     { soundtrack: 'underwater', soundPack: 'splash',  animPack: 'extra',   diceStyle: 'ocean' },
   // Forest · Forest soundtrack · Dig SFX · Minimal motion · Wooden dice
   forest:    { soundtrack: 'forest',     soundPack: 'dig',     animPack: 'minimal', diceStyle: 'wooden' },
-  // Neon · Neon soundtrack · Coins SFX · Glitch motion · Neon dice
-  neon:      { soundtrack: 'neon',       soundPack: 'coins',   animPack: 'glitch',  diceStyle: 'neon' },
+  // Neon · Neon soundtrack · Snow SFX · Glitch motion · Neon dice
+  neon:      { soundtrack: 'neon',       soundPack: 'snow',    animPack: 'glitch',  diceStyle: 'neon' },
 };

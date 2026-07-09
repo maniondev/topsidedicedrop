@@ -125,8 +125,8 @@ export default function SettingsScreen() {
               onPress={handleUpgrade}
               activeOpacity={0.85}
             >
-              <Ionicons name="star" size={16} color="#fff" />
-              <Text style={[styles.upgradeBtnText, { color: '#fff' }]}>
+              <Ionicons name="star" size={16} color={colors.accentText} />
+              <Text style={[styles.upgradeBtnText, { color: colors.accentText }]}>
                 {hasCustomization ? 'Remove All Ads' : hasNoAds ? 'Unlock Customization' : 'Unlock Premium'}
               </Text>
             </TouchableOpacity>
