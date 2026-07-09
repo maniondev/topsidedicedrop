@@ -87,6 +87,13 @@ assets/
     snow/
     splash/
 
+modules/
+  native-audio-info/       # Local Expo module (iOS only) — exposes
+                           #   AVAudioSession.isOtherAudioPlaying to JS so the
+                           #   soundtrack yields to the user's own audio.
+                           #   Autolinked from ./modules; returns false where
+                           #   unavailable (Android / older builds).
+
 ios/
   TopsideMerge/            # Native iOS project (Xcode)
   TopsideMerge.xcodeproj/

@@ -4,6 +4,7 @@ import Sound from 'react-native-sound';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ensureAudioSessionCategory, reactivateAudioSessionOnResume, forceReapplyAudioSessionCategory, isAdInterrupting } from '@/lib/audioSession';
+import { isOtherAudioPlaying } from '@/modules/native-audio-info';
 
 const MUSIC_ENABLED_KEY = 'tm_music_enabled';
 const DEV_MUSIC_INCLUDED_KEY = 'tm_dev_music_included';
@@ -233,6 +234,19 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   enabledRef.current = musicEnabled;
   const devIncludedRef = useRef(true);
   devIncludedRef.current = devMusicIncluded;
+
+  // True while the user's own audio (their music, a podcast, etc.) is playing.
+  // We yield our soundtrack to it rather than layering a second music bed on
+  // top. Refreshed synchronously at each point where we'd auto-start music
+  // (cold launch, foreground resume, ad-close restart); a cheap native property
+  // read (iOS only — always false elsewhere, preserving prior behavior). SFX
+  // are unaffected and still play over the user's audio, which is expected.
+  const otherAudioRef = useRef(false);
+  const refreshOtherAudio = useCallback(() => {
+    const v = isOtherAudioPlaying();
+    otherAudioRef.current = v;
+    return v;
+  }, []);
 
   const soundsRef = useRef<Partial<Record<MusicTrack, Sound>>>({});
   const launchSoundRef = useRef<Sound | null>(null);
@@ -486,8 +500,17 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     try { launchSoundRef.current?.stop(); } catch {}
     // Claim a generation like the other reload paths, so rapid background/
     // foreground flapping can't run this concurrently with reloadMenuTrack and
-    // leave two menu Sound instances playing (one leaked).
+    // leave two menu Sound instances playing (one leaked). Claimed BEFORE the
+    // other-audio check below so yielding also cancels any in-flight reload.
     const gen = ++reloadGenRef.current;
+    // Yield to the user's own audio — the stinger is abandoned and the overlay
+    // cleared above regardless, but don't start our soundtrack over their
+    // playback. A later resume will start it once their audio has stopped.
+    if (refreshOtherAudio()) {
+      setLaunchPlaybackStarted(false);
+      setLaunchIntroActive(false);
+      return;
+    }
     await reactivateAudioSessionOnResume();
     const old = soundsRef.current.menu;
     try { old?.stop(); old?.release(); } catch {}
@@ -518,7 +541,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }
     setLaunchPlaybackStarted(false);
     setLaunchIntroActive(false);
-  }, []);
+  }, [refreshOtherAudio]);
 
   // Single-track mode: "switching" tracks just ducks/restores the one menu
   // track's volume — no pause, no restart, no second track ever plays.
@@ -566,6 +589,12 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
   const reloadMenuTrack = useCallback(async () => {
     const gen = ++reloadGenRef.current;
+    // Yield to the user's own audio — don't rebuild/restart our soundtrack over
+    // it. The gen bump above also cancels any reload already in flight (e.g. a
+    // prior resume that's mid-load when the user starts their music), so it
+    // can't finish and play. A later resume, once their audio has stopped,
+    // reloads and plays.
+    if (refreshOtherAudio()) return;
     // Shared with SoundContext's own foreground handler — waits out
     // whichever context's native setCategory/setActive call is in flight
     // before either constructs new Sound instances, avoiding the same
@@ -609,7 +638,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       setMusicSyncStartedAt(Date.now());
       setMusicSyncEpoch(e => e + 1);
     }
-  }, [fadeTo]);
+  }, [fadeTo, refreshOtherAudio]);
 
   // User picked a different song in Settings. Shares reloadGenRef with
   // reloadMenuTrack so a soundtrack switch mid-resume (or vice versa) can't
@@ -806,8 +835,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     // unconditionally, so without this guard an ad closing would start music
     // the user has disabled.
     if (!enabledRef.current || !devIncludedRef.current) return;
+    // Yield to the user's own audio if they started something during the ad.
+    if (refreshOtherAudio()) return;
     restartMenuFromTopRef.current();
-  }, []);
+  }, [refreshOtherAudio]);
 
   const setMusicEnabled = useCallback((v: boolean) => {
     setMusicEnabledState(v);
@@ -861,10 +892,20 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     if (tracksReady && settingsReady && !hasPlayedLaunchRef.current) {
       hasPlayedLaunchRef.current = true;
       if (musicEnabled && devMusicIncluded) {
-        playLaunchSequence();
+        // Yield to the user's own audio: if something is already playing, skip
+        // the launch stinger + soundtrack and just drop the intro overlay. The
+        // foreground handler will start our music on a later resume if their
+        // audio has stopped by then. (hasPlayedLaunchRef is already set, so that
+        // path uses reloadMenuTrack, not the launch sequence.)
+        if (refreshOtherAudio()) {
+          setLaunchPlaybackStarted(false);
+          setLaunchIntroActive(false);
+        } else {
+          playLaunchSequence();
+        }
       }
     }
-  }, [tracksReady, settingsReady, musicEnabled, devMusicIncluded, playLaunchSequence]);
+  }, [tracksReady, settingsReady, musicEnabled, devMusicIncluded, playLaunchSequence, refreshOtherAudio]);
 
   // Loop-boundary ticker: fires at each predicted wrap of the looping menu
   // track, re-anchoring musicLoopStartedAt so beat-synced animations reset
