@@ -271,6 +271,82 @@ function NeonAmbient({ clock, W, H }: { clock: SharedValue<number>; W: number; H
   );
 }
 
+interface SeedBokeh { baseX: number; baseY: number; r: number; fx: number; fy: number; ax: number; ay: number; px: number; py: number; pr: number; base: number; amp: number; color: string }
+
+// A pastel bokeh orb — a big, soft, out-of-focus circle of colour drifting
+// slowly and gently breathing. Dreamy on a light background.
+function Bokeh({ clock, s }: { clock: SharedValue<number>; s: SeedBokeh }) {
+  const cx = useDerivedValue(() => { 'worklet'; return s.baseX + Math.sin(clock.value / 1000 * s.fx + s.px) * s.ax; });
+  const cy = useDerivedValue(() => { 'worklet'; return s.baseY + Math.cos(clock.value / 1000 * s.fy + s.py) * s.ay; });
+  const opacity = useDerivedValue(() => { 'worklet'; return s.base + s.amp * (0.5 + 0.5 * Math.sin(clock.value / 1000 * 0.4 + s.pr)); });
+  return (
+    <Group opacity={opacity}>
+      <Circle cx={cx} cy={cy} r={s.r} color={s.color}>
+        <BlurMask blur={s.r * 0.6} style="normal" />
+      </Circle>
+    </Group>
+  );
+}
+
+function PastelAmbient({ clock, W, H, palette }: { clock: SharedValue<number>; W: number; H: number; palette: string[] }) {
+  const orbs = useMemo<SeedBokeh[]>(() => {
+    const n = LOW ? 8 : 13;
+    return Array.from({ length: n }, (_, i) => ({
+      baseX: Math.random() * W,
+      baseY: Math.random() * H,
+      r: 30 + Math.random() * 62,        // big, soft orbs
+      fx: 0.12 + Math.random() * 0.22,   // slow drift
+      fy: 0.10 + Math.random() * 0.20,
+      ax: 16 + Math.random() * 44,
+      ay: 14 + Math.random() * 36,
+      px: Math.random() * Math.PI * 2,
+      py: Math.random() * Math.PI * 2,
+      pr: Math.random() * Math.PI * 2,
+      base: 0.24,                        // visible against the light background
+      amp: 0.12,
+      color: palette[i % palette.length],
+    }));
+  }, [W, H, palette]);
+  return <>{orbs.map((s, i) => <Bokeh key={`bo${i}`} clock={clock} s={s} />)}</>;
+}
+
+interface SeedDust { baseX: number; baseY: number; fx: number; fy: number; ax: number; ay: number; px: number; py: number; blink: number; pb: number; r: number }
+
+// A soft grey dust mote — small, faint, slowly drifting. Understated for the
+// minimal Grayscale theme.
+function Dust({ clock, s, color }: { clock: SharedValue<number>; s: SeedDust; color: string }) {
+  const cx = useDerivedValue(() => { 'worklet'; return s.baseX + Math.sin(clock.value / 1000 * s.fx + s.px) * s.ax; });
+  const cy = useDerivedValue(() => { 'worklet'; return s.baseY + Math.cos(clock.value / 1000 * s.fy + s.py) * s.ay; });
+  const opacity = useDerivedValue(() => { 'worklet'; return 0.08 + 0.16 * (0.5 + 0.5 * Math.sin(clock.value / 1000 * s.blink + s.pb)); });
+  return (
+    <Group opacity={opacity}>
+      <Circle cx={cx} cy={cy} r={s.r} color={color}>
+        <BlurMask blur={s.r * 1.2} style="normal" />
+      </Circle>
+    </Group>
+  );
+}
+
+function GrayscaleAmbient({ clock, W, H, particle }: { clock: SharedValue<number>; W: number; H: number; particle: string }) {
+  const motes = useMemo<SeedDust[]>(() => {
+    const n = LOW ? 8 : 14;
+    return Array.from({ length: n }, () => ({
+      baseX: Math.random() * W,
+      baseY: Math.random() * H,
+      fx: 0.15 + Math.random() * 0.35,
+      fy: 0.12 + Math.random() * 0.30,
+      ax: 14 + Math.random() * 36,
+      ay: 12 + Math.random() * 30,
+      px: Math.random() * Math.PI * 2,
+      py: Math.random() * Math.PI * 2,
+      blink: 0.5 + Math.random() * 1.2,
+      pb: Math.random() * Math.PI * 2,
+      r: 1.4 + Math.random() * 2.6,
+    }));
+  }, [W, H]);
+  return <>{motes.map((s, i) => <Dust key={`d${i}`} clock={clock} s={s} color={particle} />)}</>;
+}
+
 // Soft blob of light — used for dappled sun / caustic pools / neon bloom.
 function GlowBlob({ x, y, r, color, opacity }: { x: number; y: number; r: number; color: string; opacity: number }) {
   return (
@@ -301,6 +377,17 @@ function Background({ a, W, H }: { a: Atmosphere; W: number; H: number }) {
       {a.background === 'neon' && (
         <>
           <GlowBlob x={W * 0.5} y={H * 0.42} r={W * 0.7} color={a.glow} opacity={0.22} />
+        </>
+      )}
+      {a.background === 'pastel' && (
+        <>
+          {/* soft multi-colour pools for a cool baby-pastel wash — pink,
+              purple, blue, coral, peach (no yellow) */}
+          <GlowBlob x={W * 0.18} y={H * 0.14} r={W * 0.50} color="#F7BCD2" opacity={0.24} />
+          <GlowBlob x={W * 0.86} y={H * 0.20} r={W * 0.46} color="#C7A8EA" opacity={0.22} />
+          <GlowBlob x={W * 0.10} y={H * 0.56} r={W * 0.44} color="#AEC6EE" opacity={0.20} />
+          <GlowBlob x={W * 0.30} y={H * 0.90} r={W * 0.52} color="#F3A9A6" opacity={0.20} />
+          <GlowBlob x={W * 0.88} y={H * 0.84} r={W * 0.50} color="#F5C4A6" opacity={0.18} />
         </>
       )}
     </Group>
@@ -341,6 +428,12 @@ export default function ThemeAtmosphere({ showAmbient = true }: Props) {
       )}
       {showAmbient && a.background === 'neon' && (
         <NeonAmbient clock={clock} W={width} H={height} />
+      )}
+      {showAmbient && a.background === 'pastel' && (
+        <PastelAmbient clock={clock} W={width} H={height} palette={a.palette ?? [a.particle]} />
+      )}
+      {showAmbient && a.background === 'grayscale' && (
+        <GrayscaleAmbient clock={clock} W={width} H={height} particle={a.particle} />
       )}
     </Canvas>
   );

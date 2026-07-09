@@ -7,8 +7,8 @@ import { ThemeId } from './theme';
 // Each ambient element is listed independently so we can drop the one we don't
 // like later without touching the other.
 
-export type AmbientKind = 'leaves' | 'fireflies' | 'bubbles' | 'caustics' | 'neonParticles';
-export type BackgroundKind = 'forest' | 'ocean' | 'neon';
+export type AmbientKind = 'leaves' | 'fireflies' | 'bubbles' | 'caustics' | 'neonParticles' | 'bokeh' | 'dust';
+export type BackgroundKind = 'forest' | 'ocean' | 'neon' | 'pastel' | 'grayscale';
 
 export interface Atmosphere {
   background: BackgroundKind;
@@ -19,8 +19,10 @@ export interface Atmosphere {
   glow: string;
   // Ambient particle layers, drawn in order; each independently removable.
   ambient: AmbientKind[];
-  // Tint for the particle glow (fireflies / bubble sheen / neon motes).
+  // Tint for the particle glow (fireflies / bubble sheen / neon motes / dust).
   particle: string;
+  // Optional multi-colour set (pastel bokeh cycles through these baby hues).
+  palette?: string[];
 }
 
 export const ATMOSPHERE: Partial<Record<ThemeId, Atmosphere>> = {
@@ -45,5 +47,24 @@ export const ATMOSPHERE: Partial<Record<ThemeId, Atmosphere>> = {
     glow: '#2A1A6A',      // deep violet bloom
     ambient: ['neonParticles'],
     particle: '#00FFFF',
+  },
+  pastel: {
+    background: 'pastel',
+    // Soft multi-pastel wash: pink → lavender → blue (light theme).
+    gradient: ['#F7E9F1', '#EEE9F8', '#E7EFFB'],
+    glow: '#FFFFFF',
+    ambient: ['bokeh'],
+    particle: '#C9B0EC',
+    // Cool baby colours the bokeh orbs cycle through: pink, coral, purple,
+    // peach, blue.
+    palette: ['#F4A8C4', '#F09A9A', '#C09AE6', '#F3BE9A', '#9EBEEC'],
+  },
+  grayscale: {
+    background: 'grayscale',
+    // Clean near-white → soft grey for gentle depth (light theme).
+    gradient: ['#FFFFFF', '#F1F1F4', '#E4E4E9'],
+    glow: '#FFFFFF',
+    ambient: ['dust'],
+    particle: '#B4B4BE',   // soft grey motes
   },
 };
