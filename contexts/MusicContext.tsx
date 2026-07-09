@@ -14,11 +14,12 @@ export type MusicTrack = 'menu' | 'game';
 // Which SONG is loaded into the 'menu' slot — orthogonal to MusicTrack
 // (which is a duck-volume level, not a track choice). All three share the
 // same 130bpm tempo, so TRACK_BPM below doesn't need to vary by selection.
-export type SoundtrackId = 'dicedrop' | 'underwater' | 'classic' | 'neon';
-export const SOUNDTRACK_IDS: SoundtrackId[] = ['dicedrop', 'classic', 'neon', 'underwater'];
+export type SoundtrackId = 'dicedrop' | 'underwater' | 'classic' | 'neon' | 'forest';
+export const SOUNDTRACK_IDS: SoundtrackId[] = ['dicedrop', 'classic', 'forest', 'neon', 'underwater'];
 export const SoundtrackMeta: Record<SoundtrackId, { label: string }> = {
   dicedrop:   { label: 'Dice Drop' },
   classic:    { label: 'Classic' },
+  forest:     { label: 'Forest' },
   neon:       { label: 'Neon' },
   underwater: { label: 'Ocean' },
 };
@@ -28,6 +29,20 @@ const SOUNDTRACK_SOURCES: Record<SoundtrackId, any> = {
   underwater: require('@/assets/sounds/music/underwater.m4a'),
   classic:    require('@/assets/sounds/music/classic.m4a'),
   neon:       require('@/assets/sounds/music/neon.m4a'),
+  forest:     require('@/assets/sounds/music/forest.m4a'),
+};
+
+// Where each soundtrack's LOCKED preview begins (ms into the track), so the
+// snippet a non-premium user hears can showcase its best/most recognisable
+// part. 0 = play from the top. Expressed in bars for readability — every track
+// is 130 BPM 4/4, so one bar is 1846.15 ms. (Bar N starts after N-1 bars.)
+const BAR_MS = (60000 / 130) * 4;
+const PREVIEW_START_MS: Record<SoundtrackId, number> = {
+  dicedrop:   0,
+  classic:    0,
+  forest:     0,
+  neon:       Math.round(BAR_MS * 16),   // start of bar 17
+  underwater: Math.round(BAR_MS * 8),    // start of bar 9
 };
 
 // Single-track mode: gameplay.m4a is intentionally NOT required here — a
@@ -143,6 +158,8 @@ interface MusicCtxType {
   // cold launch, which is what makes beat-synced UI restart in step.
   soundtrackId: SoundtrackId;
   setSoundtrack: (id: SoundtrackId) => void;
+  // Preview a (locked) track from its configured offset without persisting.
+  previewSoundtrack: (id: SoundtrackId) => void;
 }
 
 const MusicCtx = createContext<MusicCtxType>({
@@ -164,6 +181,7 @@ const MusicCtx = createContext<MusicCtxType>({
   musicLoopStartedAt: 0,
   soundtrackId: DEFAULT_SOUNDTRACK,
   setSoundtrack: () => {},
+  previewSoundtrack: () => {},
 });
 
 export function MusicProvider({ children }: { children: React.ReactNode }) {
@@ -633,6 +651,41 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     })();
   }, []);
 
+  // Preview a (usually locked) soundtrack from its configured "best part"
+  // offset. Like setSoundtrack but (a) never persists the pick — the picker
+  // reverts to the owned track on exit — and (b) seeks to PREVIEW_START_MS
+  // before playing, so each track can showcase a different section.
+  const previewSoundtrack = useCallback((id: SoundtrackId) => {
+    soundtrackIdRef.current = id;
+    setSoundtrackIdState(id);
+    if (!devIncludedRef.current || !tracksReadyRef.current) return;
+    const startSec = Math.max(0, (PREVIEW_START_MS[id] ?? 0) / 1000);
+    const gen = ++reloadGenRef.current;
+    (async () => {
+      const old = soundsRef.current.menu;
+      try { old?.stop(); old?.release(); } catch {}
+      const asset = Asset.fromModule(SOUNDTRACK_SOURCES[id]);
+      await asset.downloadAsync();
+      const uri = asset.localUri || asset.uri;
+      const loaded = await loadMusic(uri);
+      if (!loaded) return;
+      const { sound: snd, durationMs } = loaded;
+      if (gen !== reloadGenRef.current) { try { snd.release(); } catch {} return; }
+      soundsRef.current.menu = snd;
+      setMenuLoopDurationMs(durationMs);
+      if (!enabledRef.current) return;
+      const vol = TRACK_VOLUME[currentTrackRef.current];
+      try { if (startSec > 0) snd.setCurrentTime(startSec); } catch {}
+      snd.setVolume(vol);
+      snd.play();
+      (snd as any)._lastVolume = vol;
+      const started = await waitForPlaybackStart(snd);
+      if (gen !== reloadGenRef.current || !started) return;
+      setMusicSyncStartedAt(Date.now());
+      setMusicSyncEpoch(e => e + 1);
+    })();
+  }, []);
+
   // Pause music the instant the app leaves the foreground (home button, app
   // switcher, incoming call, etc.) and resume the current track on return —
   // otherwise it keeps playing in the background regardless of audio-session
@@ -829,7 +882,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       restartMusicFromTop,
       launchIntroActive, launchPlaybackStarted, launchStingerDurationMs,
       bpm: TRACK_BPM.menu, musicSyncEpoch, musicSyncStartedAt, menuLoopDurationMs, musicLoopStartedAt,
-      soundtrackId, setSoundtrack,
+      soundtrackId, setSoundtrack, previewSoundtrack,
     }),
     [
       musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, playTrack, pauseMusic, resumeMusic,

@@ -16,7 +16,7 @@ export default function SoundtrackScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   const { hasCustomization } = usePremium();
-  const { soundtrackId, setSoundtrack } = useMusic();
+  const { soundtrackId, setSoundtrack, previewSoundtrack } = useMusic();
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
   const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // True from the moment a locked preview starts until it's resolved
@@ -69,7 +69,7 @@ export default function SoundtrackScreen() {
                         revertToSelection.current = soundtrackId;
                         previewPendingRef.current = true;
                       }
-                      setSoundtrack(id);
+                      previewSoundtrack(id);
                       previewTimerRef.current = setTimeout(() => setPremiumModalOpen(true), PREVIEW_MODAL_DELAY_MS);
                       return;
                     }
