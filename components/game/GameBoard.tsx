@@ -420,6 +420,8 @@ const DiceFace = React.memo(function DiceFace({ x, y, cs, value, faceColor, dotC
   x: number; y: number; cs: number; value: CellValue;
   faceColor: string; dotColor: string; diceStyle: DiceStyleId; perfMode?: boolean;
 }) {
+  // Performance mode renders the cheapest die regardless of the chosen style.
+  if (perfMode) return <ClassicDie x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;
   switch (diceStyle) {
     case 'sketch':  return <SketchDie  x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;
     case 'round':   return <RoundDie   x={x} y={y} cs={cs} value={value} faceColor={faceColor} dotColor={dotColor} />;

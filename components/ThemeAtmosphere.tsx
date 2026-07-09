@@ -5,6 +5,7 @@ import {
 } from '@shopify/react-native-skia';
 import { useSharedValue, useFrameCallback, useDerivedValue, SharedValue } from 'react-native-reanimated';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAnimation } from '@/contexts/AnimationContext';
 import { ATMOSPHERE, Atmosphere } from '@/constants/atmosphere';
 
 // Lower particle counts on Android — it's the frame-budget-constrained platform
@@ -406,33 +407,37 @@ interface Props {
 // edge without per-screen padding math.
 export default function ThemeAtmosphere({ showAmbient = true }: Props) {
   const { themeId } = useTheme();
+  const { performanceMode } = useAnimation();
   const { width, height } = useWindowDimensions();
   const a = ATMOSPHERE[themeId];
+  // Keep the (cheap, static) gradient, but drop the animated particle layers +
+  // per-frame loop in performance mode.
+  const ambientOn = showAmbient && !performanceMode;
 
   const clock = useSharedValue(0);
   // Start inactive; only spin the per-frame worklet when this instance actually
-  // shows moving ambient (plain themes and the game screen pay nothing).
+  // shows moving ambient (plain themes, the game screen, and perf mode pay nothing).
   const frame = useFrameCallback((info) => { 'worklet'; clock.value = info.timeSinceFirstFrame ?? 0; }, false);
-  useEffect(() => { frame.setActive(!!a && showAmbient); }, [a, showAmbient, frame]);
+  useEffect(() => { frame.setActive(!!a && ambientOn); }, [a, ambientOn, frame]);
 
   if (!a) return null;
 
   return (
     <Canvas pointerEvents="none" style={StyleSheet.absoluteFill}>
       <Background a={a} W={width} H={height} />
-      {showAmbient && a.background === 'forest' && (
+      {ambientOn && a.background === 'forest' && (
         <ForestAmbient clock={clock} W={width} H={height} particle={a.particle} />
       )}
-      {showAmbient && a.background === 'ocean' && (
+      {ambientOn && a.background === 'ocean' && (
         <OceanAmbient clock={clock} W={width} H={height} particle={a.particle} />
       )}
-      {showAmbient && a.background === 'neon' && (
+      {ambientOn && a.background === 'neon' && (
         <NeonAmbient clock={clock} W={width} H={height} />
       )}
-      {showAmbient && a.background === 'pastel' && (
+      {ambientOn && a.background === 'pastel' && (
         <PastelAmbient clock={clock} W={width} H={height} palette={a.palette ?? [a.particle]} />
       )}
-      {showAmbient && a.background === 'grayscale' && (
+      {ambientOn && a.background === 'grayscale' && (
         <GrayscaleAmbient clock={clock} W={width} H={height} particle={a.particle} />
       )}
     </Canvas>

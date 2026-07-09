@@ -165,7 +165,7 @@ interface MusicCtxType {
 const MusicCtx = createContext<MusicCtxType>({
   musicEnabled: true,
   setMusicEnabled: () => {},
-  devMusicIncluded: false,
+  devMusicIncluded: true,
   setDevMusicIncluded: () => {},
   playTrack: () => {},
   pauseMusic: () => {},
@@ -186,7 +186,9 @@ const MusicCtx = createContext<MusicCtxType>({
 
 export function MusicProvider({ children }: { children: React.ReactNode }) {
   const [musicEnabled, setMusicEnabledState] = useState(true);
-  const [devMusicIncluded, setDevMusicIncludedState] = useState(false);
+  // Shipped/on by default now (the soundtrack feature is rolled out, no longer
+  // gated behind the dev gesture). Still toggleable; an explicit off persists.
+  const [devMusicIncluded, setDevMusicIncludedState] = useState(true);
   const [soundtrackId, setSoundtrackIdState] = useState<SoundtrackId>(DEFAULT_SOUNDTRACK);
   const [tracksReady, setTracksReady] = useState(false);
   const [settingsReady, setSettingsReady] = useState(false);
@@ -229,7 +231,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const [musicLoopStartedAt, setMusicLoopStartedAt] = useState(0);
   const enabledRef = useRef(true);
   enabledRef.current = musicEnabled;
-  const devIncludedRef = useRef(false);
+  const devIncludedRef = useRef(true);
   devIncludedRef.current = devMusicIncluded;
 
   const soundsRef = useRef<Partial<Record<MusicTrack, Sound>>>({});
@@ -274,7 +276,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         AsyncStorage.getItem(SOUNDTRACK_KEY).catch(() => null),
       ]);
       if (enabledVal === '0') setMusicEnabledState(false);
-      if (devVal === '1') setDevMusicIncludedState(true);
+      if (devVal === '0') setDevMusicIncludedState(false); // default on; honor explicit off
       if (soundtrackVal && SOUNDTRACK_IDS.includes(soundtrackVal as SoundtrackId)) {
         setSoundtrackIdState(soundtrackVal as SoundtrackId);
         soundtrackIdRef.current = soundtrackVal as SoundtrackId;

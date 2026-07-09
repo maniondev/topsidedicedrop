@@ -55,7 +55,7 @@ export default function GameScreen() {
   const { playTrack } = useMusic();
   const { hasNoAds } = usePremium();
   const { gravityMs, difficulty } = useDifficulty();
-  const { showChainPopups } = useAnimation();
+  const { showChainPopups, performanceMode } = useAnimation();
   const bestScore = statsFor(difficulty).bestScore;
   const bestUnassisted = statsFor(difficulty).bestUnassisted;
   const { width: rawWidth, height } = useWindowDimensions();
@@ -721,7 +721,7 @@ export default function GameScreen() {
               <EmergencyCondenseOverlay visible={game.phase === 'condensing'} />
             </View>
           </GestureDetector>
-          {showChainPopups && (
+          {showChainPopups && !performanceMode && (
             <FloatingLabelsOverlay
               labels={floatingLabels.filter(l => l.type === 'chain')}
               onRemove={removeFloatingLabel}

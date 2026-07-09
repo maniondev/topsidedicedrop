@@ -27,7 +27,7 @@ export default function SettingsScreen() {
   const { colors, themeId } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   const { soundEnabled, setSoundEnabled, soundPack, soundMode, setSoundMode } = useSound();
-  const { musicEnabled, setMusicEnabled, devMusicIncluded, setDevMusicIncluded, soundtrackId } = useMusic();
+  const { musicEnabled, setMusicEnabled, soundtrackId } = useMusic();
   const { animPack, performanceMode, setPerformanceMode, showChainPopups, setShowChainPopups } = useAnimation();
   const { diceStyle } = useDiceStyle();
   const { hasCustomization, hasNoAds, restorePurchases, redeemCode, devToggleCustomization, devToggleNoAds } = usePremium();
@@ -47,47 +47,6 @@ export default function SettingsScreen() {
 
   const handleUpgrade = () => setPremiumModalOpen(true);
 
-  // Hidden gesture: tap "Sound" 5x, holding the 5th tap for 2s, toggles the
-  // dev music-testing flag without needing a dev build.
-  const soundTapCountRef = useRef(0);
-  const soundResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const soundHoldTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const clearSoundResetTimer = () => {
-    if (soundResetTimerRef.current) { clearTimeout(soundResetTimerRef.current); soundResetTimerRef.current = null; }
-  };
-  const scheduleSoundReset = () => {
-    clearSoundResetTimer();
-    soundResetTimerRef.current = setTimeout(() => { soundTapCountRef.current = 0; }, 1500);
-  };
-
-  const handleSoundHeaderPressIn = () => {
-    if (soundTapCountRef.current === 4) {
-      soundHoldTimerRef.current = setTimeout(() => {
-        soundTapCountRef.current = 0;
-        clearSoundResetTimer();
-        setDevMusicIncluded(!devMusicIncluded);
-        Alert.alert('Music', devMusicIncluded ? 'Music hidden' : 'Music unlocked');
-      }, 2000);
-    }
-  };
-
-  const handleSoundHeaderPressOut = () => {
-    if (soundHoldTimerRef.current) {
-      clearTimeout(soundHoldTimerRef.current);
-      soundHoldTimerRef.current = null;
-      if (soundTapCountRef.current === 4) {
-        // Released before the 2s hold completed — sequence failed.
-        soundTapCountRef.current = 0;
-        clearSoundResetTimer();
-        return;
-      }
-    }
-    if (soundTapCountRef.current < 4) {
-      soundTapCountRef.current += 1;
-      scheduleSoundReset();
-    }
-  };
 
   // Hidden gesture: tap the "Settings" title 5x, holding the 5th tap for 2s,
   // reveals dev-only controls (Reset Controls Tutorial, Enable/Remove
@@ -205,16 +164,6 @@ export default function SettingsScreen() {
             />
           )}
           {__DEV__ && devControlsRevealed && (
-            <ToggleRow
-              label="⚙️ Dev: Include Music (testing)"
-              sublabel="Simulates a shipped track to test the Sound/Music split UI"
-              value={devMusicIncluded}
-              onValueChange={setDevMusicIncluded}
-              colors={colors}
-              styles={styles}
-            />
-          )}
-          {__DEV__ && devControlsRevealed && (
             <RowItem
               label="⚙️ Dev: Demo Board 1 (twin towers)"
               onPress={() => {
@@ -246,11 +195,8 @@ export default function SettingsScreen() {
           )}
         </Section>
 
-        {/* Sound — header has a hidden 5-tap-and-hold gesture (see handleSoundHeaderPress*) */}
         <View style={styles.section}>
-          <Pressable onPressIn={handleSoundHeaderPressIn} onPressOut={handleSoundHeaderPressOut}>
-            <Text style={styles.sectionLabel}>Sound</Text>
-          </Pressable>
+          <Text style={styles.sectionLabel}>Sound</Text>
           <View style={styles.sectionCard}>
             {soundEnabled && (
               <ToggleRow
@@ -269,24 +215,20 @@ export default function SettingsScreen() {
               colors={colors}
               styles={styles}
             />
-            {devMusicIncluded && (
-              <ToggleRow
-                label="Soundtrack"
-                value={musicEnabled}
-                onValueChange={setMusicEnabled}
-                colors={colors}
-                styles={styles}
-              />
-            )}
+            <ToggleRow
+              label="Soundtrack"
+              value={musicEnabled}
+              onValueChange={setMusicEnabled}
+              colors={colors}
+              styles={styles}
+            />
           </View>
         </View>
 
         {/* Customize */}
         <Section label="Customize" styles={styles}>
           <RowItem label="Theme" value={ThemeMeta[themeId].label} onPress={() => router.push('/settings/theme')} colors={colors} styles={styles} />
-          {devMusicIncluded && (
-            <RowItem label="Soundtrack" value={SoundtrackMeta[soundtrackId].label} onPress={() => router.push('/settings/soundtrack')} colors={colors} styles={styles} />
-          )}
+          <RowItem label="Soundtrack" value={SoundtrackMeta[soundtrackId].label} onPress={() => router.push('/settings/soundtrack')} colors={colors} styles={styles} />
           <RowItem label="Sound Effects" value={SoundPackMeta[soundPack].label} onPress={() => router.push('/settings/sound-pack')} colors={colors} styles={styles} />
           <RowItem label="Animation Pack" value={AnimPackMeta[animPack].label} onPress={() => router.push('/settings/animation-pack')} colors={colors} styles={styles} />
           <RowItem label="Dice Style" value={DiceStyleMeta[diceStyle].label} onPress={() => router.push('/settings/dice-style')} colors={colors} styles={styles} />
@@ -306,7 +248,7 @@ export default function SettingsScreen() {
           />
           <ToggleRow
             label="Performance Mode"
-            sublabel="Reduces visual effects for smoother gameplay on older devices."
+            sublabel="Turns off visual & sound effects for smoother gameplay on older devices."
             value={performanceMode}
             onValueChange={v => {
               setPerformanceMode(v);
@@ -325,9 +267,7 @@ export default function SettingsScreen() {
             <RowItem label="Rate Topside: Dice Drop ★" colors={colors} styles={styles} onPress={openNativeReview} />
           )}
           <RowItem label="More Games by Topside" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games')} />
-          {devMusicIncluded && (
-            <RowItem label={COMPOSER_CREDIT_LABEL} colors={colors} styles={styles} onPress={openComposerIG} />
-          )}
+          <RowItem label={COMPOSER_CREDIT_LABEL} colors={colors} styles={styles} onPress={openComposerIG} />
           <RowItem label="Privacy Policy" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/dicedrop/privacy')} />
           <RowItem label="Terms of Service" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/dicedrop/tos')} />
           <RowItem label="Contact" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/contact')} />
