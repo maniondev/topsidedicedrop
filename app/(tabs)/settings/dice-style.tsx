@@ -44,7 +44,7 @@ export default function DiceStyleScreen() {
           </View>
         </View>
       </ScrollView>
-      <PremiumModal visible={premiumModalOpen} onClose={() => setPremiumModalOpen(false)} />
+      <PremiumModal visible={premiumModalOpen} onClose={() => setPremiumModalOpen(false)} intent="customization" />
     </View>
   );
 }

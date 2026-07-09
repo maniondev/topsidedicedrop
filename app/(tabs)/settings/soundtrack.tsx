@@ -110,6 +110,7 @@ export default function SoundtrackScreen() {
           // mid-preview should keep their new pick.
           if (!hasCustomization) setSoundtrack(revertToSelection.current);
         }}
+        intent="customization"
       />
     </View>
   );

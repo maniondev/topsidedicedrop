@@ -111,6 +111,7 @@ export default function SoundPackScreen() {
             if (!hasCustomization) setSoundPack(revertPackRef.current);
           }
         }}
+        intent="customization"
       />
     </View>
   );

@@ -113,7 +113,7 @@ export default function ThemeScreen() {
           );
         })}
       </ScrollView>
-      <PremiumModal visible={premiumModalOpen} onClose={() => setPremiumModalOpen(false)} />
+      <PremiumModal visible={premiumModalOpen} onClose={() => setPremiumModalOpen(false)} intent="customization" />
     </View>
   );
 }

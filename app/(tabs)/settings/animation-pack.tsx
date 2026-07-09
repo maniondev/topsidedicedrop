@@ -55,7 +55,7 @@ export default function AnimationPackScreen() {
           </View>
         </View>
       </ScrollView>
-      <PremiumModal visible={premiumModalOpen} onClose={() => setPremiumModalOpen(false)} />
+      <PremiumModal visible={premiumModalOpen} onClose={() => setPremiumModalOpen(false)} intent="customization" />
     </View>
   );
 }

@@ -9,13 +9,19 @@ import { PREMIUM_PRICE, REMOVE_ADS_PRICE, CUSTOMIZATION_PRICE } from '@/constant
 interface Props {
   visible: boolean;
   onClose: () => void;
+  // When opened from a customization feature (theme/dice/soundtrack pickers,
+  // the "Match" button), lead the all-in offer with customization perks and
+  // offer customization as the cheaper alternative — instead of leading with
+  // ad removal.
+  intent?: 'default' | 'customization';
 }
 
 const ALL_IN_PERKS = ['No ads', 'Free continues', 'All themes & sound packs', 'All dice animations & styles'];
+const ALL_IN_PERKS_CUSTOMIZATION = ['All themes & sound packs', 'All dice animations & styles', 'No ads', 'Free continues'];
 const REMOVE_ADS_PERKS = ['No ads', 'Free continues'];
 const CUSTOMIZATION_PERKS = ['All themes & sound packs', 'All dice animations & styles'];
 
-export default function PremiumModal({ visible, onClose }: Props) {
+export default function PremiumModal({ visible, onClose, intent = 'default' }: Props) {
   const { colors } = useTheme();
   const { hasCustomization, hasNoAds, upgrade, restorePurchases } = usePremium();
   const pendingTargetRef = useRef<PurchaseTarget | null>(null);
@@ -30,8 +36,12 @@ export default function PremiumModal({ visible, onClose }: Props) {
     : hasNoAds ? 'customization'
     : 'allIn';
 
+  // A fresh (owns-nothing) user opened from a customization feature: keep the
+  // best-value all-in offer, but lead its perks with customization.
+  const custIntent = intent === 'customization' && offer === 'allIn';
+
   const config: Record<Exclude<typeof offer, 'complete'>, { title: string; perks: string[]; price: string; target: PurchaseTarget }> = {
-    allIn: { title: 'Topside: Dice Drop Premium', perks: ALL_IN_PERKS, price: PREMIUM_PRICE, target: 'allIn' },
+    allIn: { title: 'Topside: Dice Drop Premium', perks: custIntent ? ALL_IN_PERKS_CUSTOMIZATION : ALL_IN_PERKS, price: PREMIUM_PRICE, target: 'allIn' },
     removeAds: { title: 'Remove Ads', perks: REMOVE_ADS_PERKS, price: REMOVE_ADS_PRICE, target: 'removeAds' },
     customization: { title: 'Unlock Customization', perks: CUSTOMIZATION_PERKS, price: CUSTOMIZATION_PRICE, target: 'customization' },
   };
@@ -97,12 +107,12 @@ export default function PremiumModal({ visible, onClose }: Props) {
           </TouchableOpacity>
           {offer === 'allIn' && (
             <TouchableOpacity
-              onPress={() => startPurchase('removeAds')}
+              onPress={() => startPurchase(custIntent ? 'customization' : 'removeAds')}
               hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
               style={styles.secondaryOfferBtn}
             >
               <Text style={[styles.secondaryOffer, { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>
-                Or just Remove Ads — {REMOVE_ADS_PRICE}
+                {custIntent ? `Or just Customization — ${CUSTOMIZATION_PRICE}` : `Or just Remove Ads — ${REMOVE_ADS_PRICE}`}
               </Text>
             </TouchableOpacity>
           )}
