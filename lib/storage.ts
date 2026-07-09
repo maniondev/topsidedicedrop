@@ -22,7 +22,7 @@ export interface DiffStats {
 
 export interface Stats {
   byDifficulty: Record<Difficulty, DiffStats>;
-  recentRuns: RunRecord[]; // global, last 20, each tagged with its difficulty
+  recentRuns: RunRecord[]; // global, last 100, each tagged with its difficulty
 }
 
 const emptyDiff = (): DiffStats => ({ bestScore: 0, bestUnassisted: 0, totalRuns: 0, bestChain: 0, lifetimeScore: 0 });
@@ -95,7 +95,7 @@ export async function loadStats(): Promise<Stats> {
           hard:   { ...emptyDiff(), ...parsed.byDifficulty.hard },
         };
         // One-time migration: if lifetimeScore is missing/0 but recentRuns has data,
-        // seed it from whatever history we have (last 20 runs — best we can do).
+        // seed it from whatever history we have (recent runs — best we can do).
         const needsMigration = (['easy', 'medium', 'hard'] as Difficulty[]).some(
           d => byDiff[d].lifetimeScore === 0 && byDiff[d].totalRuns > 0
         );
