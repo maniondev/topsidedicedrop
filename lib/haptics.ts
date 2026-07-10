@@ -14,9 +14,9 @@ import * as Haptics from 'expo-haptics';
 const MIN_GAP_MS = 150;
 let lastAt = 0;
 
-function fire(kind: () => Promise<unknown>) {
+function fire(kind: () => Promise<unknown>, force = false) {
   const now = Date.now();
-  if (now - lastAt < MIN_GAP_MS) return;
+  if (!force && now - lastAt < MIN_GAP_MS) return;
   lastAt = now;
   requestAnimationFrame(() => { kind().catch(() => {}); });
 }
@@ -26,7 +26,10 @@ export function hapticMedium() {
   fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
 }
 
-/** All Clear. */
+/** All Clear. Bypasses the gap: on a common single-pass All Clear the empty
+ * board is detected one resolve step (~110ms) after the clear's medium hit,
+ * and the gate was swallowing the game's biggest payoff buzz. The
+ * medium→success pair that close reads as escalation, which is the point. */
 export function hapticSuccess() {
-  fire(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
+  fire(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success), true);
 }

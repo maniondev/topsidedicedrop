@@ -22,10 +22,10 @@ export const interstitialAd = InterstitialAd.createForAdRequest(
 // startup (alongside music/SFX loading and the first Skia paint) was a big
 // chunk of the first-round jank. Nothing needs them early — the FIRST run of
 // a session never shows an interstitial, and the rewarded ad isn't needed
-// until the first game over — so loading kicks off at the first game start
-// (game screen mount), with a timer fallback in app/_layout.tsx for sessions
-// that idle on the home screen. Both must ALSO wait for SDK init (which waits
-// for the UMP consent flow), so the two preconditions gate the actual load.
+// until the first game over — so app/_layout.tsx's post-init timer REQUESTS
+// the preload, and the gameplay gate below holds the actual load until the
+// next calm moment (pause, game over, or leaving the game screen). All of it
+// also waits for SDK init, which itself waits for the UMP consent flow.
 export let adsReady = false; // SDK initialized AND preload requested — safe to load
 let sdkInitialized = false;
 let preloadRequested = false;
