@@ -472,7 +472,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     const launch = launchSoundRef.current;
     if (launch) {
       try {
-        launch.setVolume(0.3);
+        // Match the menu soundtrack's level (was a hardcoded 0.3 — 2.5x
+        // louder than the theme it hands off to). Tied to TRACK_VOLUME.menu
+        // so retuning the menu volume keeps the stinger→theme handoff even.
+        launch.setVolume(TRACK_VOLUME.menu);
         setLaunchPlaybackStarted(true);
         launch.play(() => startTheme());
         // Verify the stinger actually began; if it didn't (inactive session
