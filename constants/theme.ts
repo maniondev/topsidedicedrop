@@ -410,24 +410,40 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     adBg:          '#F4F4F4',
     adBorder:      '#E0E0E0',
     statusBar:     'dark',
-    // Grayscale die faces — dots are the only differentiator
+    // Tinted grays: the same dark→light lightness ramp as the old pure-gray
+    // faces, with a low-saturation cast of each value's canonical hue
+    // (reddish 1, umber 2, olive 3, sage 4, slate 5, lavender 6). Still
+    // reads as a grayscale theme at a glance, but adjacent values (2/3,
+    // 5/6) separate by temperature as well as lightness — and because the
+    // lightness ramp is unchanged, it stays distinguishable for colorblind
+    // players and in the dim/ghost variants below.
     gameColors: {
-      red:    '#111111',
-      orange: '#2E2E2E',
-      yellow: '#4A4A4A',
-      green:  '#666666',
-      blue:   '#838383',
-      purple: '#9F9F9F',
+      red:    '#2E1518',
+      orange: '#453026',
+      yellow: '#5C543C',
+      green:  '#587059',
+      blue:   '#7C8B9E',
+      purple: '#A79DB4',
       black:  '#080808',
     },
     gameColorsDim: {
-      red:    '#090909',
-      orange: '#1A1A1A',
-      yellow: '#2B2B2B',
-      green:  '#3C3C3C',
-      blue:   '#4D4D4D',
-      purple: '#5E5E5E',
+      red:    '#1A0C0E',
+      orange: '#281C16',
+      yellow: '#363123',
+      green:  '#334234',
+      blue:   '#49525E',
+      purple: '#645E6C',
       black:  '#050505',
+    },
+    // Pip contrast fixes: the light 5 (blue) and 6 (purple) faces get dark
+    // pips instead of white; the 3 (yellow) face routes through this list
+    // to OVERRIDE the global yellow→black pip default (black pips on a
+    // mid-olive face were the weakest contrast on the board) with cream.
+    darkenFaceColors: ['yellow', 'blue', 'purple'],
+    darkenFaceColorsDot: {
+      yellow: '#F5F2E8',
+      blue:   '#1E2228',
+      purple: '#262130',
     },
     iconBg:           '#E5E5E5',
     popupOutlineColor: 'rgba(255,255,255,0.88)',
