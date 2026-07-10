@@ -22,32 +22,36 @@ export function setHapticsEnabled(v: boolean) {
   AsyncStorage.setItem(HAPTICS_KEY, v ? '1' : '0').catch(() => {});
 }
 
-// The first two chain passes are only ~110ms apart (see chainResolveDelay's
-// build-up cadence). The Taptic Engine can't articulate light impacts that
-// close — they queue and smear into one mushy buzz that reads as lag — so
-// light ticks enforce a minimum gap and simply skip a beat they can't play.
-// Later passes (210ms+ apart) all land. Medium/success are never throttled:
-// a clear's payoff hit must always fire, even right after a merge tick.
-const LIGHT_MIN_GAP_MS = 150;
-let lastLightAt = 0;
+// Defer every haptic past the current frame's paint. Each expo-haptics call
+// allocates + fires an iOS feedback generator ON THE MAIN THREAD; issued
+// mid-effect it lands inside the same frame deadline as the board redraw and
+// sound trigger it accompanies, and that contention showed up as audible/
+// visible hitches during merge cascades. One frame (~16ms) later is
+// imperceptible for touch feedback but keeps it out of the busy frame.
+// Also enforce a small minimum gap: the Taptic Engine smears impacts fired
+// closer than ~150ms into one mushy buzz.
+const MIN_GAP_MS = 150;
+let lastAt = 0;
 
-/** Rotate tap, merge chain pass. Rate-limited (see above). */
-export function hapticLight() {
+function fire(kind: () => Promise<unknown>) {
   if (!enabled) return;
   const now = Date.now();
-  if (now - lastLightAt < LIGHT_MIN_GAP_MS) return;
-  lastLightAt = now;
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+  if (now - lastAt < MIN_GAP_MS) return;
+  lastAt = now;
+  requestAnimationFrame(() => { kind().catch(() => {}); });
+}
+
+/** Rotate tap. */
+export function hapticLight() {
+  fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light));
 }
 
 /** Six-clear. */
 export function hapticMedium() {
-  if (!enabled) return;
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+  fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
 }
 
 /** All Clear. */
 export function hapticSuccess() {
-  if (!enabled) return;
-  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+  fire(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success));
 }

@@ -401,12 +401,15 @@ export default function GameScreen() {
 
   useEffect(() => {
     if (game.lastMergeEvents.length === 0) return;
+    // NO haptic on ordinary merge passes: the cascade is the busiest render
+    // window in the game (board redraw + pop animations + sound), and the
+    // haptic generator's main-thread work landing there caused audible/visible
+    // hitches. Only the six-clear payoff buzzes, deferred past the frame.
     const hasClear = game.lastMergeEvents.some(e => e.newValue === 'clear');
     if (hasClear) {
       play('clear');
       hapticMedium();
     } else {
-      hapticLight();
       // Play merge1–merge6 in sequence during chain. If chain > 6, replay merge6.
       const MERGE_SOUNDS = ['merge1', 'merge2', 'merge3', 'merge4', 'merge5', 'merge6'] as const;
       const mergeIdx = Math.min(Math.max(0, game.chainPass - 1), 5);
