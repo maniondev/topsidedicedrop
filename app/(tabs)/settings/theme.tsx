@@ -94,8 +94,11 @@ export default function ThemeScreen() {
               key={id}
               style={[
                 rowStyles.row,
-                { backgroundColor: theme.background, borderColor: selected ? theme.accent : theme.border },
-                selected && { borderWidth: 2 },
+                // Constant 2px border on every row so selecting one doesn't
+                // resize its border and reflow the whole list. Unselected
+                // rows hide the border by matching it to their own fill; only
+                // the selected row shows the accent.
+                { backgroundColor: theme.background, borderColor: selected ? theme.accent : theme.background },
               ]}
               activeOpacity={0.8}
               onPress={() => {
@@ -128,7 +131,7 @@ const bannerStyles = StyleSheet.create({
 });
 
 const rowStyles = StyleSheet.create({
-  row:   { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 14, borderWidth: 1, gap: 14 },
+  row:   { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 14, borderWidth: 2, gap: 14 },
   dot:   { width: 26, height: 26, borderRadius: 13 },
   label: { flex: 1, fontSize: 16, fontWeight: '600' },
 });
