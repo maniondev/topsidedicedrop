@@ -12,6 +12,7 @@ import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import mobileAds, { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
 import { preloadAllAds, markAdsInitialized } from '@/lib/adManager';
 import { initSessionTracker } from '@/lib/sessionTracker';
+import { getPlayerIdentity } from '@/lib/playerIdentity';
 import { replayQueue } from '@/lib/scoreQueue';
 import { initAppsFlyer } from '@/lib/appsflyer';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
@@ -61,6 +62,16 @@ export default function RootLayout() {
       }
     });
     return () => sub.remove();
+  }, []);
+
+  // Warm the player identity (Supabase anon session restore — or, on a fresh
+  // install, account creation + display-name registration) shortly after
+  // launch, once the cold-start crunch has passed. getPlayerIdentity() is
+  // memoized, so the first visit to the Stats tab then shows the name
+  // instantly instead of "…" while this resolves in view. Fire-and-forget.
+  useEffect(() => {
+    const t = setTimeout(() => { getPlayerIdentity().catch(() => {}); }, 4000);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
