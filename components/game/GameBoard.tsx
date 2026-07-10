@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useRef, useState, useCallback } from 'react';
-import { Canvas, RoundedRect, Circle, Group, BlurMask, Rect, Line, RadialGradient, vec, rrect, rect, Path, Skia } from '@shopify/react-native-skia';
+import { Canvas, RoundedRect, Circle, Group, BlurMask, Rect, Line, RadialGradient, LinearGradient, vec, rrect, rect, Path, Skia } from '@shopify/react-native-skia';
 import {
   useSharedValue, useDerivedValue,
   withTiming, withSequence, withDelay, withSpring,
@@ -240,13 +240,16 @@ function RaisedDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
       <Group clip={clip}>
         {/* Base face */}
         <Rect x={rx} y={ry} width={rw} height={rw} color={faceColor} />
-        {/* Top-left ambient light — radial gradient from corner */}
+        {/* Diagonal ambient light: ONE linear gradient (light top-left →
+            shadow bottom-right) replacing the two full-die radial gradients —
+            halves the per-pixel shader passes with a near-identical read;
+            the bevel rects below carry most of the "raised" look anyway. */}
         {!perfMode && <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
-          <RadialGradient c={vec(rx, ry)} r={rw * 1.5} colors={['rgba(255,255,255,0.38)', 'rgba(255,255,255,0)']} />
-        </Rect>}
-        {/* Bottom-right shadow — radial from opposite corner */}
-        {!perfMode && <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
-          <RadialGradient c={vec(rx + rw, ry + rw)} r={rw * 1.5} colors={['rgba(0,0,0,0.42)', 'rgba(0,0,0,0)']} />
+          <LinearGradient
+            start={vec(rx, ry)} end={vec(rx + rw, ry + rw)}
+            colors={['rgba(255,255,255,0.38)', 'rgba(255,255,255,0)', 'rgba(0,0,0,0)', 'rgba(0,0,0,0.42)']}
+            positions={[0, 0.45, 0.55, 1]}
+          />
         </Rect>}
         {/* Top bevel highlight */}
         <Rect x={rx} y={ry} width={rw} height={bevel} color="rgba(255,255,255,0.48)" />
@@ -330,9 +333,14 @@ function OceanDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
         {!perfMode && <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
           <RadialGradient c={vec(rx + rw * 0.5, ry + rw * 1.15)} r={rw * 1.0} colors={['rgba(0,26,48,0.30)', 'rgba(0,26,48,0)']} />
         </Rect>}
-        {/* specular gloss streak */}
-        {!perfMode && <Circle cx={rx + rw * 0.34} cy={ry + rw * 0.24} r={rw * 0.17} color="rgba(255,255,255,0.62)">
-          <BlurMask blur={rw * 0.08} style="normal" />
+        {/* specular gloss streak — radial-gradient circle, not a BlurMask:
+            same soft falloff, single shader pass instead of a convolution */}
+        {!perfMode && <Circle cx={rx + rw * 0.34} cy={ry + rw * 0.24} r={rw * 0.22} color="transparent">
+          <RadialGradient
+            c={vec(rx + rw * 0.34, ry + rw * 0.24)} r={rw * 0.22}
+            colors={['rgba(255,255,255,0.62)', 'rgba(255,255,255,0.48)', 'rgba(255,255,255,0)']}
+            positions={[0, 0.5, 1]}
+          />
         </Circle>}
       </Group>
       {/* glossy rim */}
@@ -368,9 +376,16 @@ function PastelDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
         {!perfMode && <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
           <RadialGradient c={vec(rx + rw * 0.5, ry + rw * 0.02)} r={rw * 1.2} colors={['rgba(255,255,255,0.46)', 'rgba(255,255,255,0.05)', 'rgba(255,255,255,0)']} />
         </Rect>}
-        {/* big soft gloss blob for a puffy jelly look */}
-        {!perfMode && <Circle cx={rx + rw * 0.5} cy={ry} r={rw * 0.6} color="rgba(255,255,255,0.30)">
-          <BlurMask blur={rw * 0.2} style="normal" />
+        {/* big soft gloss blob for a puffy jelly look — radial-gradient
+            circle, not a BlurMask: this blur had the largest kernel of any
+            dice style (the single most expensive draw on the board); the
+            gradient's soft falloff reads the same for one shader pass */}
+        {!perfMode && <Circle cx={rx + rw * 0.5} cy={ry} r={rw * 0.72} color="transparent">
+          <RadialGradient
+            c={vec(rx + rw * 0.5, ry)} r={rw * 0.72}
+            colors={['rgba(255,255,255,0.30)', 'rgba(255,255,255,0.20)', 'rgba(255,255,255,0)']}
+            positions={[0, 0.55, 1]}
+          />
         </Circle>}
         {/* soft inner edge shade inflates the form */}
         {!perfMode && <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
