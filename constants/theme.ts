@@ -419,8 +419,8 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     // players and in the dim/ghost variants below.
     gameColors: {
       red:    '#2E1518',
-      orange: '#453026',
-      yellow: '#5C543C',
+      orange: '#574032', // value 2 — lightened for readability vs 3
+      yellow: '#6B6349', // value 3 — lightened, kept a step above 2
       green:  '#587059',
       blue:   '#7C8B9E',
       purple: '#A79DB4',
@@ -428,8 +428,8 @@ export const Themes: Record<ThemeId, ThemeColors> = {
     },
     gameColorsDim: {
       red:    '#1A0C0E',
-      orange: '#281C16',
-      yellow: '#363123',
+      orange: '#342518', // value 2 dim — tracks the lightened face above
+      yellow: '#403A2B', // value 3 dim — tracks the lightened face above
       green:  '#334234',
       blue:   '#49525E',
       purple: '#645E6C',
