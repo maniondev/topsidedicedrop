@@ -24,10 +24,10 @@ export interface ThemePreset {
 export const THEME_PRESETS: Partial<Record<ThemeId, ThemePreset>> = {
   // Dice Drop · Dice Drop soundtrack · Classic SFX · Classic motion · Classic dice
   dicedrop:  { soundtrack: 'classic',    soundPack: 'topside', animPack: 'classic', diceStyle: 'classic' },
-  // "Classic" theme · Dice Drop soundtrack · Classic SFX · Classic motion · Classic dice
-  dice:      { soundtrack: 'classic',    soundPack: 'topside', animPack: 'classic', diceStyle: 'classic' },
-  // Light · Dice Drop soundtrack · Classic SFX · Classic motion · Classic dice
-  light:     { soundtrack: 'classic',    soundPack: 'topside', animPack: 'classic', diceStyle: 'classic' },
+  // "Classic" theme · Drift soundtrack · Classic SFX · Classic motion · Classic dice
+  dice:      { soundtrack: 'dicedrop',   soundPack: 'topside', animPack: 'classic', diceStyle: 'classic' },
+  // Light · Drift soundtrack · Classic SFX · Classic motion · Classic dice
+  light:     { soundtrack: 'dicedrop',   soundPack: 'topside', animPack: 'classic', diceStyle: 'classic' },
   // Dark · Dice Drop soundtrack · Fight SFX · Shatter motion · Pop Art dice
   dark:      { soundtrack: 'classic',    soundPack: 'fight',   animPack: 'shatter', diceStyle: 'comic' },
   // Pastel · Drift soundtrack · Bubbles SFX · Extra motion · Jelly dice
