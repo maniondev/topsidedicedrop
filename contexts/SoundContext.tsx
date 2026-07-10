@@ -3,7 +3,8 @@ import { AppState } from 'react-native';
 import Sound from 'react-native-sound';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { restoreGameAudioSession, setAudioMode, ensureAudioSessionCategory, reactivateAudioSessionOnResume } from '@/lib/audioSession';
+import { restoreGameAudioSession, setAudioMode, ensureAudioSessionCategory, reactivateAudioSessionOnResume, isAdInterrupting } from '@/lib/audioSession';
+import { addAudioInterruptionListener } from '@/modules/native-audio-info';
 import { SOUND_KEY } from '@/lib/storage';
 
 const SOUND_MODE_KEY = 'tm_sound_mode';
@@ -357,6 +358,24 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       // whichever context's native setCategory/setActive call is in flight
       // before either constructs new Sound instances, so the two batches of
       // player construction never race each other on resume.
+      (async () => {
+        await reactivateAudioSessionOnResume();
+        buildPool(soundPackRef.current, () => false);
+      })();
+    });
+    return () => sub.remove();
+  }, []);
+
+  // Audio-session interruptions (alarms, timers, Siri) can end with NO
+  // AppState change — a banner alarm never backgrounds the app — leaving the
+  // pool's players stale/silent just like a backgrounding would. Same
+  // recovery as the foreground handler above; skipped when the app isn't
+  // active (the foreground handler will run) or while an ad owns the audio.
+  useEffect(() => {
+    const sub = addAudioInterruptionListener(e => {
+      if (e.type !== 'ended') return;
+      if (AppState.currentState !== 'active') return;
+      if (isAdInterrupting()) return;
       (async () => {
         await reactivateAudioSessionOnResume();
         buildPool(soundPackRef.current, () => false);

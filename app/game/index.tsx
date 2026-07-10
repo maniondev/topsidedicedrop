@@ -29,6 +29,7 @@ import { FloatingLabelsOverlay, FloatingLabelData } from '@/components/game/Floa
 import AdBanner from '@/components/AdBanner';
 import { preloadAllAds, setGameplayActive } from '@/lib/adManager';
 import { hapticMedium, hapticSuccess } from '@/lib/haptics';
+import { addAudioInterruptionListener } from '@/modules/native-audio-info';
 import { saveGame, loadSavedGame, clearSavedGame, savePendingRun, clearPendingRun, hasSeenControls, markControlsSeen } from '@/lib/storage';
 import TutorialOverlay from '@/components/game/TutorialOverlay';
 import { runMergePhase, computeClearSteps } from '@/lib/condense';
@@ -219,6 +220,21 @@ export default function GameScreen() {
   useEffect(() => {
     const sub = AppState.addEventListener('change', (s) => {
       if (s !== 'active' && (phaseRef.current === 'falling' || phaseRef.current === 'locking')) {
+        setPaused(true);
+      }
+    });
+    return () => sub.remove();
+  }, []);
+
+  // Also auto-pause on an audio-session interruption (alarm, timer, Siri,
+  // call). A banner alarm does NOT background the app, so the AppState
+  // handler above never fires — the game kept running with dead audio while
+  // the player dealt with the alarm. Pausing here also freezes the run so
+  // resuming is on the player's terms; the music/SFX contexts handle their
+  // own restart when the interruption ends.
+  useEffect(() => {
+    const sub = addAudioInterruptionListener(e => {
+      if (e.type === 'began' && (phaseRef.current === 'falling' || phaseRef.current === 'locking')) {
         setPaused(true);
       }
     });

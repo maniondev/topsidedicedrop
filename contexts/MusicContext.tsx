@@ -4,7 +4,7 @@ import Sound from 'react-native-sound';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ensureAudioSessionCategory, reactivateAudioSessionOnResume, forceReapplyAudioSessionCategory, isAdInterrupting } from '@/lib/audioSession';
-import { isOtherAudioPlaying } from '@/modules/native-audio-info';
+import { isOtherAudioPlaying, addAudioInterruptionListener } from '@/modules/native-audio-info';
 
 const MUSIC_ENABLED_KEY = 'tm_music_enabled';
 const DEV_MUSIC_INCLUDED_KEY = 'tm_dev_music_included';
@@ -780,6 +780,45 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     });
     return () => sub.remove();
   }, [fadeTo, reloadMenuTrack, completeLaunchOnResume]);
+
+  // Audio-session interruptions (alarms, timers, Siri, calls). These can fire
+  // with NO AppState change — a banner alarm leaves the app 'active' — so the
+  // foreground handler above never runs and the music used to die silently
+  // until some later event happened to reactivate the session, with the
+  // beat-synced animations left anchored to a stale epoch. Mirror the
+  // AppState handler: pause everything when the interruption begins; when it
+  // ends, run the same restart path (fresh Sound, session reactivation with
+  // retry, epoch re-anchor) so music AND animations come back together.
+  // If the interruption DID background the app (calls), the AppState guards
+  // here defer to the foreground handler — exactly one restart runs.
+  useEffect(() => {
+    const sub = addAudioInterruptionListener(e => {
+      if (e.type === 'began') {
+        if (launchInFlightRef.current) {
+          try { launchSoundRef.current?.pause(); } catch {}
+        }
+        (Object.keys(soundsRef.current) as MusicTrack[]).forEach(track => {
+          const snd = soundsRef.current[track];
+          if (!snd) return;
+          clearFade(track);
+          try { snd.pause(); } catch {}
+        });
+        return;
+      }
+      // ended
+      if (AppState.currentState !== 'active') return; // foreground handler owns it
+      if (!hasPlayedLaunchRef.current) return;        // cold launch owns it
+      if (isAdInterrupting()) return;                 // ad CLOSED handler owns it
+      if (enabledRef.current && devIncludedRef.current) {
+        if (launchInFlightRef.current) {
+          completeLaunchOnResume();
+        } else {
+          reloadMenuTrack();
+        }
+      }
+    });
+    return () => sub.remove();
+  }, [reloadMenuTrack, completeLaunchOnResume]);
 
   // Plain on/off mute toggles (Settings, home screen, pause menu) are instant
   // — no fade — since they're a mute switch, not a track transition. The

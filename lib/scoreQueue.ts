@@ -175,8 +175,16 @@ export async function replayQueue(): Promise<void> {
       ? { ...entry, p_player_id: resolvedId ?? '', p_display_name: resolvedName ?? '' }
       : entry;
 
-    // Drop permanently if identity still unknown — don't pollute leaderboard
-    if (!resolved.p_player_id) continue;
+    // Identity still unresolved — that failure is always TRANSIENT (the id is
+    // a Supabase UUID that resolves once we're online), so keep the entry for
+    // the next pass. This used to `continue` without re-queueing, which
+    // permanently deleted every offline-session score if a replay pass ran
+    // while the device was still offline (e.g. a foreground event in
+    // airplane mode after playing an offline-from-launch session).
+    if (!resolved.p_player_id) {
+      failed.push(entry);
+      continue;
+    }
 
     try {
       const { error } = await withTimeout(supabase.rpc('submit_score', {
