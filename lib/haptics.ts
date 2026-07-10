@@ -22,9 +22,21 @@ export function setHapticsEnabled(v: boolean) {
   AsyncStorage.setItem(HAPTICS_KEY, v ? '1' : '0').catch(() => {});
 }
 
-/** Rotate tap, merge chain pass. */
+// The first two chain passes are only ~110ms apart (see chainResolveDelay's
+// build-up cadence). The Taptic Engine can't articulate light impacts that
+// close — they queue and smear into one mushy buzz that reads as lag — so
+// light ticks enforce a minimum gap and simply skip a beat they can't play.
+// Later passes (210ms+ apart) all land. Medium/success are never throttled:
+// a clear's payoff hit must always fire, even right after a merge tick.
+const LIGHT_MIN_GAP_MS = 150;
+let lastLightAt = 0;
+
+/** Rotate tap, merge chain pass. Rate-limited (see above). */
 export function hapticLight() {
   if (!enabled) return;
+  const now = Date.now();
+  if (now - lastLightAt < LIGHT_MIN_GAP_MS) return;
+  lastLightAt = now;
   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 }
 
