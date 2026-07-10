@@ -333,13 +333,16 @@ function OceanDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
         {!perfMode && <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
           <RadialGradient c={vec(rx + rw * 0.5, ry + rw * 1.15)} r={rw * 1.0} colors={['rgba(0,26,48,0.30)', 'rgba(0,26,48,0)']} />
         </Rect>}
-        {/* specular gloss streak — radial-gradient circle, not a BlurMask:
-            same soft falloff, single shader pass instead of a convolution */}
-        {!perfMode && <Circle cx={rx + rw * 0.34} cy={ry + rw * 0.24} r={rw * 0.22} color="transparent">
+        {/* specular gloss streak — radial-gradient circle, not a BlurMask
+            (one shader pass instead of a convolution). NOTE the flat core:
+            a blurred solid disk is FULL opacity out to near its radius with
+            only the edge feathered — a center-peak gradient reads several
+            times dimmer and killed the wet-gloss look entirely. */}
+        {!perfMode && <Circle cx={rx + rw * 0.34} cy={ry + rw * 0.24} r={rw * 0.25} color="transparent">
           <RadialGradient
-            c={vec(rx + rw * 0.34, ry + rw * 0.24)} r={rw * 0.22}
-            colors={['rgba(255,255,255,0.62)', 'rgba(255,255,255,0.48)', 'rgba(255,255,255,0)']}
-            positions={[0, 0.5, 1]}
+            c={vec(rx + rw * 0.34, ry + rw * 0.24)} r={rw * 0.25}
+            colors={['rgba(255,255,255,0.62)', 'rgba(255,255,255,0.62)', 'rgba(255,255,255,0)']}
+            positions={[0, 0.66, 1]}
           />
         </Circle>}
       </Group>
@@ -378,13 +381,15 @@ function PastelDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
         </Rect>}
         {/* big soft gloss blob for a puffy jelly look — radial-gradient
             circle, not a BlurMask: this blur had the largest kernel of any
-            dice style (the single most expensive draw on the board); the
-            gradient's soft falloff reads the same for one shader pass */}
-        {!perfMode && <Circle cx={rx + rw * 0.5} cy={ry} r={rw * 0.72} color="transparent">
+            dice style (the single most expensive draw on the board). NOTE
+            the flat core: a blurred solid disk keeps FULL opacity out to
+            near its radius with only the edge feathered — a center-peak
+            gradient reads several times dimmer and flattened the jelly. */}
+        {!perfMode && <Circle cx={rx + rw * 0.5} cy={ry} r={rw * 0.8} color="transparent">
           <RadialGradient
-            c={vec(rx + rw * 0.5, ry)} r={rw * 0.72}
-            colors={['rgba(255,255,255,0.30)', 'rgba(255,255,255,0.20)', 'rgba(255,255,255,0)']}
-            positions={[0, 0.55, 1]}
+            c={vec(rx + rw * 0.5, ry)} r={rw * 0.8}
+            colors={['rgba(255,255,255,0.30)', 'rgba(255,255,255,0.30)', 'rgba(255,255,255,0)']}
+            positions={[0, 0.56, 1]}
           />
         </Circle>}
         {/* soft inner edge shade inflates the form */}
