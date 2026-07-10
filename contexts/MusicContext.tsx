@@ -808,14 +808,24 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       // ended
       if (AppState.currentState !== 'active') return; // foreground handler owns it
       if (!hasPlayedLaunchRef.current) return;        // cold launch owns it
-      if (isAdInterrupting()) return;                 // ad CLOSED handler owns it
-      if (enabledRef.current && devIncludedRef.current) {
+      // The 'ended' notification arrives WHILE the interrupter's audio is
+      // still tearing down — isOtherAudioPlaying reports true for the alarm
+      // ITSELF at that instant, so restarting immediately made the reload
+      // yield to audio that was already gone and music stayed dead (until
+      // some later restart, e.g. leaving the game screen). Wait out the
+      // teardown, re-check every guard that can change during the wait, then
+      // reload — whose own fresh isOtherAudioPlaying check now sees the true
+      // post-alarm state (a genuinely-playing Spotify still yields).
+      setTimeout(() => {
+        if (AppState.currentState !== 'active') return;
+        if (isAdInterrupting()) return;
+        if (!enabledRef.current || !devIncludedRef.current) return;
         if (launchInFlightRef.current) {
           completeLaunchOnResume();
         } else {
           reloadMenuTrack();
         }
-      }
+      }, 700);
     });
     return () => sub.remove();
   }, [reloadMenuTrack, completeLaunchOnResume]);
