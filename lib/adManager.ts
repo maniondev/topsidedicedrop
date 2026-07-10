@@ -29,9 +29,14 @@ export const interstitialAd = InterstitialAd.createForAdRequest(
 export let adsReady = false; // SDK initialized AND preload requested — safe to load
 let sdkInitialized = false;
 let preloadRequested = false;
+// True while a round is actively being played (pieces falling). Loading ads
+// spins up WebViews on the main thread, which visibly steals frames from
+// live gameplay — so a requested preload WAITS here and fires at the next
+// calm moment (pause, game over, or back on the home screen).
+let gameplayActive = false;
 
 function maybePreload() {
-  if (!sdkInitialized || !preloadRequested || adsReady) return;
+  if (!sdkInitialized || !preloadRequested || gameplayActive || adsReady) return;
   adsReady = true;
   rewardedAd.load();
   interstitialAd.load();
@@ -46,5 +51,11 @@ export function markAdsInitialized() {
 /** Request the deferred preload — idempotent, waits for SDK init if needed. */
 export function preloadAllAds() {
   preloadRequested = true;
+  maybePreload();
+}
+
+/** Game screen reports live-play state; flipping to false releases a pending preload. */
+export function setGameplayActive(v: boolean) {
+  gameplayActive = v;
   maybePreload();
 }

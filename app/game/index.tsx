@@ -27,7 +27,7 @@ import PauseModal from '@/components/game/PauseModal';
 import EmergencyCondenseOverlay from '@/components/game/EmergencyCondenseOverlay';
 import { FloatingLabelsOverlay, FloatingLabelData } from '@/components/game/FloatingLabels';
 import AdBanner from '@/components/AdBanner';
-import { preloadAllAds } from '@/lib/adManager';
+import { preloadAllAds, setGameplayActive } from '@/lib/adManager';
 import { saveGame, loadSavedGame, clearSavedGame, savePendingRun, clearPendingRun, hasSeenControls, markControlsSeen } from '@/lib/storage';
 import TutorialOverlay from '@/components/game/TutorialOverlay';
 import { runMergePhase, computeClearSteps } from '@/lib/condense';
@@ -129,14 +129,24 @@ export default function GameScreen() {
     return () => playTrack('menu');
   }, [playTrack]);
 
-  // First game start = the signal to load the deferred full-screen ads (see
-  // lib/adManager.ts — they're kept out of the cold-launch window). A short
-  // delay lets the screen transition + first piece settle before the ad SDK
-  // spins up its WebViews; the rewarded ad only needs to be ready by the
-  // first game over, the interstitial by the second game.
+  // Deferred full-screen ad loading (see lib/adManager.ts): keep it out of
+  // BOTH the cold-launch window and live gameplay — the WebView spin-up
+  // visibly steals frames from a round in progress. While pieces are moving
+  // we hold the gate closed; the first calm moment (pause or game over)
+  // requests the preload and opens the gate, which also releases the root
+  // layout's post-launch fallback timer if it fired mid-round. The rewarded
+  // ad starts loading the moment the game-over modal appears, so it's
+  // typically ready by the time the player decides to continue (the 1.5s
+  // wait-then-free-reward fallback covers instant taps).
+  // NOT 'idle' — that's the mount-moment phase right before the first spawn,
+  // and counting it as calm would start the load exactly at round start.
+  const inCalmMoment = paused || game.phase === 'gameOver';
   useEffect(() => {
-    const t = setTimeout(preloadAllAds, 2000);
-    return () => clearTimeout(t);
+    setGameplayActive(!inCalmMoment);
+    if (inCalmMoment) preloadAllAds();
+  }, [inCalmMoment]);
+  useEffect(() => {
+    return () => setGameplayActive(false); // leaving the screen is always calm
   }, []);
 
   // True when this run was loaded from a dev demo save (preset board for

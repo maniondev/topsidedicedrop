@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Dimensions, Platform, View } from 'react-native';
 import { HapticTab } from '@/components/haptic-tab';
@@ -11,6 +12,12 @@ const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 60
 export default function TabLayout() {
   const { colors } = useTheme();
   const { bottom } = useSafeAreaInsets();
+  // The game screen stacks ON TOP of the tabs, which stay mounted beneath it
+  // — without this gate the atmosphere's per-frame particle worklet + Skia
+  // redraw kept running invisibly behind the board for the whole game,
+  // stealing frames from gameplay. Suspend the ambient layer (the static
+  // gradient stays) whenever the tabs aren't the focused route.
+  const focused = useIsFocused();
   const isAndroid = Platform.OS === 'android';
   const bottomPad = isAndroid ? Math.max(bottom, 12) + 16 : Math.max(bottom, 8);
 
@@ -20,7 +27,7 @@ export default function TabLayout() {
     // it; scenes and screen roots are transparent so it shows through — full
     // bleed, no per-screen padding seams.
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ThemeAtmosphere />
+      <ThemeAtmosphere showAmbient={focused} />
       <Tabs
         screenOptions={{
           headerShown: false,
