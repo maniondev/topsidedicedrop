@@ -589,7 +589,7 @@ function WiggleTile({ x, y, cs, value, faceColor, dotColor, diceStyle, perfMode 
 }) {
   const tx = useSharedValue(0);
   useEffect(() => {
-    const a = cs * 0.045; // subtle — about 4.5% of cell size
+    const a = cs * 0.038; // subtle — ~3.8% of cell size (was 4.5%, trimmed 15%)
     tx.value = withSequence(
       withTiming(-a,        { duration: 40, easing: Easing.out(Easing.quad) }),
       withSpring(0, { mass: 0.4, damping: 5, stiffness: 280 }),
