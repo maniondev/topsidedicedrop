@@ -690,7 +690,12 @@ export default function GameScreen() {
         })
         .onEnd(e => {
           // A quick downward flick (vertical-locked) hard-drops — easy "send it down"
-          if (axis.current === 'v' && e.velocityY > 900 && e.translationY > cellSize) {
+          // Thresholds tuned DOWN from 900 px/s + one full cell — firm swipes
+          // were reading as soft drops and the piece stopped short of the
+          // bottom. Velocity is still the discriminator vs. a slow soft-drop
+          // drag; the small travel floor just rejects accidental taps-with-
+          // movement.
+          if (axis.current === 'v' && e.velocityY > 650 && e.translationY > cellSize * 0.6) {
             runOnJS(hardDropWithSound)();
           }
         }),
