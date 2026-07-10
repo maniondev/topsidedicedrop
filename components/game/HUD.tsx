@@ -3,6 +3,7 @@ import { Animated, View, Text, StyleSheet, TouchableOpacity, Platform, Dimension
 import { Canvas, RoundedRect, Circle, Rect, Group, BlurMask, Line, RadialGradient, vec, rrect, rect } from '@shopify/react-native-skia';
 import { useTheme, useDieColors } from '@/contexts/ThemeContext';
 import { useDiceStyle, DiceStyleId } from '@/contexts/DiceStyleContext';
+import { useAnimation } from '@/contexts/AnimationContext';
 import { QueuedPiece } from '@/hooks/useGame';
 import AppLogo from '@/components/AppLogo';
 
@@ -148,19 +149,29 @@ const InlinePiece = React.memo(function InlinePiece({ piece, faceColor, dotColor
 }, (prev, next) => prev.piece === next.piece && prev.diceStyle === next.diceStyle);
 
 function useCountingScore(target: number): string {
+  const { performanceMode } = useAnimation();
   const animVal = useRef(new Animated.Value(target)).current;
   const [display, setDisplay] = useState(() => target.toLocaleString());
   const animRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
     if (animRef.current) animRef.current.stop();
+    // Performance mode: snap. The count-up is a JS-driven Animated value with
+    // a listener that setStates ~every frame for 350ms per score change —
+    // near-continuous JS-thread churn during chains, exactly when the board
+    // is busiest.
+    if (performanceMode) {
+      animVal.setValue(target);
+      setDisplay(target.toLocaleString());
+      return;
+    }
     animRef.current = Animated.timing(animVal, {
       toValue: target,
       duration: 350,
       useNativeDriver: false,
     });
     animRef.current.start();
-  }, [target]);
+  }, [target, performanceMode]);
 
   useEffect(() => {
     const id = animVal.addListener(({ value }) => setDisplay(Math.round(value).toLocaleString()));

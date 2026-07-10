@@ -893,21 +893,15 @@ function ShatterParticle({ cx, cy, angle, maxDist, duration }: {
   useEffect(() => {
     prog.value = withTiming(1, { duration, easing: Easing.out(Easing.quad) });
   }, []);
-  const animProps = useDerivedValue(() => {
-    'worklet';
-    const d = prog.value * maxDist;
-    return { x: cx + Math.cos(angle) * d, y: cy + Math.sin(angle) * d, op: 1 - prog.value };
-  });
   const size = maxDist * 0.18;
-  return (
-    <Rect
-      x={animProps.value.x - size / 2}
-      y={animProps.value.y - size / 2}
-      width={size} height={size}
-      color="#ffffff"
-      opacity={animProps.value.op}
-    />
-  );
+  // Derived values passed AS props (like PixelParticle above) so Skia tracks
+  // them per frame. The old version read `.value` during render, freezing the
+  // Rect at progress 0 — the shatter squares never flew, they just sat
+  // stacked at the center until removal.
+  const px = useDerivedValue(() => { 'worklet'; return cx + Math.cos(angle) * prog.value * maxDist - size / 2; });
+  const py = useDerivedValue(() => { 'worklet'; return cy + Math.sin(angle) * prog.value * maxDist - size / 2; });
+  const op = useDerivedValue(() => { 'worklet'; return 1 - prog.value; });
+  return <Rect x={px} y={py} width={size} height={size} color="#ffffff" opacity={op} />;
 }
 
 function BurstShatter({ x, y, cs, duration, onDone }: {

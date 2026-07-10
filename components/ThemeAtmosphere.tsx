@@ -460,7 +460,11 @@ interface Props {
 // full-screen container (the tab navigator wrapper, or a bare wrapper on the
 // game screen) as an absolute fill — that's what makes coverage reach every
 // edge without per-screen padding math.
-export default function ThemeAtmosphere({ showAmbient = true }: Props) {
+// Memoized: the game screen re-renders on every game-state dispatch (gravity
+// ticks, each move step of a drag), and without memo each one re-reconciled
+// this component's whole Skia element tree for a layer that never changes
+// mid-game. Context changes (theme, perf mode) still propagate through memo.
+export default React.memo(function ThemeAtmosphere({ showAmbient = true }: Props) {
   const { themeId } = useTheme();
   const { performanceMode } = useAnimation();
   const { width, height } = useWindowDimensions();
@@ -500,4 +504,4 @@ export default function ThemeAtmosphere({ showAmbient = true }: Props) {
       )}
     </Canvas>
   );
-}
+});
