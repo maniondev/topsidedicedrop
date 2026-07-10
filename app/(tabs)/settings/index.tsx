@@ -228,7 +228,6 @@ export default function SettingsScreen() {
             />
             <ToggleRow
               label="Haptics"
-              sublabel="Vibration on rotate, lock, and merges"
               value={haptics}
               onValueChange={v => { setHapticsState(v); setHapticsEnabled(v); }}
               colors={colors}

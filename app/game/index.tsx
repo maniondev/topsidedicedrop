@@ -425,7 +425,6 @@ export default function GameScreen() {
   useEffect(() => {
     if (prevPhaseRef.current === 'falling' && game.phase === 'locking') {
       play('lock');
-      hapticMedium();
     }
     prevPhaseRef.current = game.phase;
   // eslint-disable-next-line react-hooks/exhaustive-deps

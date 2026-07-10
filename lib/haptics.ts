@@ -28,7 +28,7 @@ export function hapticLight() {
   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 }
 
-/** Piece lock, six-clear. */
+/** Six-clear. */
 export function hapticMedium() {
   if (!enabled) return;
   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
