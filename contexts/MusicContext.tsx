@@ -15,16 +15,27 @@ export type MusicTrack = 'menu' | 'game';
 // Which SONG is loaded into the 'menu' slot — orthogonal to MusicTrack
 // (which is a duck-volume level, not a track choice). All three share the
 // same 130bpm tempo, so TRACK_BPM below doesn't need to vary by selection.
+// ⚠️ ID↔label divergence (deliberate, do NOT "fix" by renaming IDs):
+// the IDs are the values persisted in AsyncStorage and referenced by the
+// theme presets, so they are FROZEN — each stays bound to its original audio
+// file forever, which is what guarantees a user keeps hearing the exact track
+// they picked across this relabel. Only the display labels moved:
+//   id 'classic'  → file classic.m4a → now shown as "Dice Drop" (main theme)
+//   id 'dicedrop' → file theme.m4a   → now shown as "Drift"     (pastel pairing)
+// (The old main theme, theme.m4a, became Drift; the old Classic track,
+// classic.m4a, is now the Dice Drop main theme.) When reading this file, trust
+// the LABEL for what a user hears, not the id name.
 export type SoundtrackId = 'dicedrop' | 'underwater' | 'classic' | 'neon' | 'forest';
-export const SOUNDTRACK_IDS: SoundtrackId[] = ['dicedrop', 'classic', 'forest', 'neon', 'underwater'];
+// Display order: the free main theme (Dice Drop) first, then Drift, then the rest.
+export const SOUNDTRACK_IDS: SoundtrackId[] = ['classic', 'dicedrop', 'forest', 'neon', 'underwater'];
 export const SoundtrackMeta: Record<SoundtrackId, { label: string }> = {
-  dicedrop:   { label: 'Dice Drop' },
-  classic:    { label: 'Classic' },
+  classic:    { label: 'Dice Drop' },  // file classic.m4a — main theme
+  dicedrop:   { label: 'Drift' },      // file theme.m4a — airy, pastel pairing
   forest:     { label: 'Forest' },
   neon:       { label: 'Neon' },
   underwater: { label: 'Ocean' },
 };
-const DEFAULT_SOUNDTRACK: SoundtrackId = 'dicedrop';
+const DEFAULT_SOUNDTRACK: SoundtrackId = 'classic'; // the Dice Drop main theme
 const SOUNDTRACK_SOURCES: Record<SoundtrackId, any> = {
   dicedrop:   require('@/assets/sounds/music/theme.m4a'),
   underwater: require('@/assets/sounds/music/underwater.m4a'),

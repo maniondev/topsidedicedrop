@@ -8,7 +8,9 @@ import { makeSettingsStyles, PickerRow, SettingsSubHeader, IS_LARGE } from '@/co
 import PremiumModal from '@/components/PremiumModal';
 import { COMPOSER_NAME, openComposerIG } from '@/lib/composer';
 
-const FREE_SOUNDTRACK: SoundtrackId = 'dicedrop';
+// The free (unlocked) soundtrack = the Dice Drop main theme. Its id is
+// 'classic' after the relabel (see SoundtrackMeta) — file classic.m4a.
+const FREE_SOUNDTRACK: SoundtrackId = 'classic';
 // Long enough to hear a few bars of the preview before the paywall appears.
 const PREVIEW_MODAL_DELAY_MS = 2500;
 

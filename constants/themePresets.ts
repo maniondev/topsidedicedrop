@@ -19,18 +19,20 @@ export interface ThemePreset {
 }
 
 // Authored mapping (labels shown in comments; values are the stable IDs).
+// NOTE the soundtrack id/label divergence documented in MusicContext:
+// id 'classic' is the "Dice Drop" main theme, id 'dicedrop' is "Drift".
 export const THEME_PRESETS: Partial<Record<ThemeId, ThemePreset>> = {
-  // Dice Drop · Classic SFX · Classic motion · Classic dice
-  dicedrop:  { soundtrack: 'dicedrop',   soundPack: 'topside', animPack: 'classic', diceStyle: 'classic' },
-  // "Classic" theme · Classic soundtrack · Classic SFX · Classic motion · Classic dice
+  // Dice Drop · Dice Drop soundtrack · Classic SFX · Classic motion · Classic dice
+  dicedrop:  { soundtrack: 'classic',    soundPack: 'topside', animPack: 'classic', diceStyle: 'classic' },
+  // "Classic" theme · Dice Drop soundtrack · Classic SFX · Classic motion · Classic dice
   dice:      { soundtrack: 'classic',    soundPack: 'topside', animPack: 'classic', diceStyle: 'classic' },
-  // Light · Classic soundtrack · Classic SFX · Classic motion · Classic dice
+  // Light · Dice Drop soundtrack · Classic SFX · Classic motion · Classic dice
   light:     { soundtrack: 'classic',    soundPack: 'topside', animPack: 'classic', diceStyle: 'classic' },
   // Dark · Dice Drop soundtrack · Fight SFX · Shatter motion · Pop Art dice
-  dark:      { soundtrack: 'dicedrop',   soundPack: 'fight',   animPack: 'shatter', diceStyle: 'comic' },
-  // Pastel · Forest soundtrack · Bubbles SFX · Extra motion · Jelly dice
-  pastel:    { soundtrack: 'forest',     soundPack: 'bubbles', animPack: 'extra',   diceStyle: 'pastel' },
-  // Grayscale · Classic soundtrack · Marimba SFX · Twist motion · Classic dice
+  dark:      { soundtrack: 'classic',    soundPack: 'fight',   animPack: 'shatter', diceStyle: 'comic' },
+  // Pastel · Drift soundtrack · Bubbles SFX · Extra motion · Jelly dice
+  pastel:    { soundtrack: 'dicedrop',   soundPack: 'bubbles', animPack: 'extra',   diceStyle: 'pastel' },
+  // Grayscale · Dice Drop soundtrack · Marimba SFX · Twist motion · Classic dice
   grayscale: { soundtrack: 'classic',    soundPack: 'marimba', animPack: 'twist',   diceStyle: 'classic' },
   // Ocean · Ocean soundtrack · Splash SFX · Extra motion · Sea Glass dice
   ocean:     { soundtrack: 'underwater', soundPack: 'splash',  animPack: 'extra',   diceStyle: 'ocean' },
