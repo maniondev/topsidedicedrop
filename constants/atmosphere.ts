@@ -7,8 +7,8 @@ import { ThemeId } from './theme';
 // Each ambient element is listed independently so we can drop the one we don't
 // like later without touching the other.
 
-export type AmbientKind = 'leaves' | 'fireflies' | 'bubbles' | 'caustics' | 'neonParticles' | 'bokeh' | 'dust';
-export type BackgroundKind = 'forest' | 'ocean' | 'neon' | 'pastel' | 'grayscale';
+export type AmbientKind = 'leaves' | 'fireflies' | 'bubbles' | 'caustics' | 'neonParticles' | 'bokeh' | 'dust' | 'embers';
+export type BackgroundKind = 'forest' | 'ocean' | 'neon' | 'pastel' | 'grayscale' | 'dicedrop';
 
 export interface Atmosphere {
   background: BackgroundKind;
@@ -26,6 +26,16 @@ export interface Atmosphere {
 }
 
 export const ATMOSPHERE: Partial<Record<ThemeId, Atmosphere>> = {
+  dicedrop: {
+    background: 'dicedrop',
+    // Fireside warmth: slightly darker overhead, warming toward the hearth
+    // below. Centered on the theme's flat #1C1008 so the overall feel (and
+    // every surface color tuned against it) is unchanged.
+    gradient: ['#160D06', '#1C1008', '#231409'],
+    glow: '#7A3A20',      // low hearth glow
+    ambient: ['embers'],
+    particle: '#FFB067',  // warm ember motes
+  },
   forest: {
     background: 'forest',
     gradient: ['#0A1810', '#122414', '#1B2E1C'],

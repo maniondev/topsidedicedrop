@@ -348,6 +348,54 @@ function GrayscaleAmbient({ clock, W, H, particle }: { clock: SharedValue<number
   return <>{motes.map((s, i) => <Dust key={`d${i}`} clock={clock} s={s} color={particle} />)}</>;
 }
 
+interface SeedEmber { baseX: number; offset: number; speed: number; swayF: number; swayA: number; phase: number; blink: number; pb: number; r: number; base: number; amp: number }
+
+// An ember — a tiny warm mote rising slowly from the bottom with a gentle
+// sway and a firefly-style flicker, fading out as it nears the top. Cozy and
+// understated for the signature Dice Drop theme.
+function Ember({ clock, s, H, color }: { clock: SharedValue<number>; s: SeedEmber; H: number; color: string }) {
+  const range = H + 60;
+  const cy = useDerivedValue(() => {
+    'worklet';
+    return (H + 30) - (((clock.value / 1000) * s.speed + s.offset) % range);   // rise + wrap
+  });
+  const cx = useDerivedValue(() => { 'worklet'; return s.baseX + Math.sin(clock.value / 1000 * s.swayF + s.phase) * s.swayA; });
+  const opacity = useDerivedValue(() => {
+    'worklet';
+    const y = (H + 30) - (((clock.value / 1000) * s.speed + s.offset) % range);
+    const fade = y < H * 0.25 ? Math.max(0, y / (H * 0.25)) : 1;               // die out near the top
+    const flicker = s.base + s.amp * (0.5 + 0.5 * Math.sin(clock.value / 1000 * s.blink + s.pb));
+    return flicker * fade;
+  });
+  return (
+    <Group opacity={opacity}>
+      <Circle cx={cx} cy={cy} r={s.r} color={color}>
+        <BlurMask blur={s.r * 1.4} style="normal" />
+      </Circle>
+    </Group>
+  );
+}
+
+function DiceDropAmbient({ clock, W, H, particle }: { clock: SharedValue<number>; W: number; H: number; particle: string }) {
+  const embers = useMemo<SeedEmber[]>(() => {
+    const n = LOW ? 7 : 12;
+    return Array.from({ length: n }, () => ({
+      baseX: Math.random() * W,
+      offset: Math.random() * (H + 60),
+      speed: 9 + Math.random() * 15,           // slow, lazy rise
+      swayF: 0.25 + Math.random() * 0.5,
+      swayA: 8 + Math.random() * 18,
+      phase: Math.random() * Math.PI * 2,
+      blink: 0.6 + Math.random() * 1.4,
+      pb: Math.random() * Math.PI * 2,
+      r: 1.2 + Math.random() * 2.0,
+      base: 0.10,
+      amp: 0.20,
+    }));
+  }, [W, H]);
+  return <>{embers.map((s, i) => <Ember key={`e${i}`} clock={clock} s={s} H={H} color={particle} />)}</>;
+}
+
 // Soft blob of light — used for dappled sun / caustic pools / neon bloom.
 function GlowBlob({ x, y, r, color, opacity }: { x: number; y: number; r: number; color: string; opacity: number }) {
   return (
@@ -363,6 +411,13 @@ function Background({ a, W, H }: { a: Atmosphere; W: number; H: number }) {
       <Rect x={0} y={0} width={W} height={H}>
         <LinearGradient start={vec(0, 0)} end={vec(0, H)} colors={a.gradient} />
       </Rect>
+      {a.background === 'dicedrop' && (
+        <>
+          {/* hearth light pooling low, faint spill upper-right */}
+          <GlowBlob x={W * 0.30} y={H * 0.94} r={W * 0.52} color={a.glow} opacity={0.12} />
+          <GlowBlob x={W * 0.85} y={H * 0.20} r={W * 0.34} color={a.glow} opacity={0.06} />
+        </>
+      )}
       {a.background === 'forest' && (
         <>
           <GlowBlob x={W * 0.22} y={H * 0.14} r={W * 0.42} color={a.glow} opacity={0.16} />
@@ -425,6 +480,9 @@ export default function ThemeAtmosphere({ showAmbient = true }: Props) {
   return (
     <Canvas pointerEvents="none" style={StyleSheet.absoluteFill}>
       <Background a={a} W={width} H={height} />
+      {ambientOn && a.background === 'dicedrop' && (
+        <DiceDropAmbient clock={clock} W={width} H={height} particle={a.particle} />
+      )}
       {ambientOn && a.background === 'forest' && (
         <ForestAmbient clock={clock} W={width} H={height} particle={a.particle} />
       )}
