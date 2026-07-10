@@ -27,6 +27,7 @@ import PauseModal from '@/components/game/PauseModal';
 import EmergencyCondenseOverlay from '@/components/game/EmergencyCondenseOverlay';
 import { FloatingLabelsOverlay, FloatingLabelData } from '@/components/game/FloatingLabels';
 import AdBanner from '@/components/AdBanner';
+import { preloadAllAds } from '@/lib/adManager';
 import { saveGame, loadSavedGame, clearSavedGame, savePendingRun, clearPendingRun, hasSeenControls, markControlsSeen } from '@/lib/storage';
 import TutorialOverlay from '@/components/game/TutorialOverlay';
 import { runMergePhase, computeClearSteps } from '@/lib/condense';
@@ -127,6 +128,16 @@ export default function GameScreen() {
     playTrack('game');
     return () => playTrack('menu');
   }, [playTrack]);
+
+  // First game start = the signal to load the deferred full-screen ads (see
+  // lib/adManager.ts — they're kept out of the cold-launch window). A short
+  // delay lets the screen transition + first piece settle before the ad SDK
+  // spins up its WebViews; the rewarded ad only needs to be ready by the
+  // first game over, the interstitial by the second game.
+  useEffect(() => {
+    const t = setTimeout(preloadAllAds, 2000);
+    return () => clearTimeout(t);
+  }, []);
 
   // True when this run was loaded from a dev demo save (preset board for
   // App Store preview capture). Demo runs NEVER touch stats, pending-run

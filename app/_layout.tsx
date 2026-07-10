@@ -10,7 +10,7 @@ import { Rubik_700Bold } from '@expo-google-fonts/rubik';
 import * as SplashScreen from 'expo-splash-screen';
 import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 import mobileAds, { AdsConsent, AdsConsentStatus } from 'react-native-google-mobile-ads';
-import { preloadAllAds } from '@/lib/adManager';
+import { preloadAllAds, markAdsInitialized } from '@/lib/adManager';
 import { initSessionTracker } from '@/lib/sessionTracker';
 import { replayQueue } from '@/lib/scoreQueue';
 import { initAppsFlyer } from '@/lib/appsflyer';
@@ -64,6 +64,7 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
+    let preloadTimer: ReturnType<typeof setTimeout> | undefined;
     (async () => {
       if (Platform.OS === 'ios') {
         await new Promise<void>(resolve => setTimeout(resolve, 500));
@@ -102,9 +103,15 @@ export default function RootLayout() {
       // accepted trade-off vs. phantom ad audio. Muting is policy-compliant.
       mobileAds().setAppMuted(true);
       mobileAds().setAppVolume(0);
-      preloadAllAds();
+      // Preloading the two full-screen ads is deferred out of the launch
+      // window (see lib/adManager.ts) — the game screen requests it at first
+      // game start; this timer is the fallback for sessions that idle on the
+      // home screen, comfortably past the cold-start crunch either way.
+      markAdsInitialized();
+      preloadTimer = setTimeout(preloadAllAds, 6000);
       replayQueue().catch(() => {});
     })();
+    return () => { if (preloadTimer) clearTimeout(preloadTimer); };
   }, []);
 
   if (!fontsLoaded && !fontError) return null;

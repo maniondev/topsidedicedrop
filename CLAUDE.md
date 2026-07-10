@@ -129,6 +129,7 @@ game/                      # (empty — reserved)
 - Banner ads shown to non-premium users only
 - Rewarded ads used for continues (every continue = one rewarded ad)
 - Interstitial shown to non-premium users on every New Game *except* the first run of a session (gated by `isFirstRunOfSession()` in `lib/sessionTracker.ts`; session resets after backgrounding). Registered once at module level in `hooks/useInterstitialAd.ts`.
+- Full-screen ad preloading is deferred out of the cold-launch window (`lib/adManager.ts`): requested 2s after the first game starts, with a 6s post-init fallback timer in `app/_layout.tsx`. Safe because the first session run never shows an interstitial and the rewarded ad isn't needed before the first game over.
 - Test app IDs (dev only): iOS `ca-app-pub-3940256099942544~1458002511`, Android `ca-app-pub-3940256099942544~3347511713`
 
 ## Commands
