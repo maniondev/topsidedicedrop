@@ -83,6 +83,14 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
       try {
         if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
         await Purchases.configure({ apiKey: Platform.OS === 'ios' ? RC_IOS_KEY : RC_ANDROID_KEY });
+        // Warm the offerings cache now (fire-and-forget). upgrade() fetches
+        // offerings at buy-tap time, and the FIRST fetch of a session is the
+        // slow one — RevenueCat API + StoreKit product-metadata validation,
+        // several seconds in sandbox/TestFlight — happening after the paywall
+        // has already dismissed (the iPad StoreKit-presentation fix), i.e.
+        // with no visual feedback. Prefetching moves that cost to launch;
+        // the tap-time getOfferings() then resolves from the SDK's cache.
+        Purchases.getOfferings().catch(() => {});
         const info = await Purchases.getCustomerInfo();
         applyInfo(info);
       } catch (e) {
