@@ -248,7 +248,7 @@ export function DiceStylePreview({ styleId, size = 20 }: { styleId: DiceStyleId;
           </RoundedRect>
           <RoundedRect x={rx + 1} y={ry + 1} width={rw - 2} height={rw - 2} r={5} color={fc} style="stroke" strokeWidth={0.8} />
           {/* Crisp pip — matches the board's NeonDie (per-pip blur removed) */}
-          <Circle cx={cx} cy={cy} r={dotR} color={fc} />
+          <Circle cx={cx} cy={cy} r={dotR * 1.1} color={fc} />
         </>
       )}
       {styleId === 'raised' && (() => {

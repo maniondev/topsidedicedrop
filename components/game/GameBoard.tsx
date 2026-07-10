@@ -218,7 +218,7 @@ function NeonDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
           board ~250 blur ops per repaint (the dominant draw cost of any dice
           style); the border glow alone carries the neon look. */}
       {dots.map(([xf, yf], i) => (
-        <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR} color={faceColor} />
+        <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR * 1.1} color={faceColor} />
       ))}
     </>
   );

@@ -70,7 +70,7 @@ function PreviewDie({ x, y, cs, value, faceColor, dotColor, diceStyle }: {
           {/* Crisp pips — matches the board's NeonDie, which dropped its
               per-pip blur for draw cost (border glow carries the look). */}
           {dots.map(([xf, yf], i) => (
-            <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR} color={faceColor} />
+            <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR * 1.1} color={faceColor} />
           ))}
         </>
       );
