@@ -198,16 +198,17 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Sound</Text>
           <View style={styles.sectionCard}>
-            {soundEnabled && (
-              <ToggleRow
-                label="Break Through Silent Mode"
-                sublabel="May pause streaming music"
-                value={soundMode === 'playback'}
-                onValueChange={v => setSoundMode(v ? 'playback' : 'ambient')}
-                colors={colors}
-                styles={styles}
-              />
-            )}
+            {/* Always visible — the audio-session category governs the
+                soundtrack too, not just SFX, so hiding it behind the Sound
+                Effects toggle stranded music-only users on the wrong mode. */}
+            <ToggleRow
+              label="Break Through Silent Mode"
+              sublabel="May pause streaming music"
+              value={soundMode === 'playback'}
+              onValueChange={v => setSoundMode(v ? 'playback' : 'ambient')}
+              colors={colors}
+              styles={styles}
+            />
             <ToggleRow
               label="Sound Effects"
               value={soundEnabled}
