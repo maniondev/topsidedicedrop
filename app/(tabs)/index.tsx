@@ -400,14 +400,14 @@ export default function LobbyScreen() {
         <View style={[styles.statsRow, { gap: f(12) }]}>
           <PulsingCard beatIndex={0} epoch={animPhaseEpoch} active={statsPulseActive} style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
             <Ionicons name="star-outline" size={f(22)} color={colors.accent} />
-            <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+            <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} key={`bu:${dstats.bestUnassisted}`}>
               {dstats.bestUnassisted > 0 ? dstats.bestUnassisted.toLocaleString() : '—'}
             </Text>
             <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>BEST UNASSISTED</Text>
           </PulsingCard>
           <PulsingCard beatIndex={1} epoch={animPhaseEpoch} active={statsPulseActive} style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
             <Ionicons name="trophy-outline" size={f(22)} color={colors.accent} />
-            <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+            <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} key={`bs:${dstats.bestScore}`}>
               {dstats.bestScore > 0 ? dstats.bestScore.toLocaleString() : '—'}
             </Text>
             <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>BEST OVERALL</Text>
@@ -416,14 +416,14 @@ export default function LobbyScreen() {
         <View style={[styles.statsRow, { gap: f(12) }]}>
           <PulsingCard beatIndex={2} epoch={animPhaseEpoch} active={statsPulseActive} style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
             <Ionicons name="timer-outline" size={f(22)} color={colors.textSecondary} />
-            <Text style={[styles.heroValue, { color: colors.textSecondary, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+            <Text style={[styles.heroValue, { color: colors.textSecondary, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} key={`lr:${lastRunScore}`}>
               {lastRunScore > 0 ? lastRunScore.toLocaleString() : '—'}
             </Text>
             <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>LAST RUN</Text>
           </PulsingCard>
           <PulsingCard beatIndex={3} epoch={animPhaseEpoch} active={statsPulseActive} style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
             <Ionicons name="flame-outline" size={f(22)} color={colors.textSecondary} />
-            <Text style={[styles.heroValue, { color: colors.textSecondary, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+            <Text style={[styles.heroValue, { color: colors.textSecondary, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} key={`st:${currentStreak}`}>
               {currentStreak > 0 ? currentStreak.toLocaleString() : '—'}
             </Text>
             <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>DAY STREAK</Text>
