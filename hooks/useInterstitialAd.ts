@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 import { AdEventType } from 'react-native-google-mobile-ads';
 import { interstitialAd as ad, adsReady } from '@/lib/adManager';
 import { useMusic } from '@/contexts/MusicContext';
-import { enterAdAudioSession, exitAdAudioSession } from '@/lib/audioSession';
+import { enterAdAudioSession, exitAdAudioSession, isAdSessionActive } from '@/lib/audioSession';
 
 // The interstitial is a shared singleton, and BOTH the home and game screens
 // mount this hook (game stacks over the tabs). Registering the persistent
@@ -27,7 +27,17 @@ function bindOnce() {
   if (bound) return;
   bound = true;
   ad.addAdEventListener(AdEventType.LOADED, () => { retry = 0; }); // success resets backoff
-  ad.addAdEventListener(AdEventType.ERROR, () => { scheduleReload(); });
+  ad.addAdEventListener(AdEventType.ERROR, () => {
+    // An error during/after presentation may arrive with no CLOSED event. If
+    // an ad audio session is still open, run the exit path or the SDK stays
+    // UNMUTED (idle creatives can bleed audio again) and _adPresenting stays
+    // stuck, blocking music until app restart. Routine load errors (no
+    // session open) skip this — audio must not be touched.
+    if (isAdSessionActive()) {
+      try { exitAdAudioSession(); sharedMusic.restartMusicFromTop(); } catch {}
+    }
+    scheduleReload();
+  });
   // iOS: restore the user's audio category + restart the soundtrack once when
   // the ad closes, however it was dismissed. Android ads are silent.
   if (Platform.OS === 'ios') {

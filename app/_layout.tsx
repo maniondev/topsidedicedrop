@@ -86,19 +86,22 @@ export default function RootLayout() {
       initSessionTracker();
 
       await mobileAds().initialize();
-      // Android ONLY: silence ad creatives. Android AdMob has a long-standing
-      // bug where interactive/video interstitials bleed audio the moment they
-      // PRELOAD (before being shown) — over the top of our soundtrack, since
-      // the audio session mixes rather than ducks. setAppMuted alone doesn't
-      // stop it; setAppVolume(0) is the community mitigation (partial — a few
-      // creatives still leak, but it kills most). iOS has no such preload bug,
-      // so we leave iOS unmuted for full video-ad eligibility (best revenue)
-      // and instead pause/duck our own music around shown ads (see the ad
-      // hooks) so nothing overlaps. Muting is AdMob-policy-compliant.
-      if (Platform.OS === 'android') {
-        mobileAds().setAppMuted(true);
-        mobileAds().setAppVolume(0);
-      }
+      // BOTH platforms: silence ad creatives while no ad is showing. AdMob
+      // interactive/video creatives can bleed audio the moment they PRELOAD
+      // (before ever being shown) — sometimes minutes later, at full volume,
+      // untouchable by our own sound/music toggles since the SDK's players
+      // bypass our audio stack entirely. Long documented on Android; observed
+      // in the field on iOS too (idle on the home tab, ad audio out of
+      // nowhere), so the old iOS carve-out "no such preload bug there" is
+      // gone. setAppMuted alone doesn't stop it; setAppVolume(0) is the
+      // community mitigation (partial — a few creatives still leak, but it
+      // kills most). iOS UNMUTES around an actually-presented ad
+      // (enterAdAudioSession/exitAdAudioSession in lib/audioSession.ts) so
+      // shown ads keep their sound; Android stays muted even while showing,
+      // as before. Muted-at-request can lower video-ad eligibility/eCPM —
+      // accepted trade-off vs. phantom ad audio. Muting is policy-compliant.
+      mobileAds().setAppMuted(true);
+      mobileAds().setAppVolume(0);
       preloadAllAds();
       replayQueue().catch(() => {});
     })();

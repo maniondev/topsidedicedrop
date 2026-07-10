@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { Platform } from 'react-native';
 import { RewardedAdEventType, AdEventType } from 'react-native-google-mobile-ads';
 import { rewardedAd as ad, adsReady } from '@/lib/adManager';
-import { restoreGameAudioSession, enterAdAudioSession, exitAdAudioSession } from '@/lib/audioSession';
+import { restoreGameAudioSession, enterAdAudioSession, exitAdAudioSession, isAdSessionActive } from '@/lib/audioSession';
 import { useMusic } from '@/contexts/MusicContext';
 
 export function useRewardedAd(onRewarded: () => void) {
@@ -89,6 +89,12 @@ export function useRewardedAd(onRewarded: () => void) {
     const unsubError = ad.addAdEventListener(AdEventType.ERROR, () => {
       earnedRef.current = false;
       inFlightRef.current = false;
+      // An error during/after presentation may arrive with no CLOSED event.
+      // If an ad audio session is still open, run the exit path here or the
+      // SDK stays UNMUTED (idle creatives can bleed audio again) and
+      // _adPresenting stays stuck, blocking music until app restart. Routine
+      // load errors (no session open) skip this — audio must not be touched.
+      if (isAdSessionActive()) adAudioRef.current.endAdAudio();
       setAdLoaded(false);
       scheduleReload();
     });

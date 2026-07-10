@@ -1,5 +1,7 @@
+import { Platform } from 'react-native';
 import Sound from 'react-native-sound';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import mobileAds from 'react-native-google-mobile-ads';
 
 const SOUND_MODE_KEY = 'tm_sound_mode'; // shared with SoundContext
 
@@ -110,21 +112,48 @@ export function isAdInterrupting(): boolean {
   return _adPresenting || Date.now() - _adEndedAt < AD_GRACE_MS;
 }
 
+// True only between enterAdAudioSession and exitAdAudioSession — i.e. an ad
+// audio session was opened and never closed. Lets the ad hooks' ERROR handlers
+// distinguish "presentation died without a CLOSED event" (must run the exit
+// path, or the SDK stays unmuted and music stays blocked until app restart)
+// from a routine load failure (must NOT touch audio — exiting there would
+// spuriously restart music mid-game).
+export function isAdSessionActive(): boolean {
+  return _adPresenting;
+}
+
 // Call right BEFORE presenting an ad (so the category is set before the ad's
 // player starts). Best-effort — never throws into the caller.
+// Also the ONLY place ad creatives are unmuted: the SDK stays app-muted at all
+// other times (see app/_layout.tsx) because a preloaded-but-not-shown creative
+// can spontaneously start playing audio — observed on BOTH platforms — and
+// nothing in our own audio stack (toggles, volumes, session category) can
+// silence the SDK's internal players. iOS-only: Android ads are deliberately
+// silent even while showing, so it never unmutes.
 export function enterAdAudioSession() {
   _adPresenting = true;
   try {
     Sound.setCategory('Ambient');
     Sound.setActive(true);
   } catch {}
+  if (Platform.OS === 'ios') {
+    try {
+      mobileAds().setAppMuted(false);
+      mobileAds().setAppVolume(1);
+    } catch {}
+  }
 }
 
 // Call when the ad is dismissed OR when show() failed (so we never leave the
 // music paused or the category stuck on Ambient). Restores the user's real
-// category after the usual settle delay and opens the grace window.
+// category after the usual settle delay, opens the grace window, and re-mutes
+// the SDK so the next preloaded creative can't bleed audio while idle.
 export function exitAdAudioSession() {
   _adPresenting = false;
   _adEndedAt = Date.now();
+  try {
+    mobileAds().setAppMuted(true);
+    mobileAds().setAppVolume(0);
+  } catch {}
   restoreGameAudioSession();
 }
