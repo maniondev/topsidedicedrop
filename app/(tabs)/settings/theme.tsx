@@ -83,7 +83,7 @@ export default function ThemeScreen() {
         </TouchableOpacity>
       )}
 
-      <ScrollView contentContainerStyle={[styles.content, { gap: 10, paddingTop: 10 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.content, { gap: 5, paddingTop: 10 }]} showsVerticalScrollIndicator={false}>
         {THEME_IDS.map(id => {
           const meta = ThemeMeta[id];
           const theme = Themes[id];
