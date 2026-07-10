@@ -435,15 +435,13 @@ export const Themes: Record<ThemeId, ThemeColors> = {
       purple: '#645E6C',
       black:  '#050505',
     },
-    // Pip contrast fixes: the light 5 (blue) and 6 (purple) faces get dark
-    // pips instead of white; the 3 (yellow) face routes through this list
-    // to OVERRIDE the global yellow→black pip default (black pips on a
-    // mid-olive face were the weakest contrast on the board) with cream.
-    darkenFaceColors: ['yellow', 'blue', 'purple'],
+    // All pips white on this theme. The 3 (yellow) face must route through
+    // this list purely to OVERRIDE the global yellow→black pip default —
+    // black pips on the mid-olive face were the weakest contrast on the
+    // board. The rest already default to white.
+    darkenFaceColors: ['yellow'],
     darkenFaceColorsDot: {
-      yellow: '#F5F2E8',
-      blue:   '#1E2228',
-      purple: '#262130',
+      yellow: '#FFFFFF',
     },
     iconBg:           '#E5E5E5',
     popupOutlineColor: 'rgba(255,255,255,0.88)',
