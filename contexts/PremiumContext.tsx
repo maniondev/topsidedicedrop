@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react';
 import { Platform, Alert, Linking } from 'react-native';
-import Purchases, { LOG_LEVEL, CustomerInfo, PurchasesPackage } from 'react-native-purchases';
+import Purchases, { LOG_LEVEL, CustomerInfo, PurchasesOfferings, PurchasesPackage } from 'react-native-purchases';
+import { PREMIUM_PRICE, REMOVE_ADS_PRICE, CUSTOMIZATION_PRICE } from '@/constants/pricing';
 import { logPurchaseEvent } from '@/lib/appsflyer';
 import { setReviewPendingFromPurchase } from '@/lib/reviewPrompt';
 
@@ -27,6 +28,22 @@ const PACKAGE_CUSTOMIZATION = 'customization';
 
 export type PurchaseTarget = 'allIn' | 'removeAds' | 'customization';
 
+// Display prices for the paywall. Seeded with the hardcoded USD strings from
+// constants/pricing.ts and replaced with the store's own LOCALIZED
+// priceString (e.g. "€4,99", "£3.99") once offerings resolve — so the button
+// always shows exactly what Apple/Google will charge, in the user's currency.
+export interface PremiumPrices {
+  allIn: string;
+  removeAds: string;
+  customization: string;
+}
+
+const FALLBACK_PRICES: PremiumPrices = {
+  allIn: PREMIUM_PRICE,
+  removeAds: REMOVE_ADS_PRICE,
+  customization: CUSTOMIZATION_PRICE,
+};
+
 interface PremiumCtxType {
   hasCustomization: boolean;
   hasNoAds: boolean;
@@ -43,6 +60,13 @@ interface PremiumCtxType {
   // testable without real purchases.
   devToggleCustomization: () => void;
   devToggleNoAds: () => void;
+  // Localized display prices (see PremiumPrices). USD fallbacks until (and
+  // unless) offerings resolve.
+  prices: PremiumPrices;
+  // Cheap re-attempt hook for the paywall: if the launch prefetch failed
+  // (e.g. offline at launch), opening the modal retries once via the SDK's
+  // cache-first getOfferings.
+  ensureLocalizedPrices: () => void;
 }
 
 const PremiumCtx = createContext<PremiumCtxType>({
@@ -54,6 +78,8 @@ const PremiumCtx = createContext<PremiumCtxType>({
   redeemCode: async () => {},
   devToggleCustomization: () => {},
   devToggleNoAds: () => {},
+  prices: FALLBACK_PRICES,
+  ensureLocalizedPrices: () => {},
 });
 
 function readEntitlements(info: CustomerInfo): { customization: boolean; noAds: boolean } {
@@ -76,6 +102,36 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
   const hasCustomization = devOverride.customization ?? rcState.customization;
   const hasNoAds = devOverride.noAds ?? rcState.noAds;
 
+  // Localized display prices, seeded with the USD fallbacks. localizedRef
+  // tracks whether real store prices have landed, so ensureLocalizedPrices
+  // can be a no-op afterwards.
+  const [prices, setPrices] = useState<PremiumPrices>(FALLBACK_PRICES);
+  const localizedRef = useRef(false);
+  const configuredRef = useRef(false);
+
+  const applyOfferingPrices = useCallback((offerings: PurchasesOfferings) => {
+    const pkgs = offerings.current?.availablePackages ?? [];
+    const priceOf = (id: string): string | null =>
+      pkgs.find(p => p.identifier === id)?.product.priceString ?? null;
+    const next: PremiumPrices = {
+      allIn:         priceOf(PACKAGE_ALL_IN)        ?? FALLBACK_PRICES.allIn,
+      removeAds:     priceOf(PACKAGE_REMOVE_ADS)    ?? FALLBACK_PRICES.removeAds,
+      customization: priceOf(PACKAGE_CUSTOMIZATION) ?? FALLBACK_PRICES.customization,
+    };
+    // Only mark localized (and re-render) if at least one real price landed.
+    if (pkgs.length > 0) {
+      localizedRef.current = true;
+      setPrices(next);
+    }
+  }, []);
+
+  const ensureLocalizedPrices = useCallback(() => {
+    if (localizedRef.current || !configuredRef.current) return;
+    // Cache-first in the SDK, so this is cheap when the launch prefetch
+    // already succeeded and a real retry when it didn't (offline launch).
+    Purchases.getOfferings().then(applyOfferingPrices).catch(() => {});
+  }, [applyOfferingPrices]);
+
   useEffect(() => {
     const applyInfo = (info: CustomerInfo) => setRcState(readEntitlements(info));
 
@@ -83,6 +139,7 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
       try {
         if (__DEV__) Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
         await Purchases.configure({ apiKey: Platform.OS === 'ios' ? RC_IOS_KEY : RC_ANDROID_KEY });
+        configuredRef.current = true;
         // Warm the offerings cache now (fire-and-forget). upgrade() fetches
         // offerings at buy-tap time, and the FIRST fetch of a session is the
         // slow one — RevenueCat API + StoreKit product-metadata validation,
@@ -90,7 +147,8 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
         // has already dismissed (the iPad StoreKit-presentation fix), i.e.
         // with no visual feedback. Prefetching moves that cost to launch;
         // the tap-time getOfferings() then resolves from the SDK's cache.
-        Purchases.getOfferings().catch(() => {});
+        // The same fetch feeds the paywall's localized display prices.
+        Purchases.getOfferings().then(applyOfferingPrices).catch(() => {});
         const info = await Purchases.getCustomerInfo();
         applyInfo(info);
       } catch (e) {
@@ -102,7 +160,7 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
 
     Purchases.addCustomerInfoUpdateListener(applyInfo);
     return () => { Purchases.removeCustomerInfoUpdateListener(applyInfo); };
-  }, []);
+  }, [applyOfferingPrices]);
 
   const upgrade = useCallback(async (target: PurchaseTarget) => {
     try {
@@ -179,10 +237,10 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       hasCustomization, hasNoAds, isLoading, upgrade, restorePurchases, redeemCode,
-      devToggleCustomization, devToggleNoAds,
+      devToggleCustomization, devToggleNoAds, prices, ensureLocalizedPrices,
     }),
     [hasCustomization, hasNoAds, isLoading, upgrade, restorePurchases, redeemCode,
-      devToggleCustomization, devToggleNoAds],
+      devToggleCustomization, devToggleNoAds, prices, ensureLocalizedPrices],
   );
 
   return <PremiumCtx.Provider value={value}>{children}</PremiumCtx.Provider>;

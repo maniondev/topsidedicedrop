@@ -1,10 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePremium, PurchaseTarget } from '@/contexts/PremiumContext';
 
 const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
-import { PREMIUM_PRICE, REMOVE_ADS_PRICE, CUSTOMIZATION_PRICE } from '@/constants/pricing';
 
 interface Props {
   visible: boolean;
@@ -23,8 +22,13 @@ const CUSTOMIZATION_PERKS = ['All themes & sound packs', 'All dice animations & 
 
 export default function PremiumModal({ visible, onClose, intent = 'default' }: Props) {
   const { colors } = useTheme();
-  const { hasCustomization, hasNoAds, upgrade, restorePurchases } = usePremium();
+  const { hasCustomization, hasNoAds, upgrade, restorePurchases, prices, ensureLocalizedPrices } = usePremium();
   const pendingTargetRef = useRef<PurchaseTarget | null>(null);
+
+  // Prices are localized store priceStrings once offerings resolve (USD
+  // fallbacks otherwise). Opening the paywall retries the fetch if the
+  // launch prefetch failed — no-op when prices are already localized.
+  useEffect(() => { if (visible) ensureLocalizedPrices(); }, [visible, ensureLocalizedPrices]);
 
   // Four states: nothing yet, code-only (has customization, wants ads gone),
   // ads-only (has no_ads, wants customization — the fair upsell for someone
@@ -41,9 +45,9 @@ export default function PremiumModal({ visible, onClose, intent = 'default' }: P
   const custIntent = intent === 'customization' && offer === 'allIn';
 
   const config: Record<Exclude<typeof offer, 'complete'>, { title: string; perks: string[]; price: string; target: PurchaseTarget }> = {
-    allIn: { title: 'Topside: Dice Drop Premium', perks: custIntent ? ALL_IN_PERKS_CUSTOMIZATION : ALL_IN_PERKS, price: PREMIUM_PRICE, target: 'allIn' },
-    removeAds: { title: 'Remove Ads', perks: REMOVE_ADS_PERKS, price: REMOVE_ADS_PRICE, target: 'removeAds' },
-    customization: { title: 'Unlock Customization', perks: CUSTOMIZATION_PERKS, price: CUSTOMIZATION_PRICE, target: 'customization' },
+    allIn: { title: 'Topside: Dice Drop Premium', perks: custIntent ? ALL_IN_PERKS_CUSTOMIZATION : ALL_IN_PERKS, price: prices.allIn, target: 'allIn' },
+    removeAds: { title: 'Remove Ads', perks: REMOVE_ADS_PERKS, price: prices.removeAds, target: 'removeAds' },
+    customization: { title: 'Unlock Customization', perks: CUSTOMIZATION_PERKS, price: prices.customization, target: 'customization' },
   };
 
   if (offer === 'complete') {
@@ -112,7 +116,7 @@ export default function PremiumModal({ visible, onClose, intent = 'default' }: P
               style={styles.secondaryOfferBtn}
             >
               <Text style={[styles.secondaryOffer, { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>
-                {custIntent ? `Or just Customization — ${CUSTOMIZATION_PRICE}` : `Or just Remove Ads — ${REMOVE_ADS_PRICE}`}
+                {custIntent ? `Or just Customization — ${prices.customization}` : `Or just Remove Ads — ${prices.removeAds}`}
               </Text>
             </TouchableOpacity>
           )}
