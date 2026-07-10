@@ -392,19 +392,19 @@ export default function LeaderboardScreen() {
         <Pressable style={styles.infoOverlay} onPress={() => setShowInfo(false)}>
           <Pressable style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
             <Text style={[styles.infoTitle, { color: colors.titleColor ?? colors.text }]}>About the Leaderboard</Text>
-            <Text style={[styles.infoBody, { color: colors.textSecondary }]}>
+            <Text style={[styles.infoBody, { color: colors.titleColor ?? colors.text }]}>
               <Text style={{ fontWeight: '700', color: colors.titleColor ?? colors.accent }}>Unassisted Runs</Text>
               {' — scores from runs completed before using a continue.'}
             </Text>
-            <Text style={[styles.infoBody, { color: colors.textSecondary }]}>
+            <Text style={[styles.infoBody, { color: colors.titleColor ?? colors.text }]}>
               <Text style={{ fontWeight: '700', color: colors.titleColor ?? colors.accent }}>All Runs</Text>
               {' — every run, including those where a continue was used to extend the game.'}
             </Text>
-            <Text style={[styles.infoBody, { color: colors.textSecondary }]}>
+            <Text style={[styles.infoBody, { color: colors.titleColor ?? colors.text }]}>
               <Text style={{ fontWeight: '700', color: colors.titleColor ?? colors.accent }}>Scoring</Text>
               {' — merging dice earns points, with a multiplier for chain reactions. Clearing sixes earns a bonus, and clearing the entire board earns an even bigger bonus.'}
             </Text>
-            <Text style={[styles.infoBody, { color: colors.textSecondary }]}>
+            <Text style={[styles.infoBody, { color: colors.titleColor ?? colors.text }]}>
               <Text style={{ fontWeight: '700', color: colors.titleColor ?? colors.accent }}>Anonymous</Text>
               {' — your display name is randomly generated. No personal information is collected or used in the leaderboard.'}
             </Text>

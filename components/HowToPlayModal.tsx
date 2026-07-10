@@ -39,7 +39,7 @@ export default function HowToPlayModal({ visible, onClose, showConsent }: Props)
             <View style={styles.rule}>
               <Text style={[styles.ruleTitle, { color: colors.accent }]}>Drop the dice</Text>
               {CONTROLS.map((c, i) => (
-                <Text key={i} style={[styles.ruleBody, { color: colors.textSecondary }]}>
+                <Text key={i} style={[styles.ruleBody, { color: colors.text }]}>
                   <Text style={styles.verb}>{c.verb}</Text>{c.rest}
                 </Text>
               ))}
@@ -47,7 +47,7 @@ export default function HowToPlayModal({ visible, onClose, showConsent }: Props)
             {RULES.map((r, i) => (
               <View key={i} style={styles.rule}>
                 <Text style={[styles.ruleTitle, { color: colors.accent }]}>{r.title}</Text>
-                <Text style={[styles.ruleBody, { color: colors.textSecondary }]}>{r.body}</Text>
+                <Text style={[styles.ruleBody, { color: colors.text }]}>{r.body}</Text>
               </View>
             ))}
           </View>
