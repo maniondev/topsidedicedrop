@@ -67,13 +67,10 @@ function PreviewDie({ x, y, cs, value, faceColor, dotColor, diceStyle }: {
             <BlurMask blur={2.5} style="solid" />
           </RoundedRect>
           <RoundedRect x={rx + 1} y={ry + 1} width={rw - 2} height={rw - 2} r={3} color={faceColor} style="stroke" strokeWidth={0.5} />
+          {/* Crisp pips — matches the board's NeonDie, which dropped its
+              per-pip blur for draw cost (border glow carries the look). */}
           {dots.map(([xf, yf], i) => (
-            <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR} color={faceColor}>
-              <BlurMask blur={1.8} style="solid" />
-            </Circle>
-          ))}
-          {dots.map(([xf, yf], i) => (
-            <Circle key={`s${i}`} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR * 0.55} color={faceColor} />
+            <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR} color={faceColor} />
           ))}
         </>
       );

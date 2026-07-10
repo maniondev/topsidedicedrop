@@ -214,15 +214,11 @@ function NeonDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
       </RoundedRect>
       {/* Inner crisp border ring */}
       <RoundedRect x={rx + 1} y={ry + 1} width={rw - 2} height={rw - 2} r={7} color={faceColor} style="stroke" strokeWidth={0.8} />
-      {/* Glowing pips */}
+      {/* Crisp pips — deliberately NOT blurred. A blur per pip made a dense
+          board ~250 blur ops per repaint (the dominant draw cost of any dice
+          style); the border glow alone carries the neon look. */}
       {dots.map(([xf, yf], i) => (
-        <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR} color={faceColor}>
-          {!perfMode && <BlurMask blur={2.5} style="solid" />}
-        </Circle>
-      ))}
-      {/* Solid pip core on top */}
-      {dots.map(([xf, yf], i) => (
-        <Circle key={`s${i}`} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR * 0.55} color={faceColor} />
+        <Circle key={i} cx={rx + xf * rw} cy={ry + yf * rw} r={dotR} color={faceColor} />
       ))}
     </>
   );
