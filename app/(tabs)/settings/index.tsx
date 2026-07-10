@@ -20,7 +20,6 @@ import { ThemeMeta } from '@/constants/theme';
 import { openNativeReview, getHasRated } from '@/lib/reviewPrompt';
 import { Section, RowItem, ToggleRow, makeSettingsStyles } from '@/components/settings/SettingsShared';
 import { getAppIcon, getCurrentAppIconLabel, APP_ICON_SUPPORTED } from '@/lib/appIcon';
-import { getHapticsEnabled, setHapticsEnabled } from '@/lib/haptics';
 import { COMPOSER_CREDIT_LABEL, openComposerIG } from '@/lib/composer';
 
 export default function SettingsScreen() {
@@ -39,13 +38,11 @@ export default function SettingsScreen() {
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
   const [hasRated, setHasRatedState] = useState(false);
   const [, forceIconLabelRefresh] = useState(0);
-  const [haptics, setHapticsState] = useState(true);
   const scrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(useCallback(() => {
     getHasRated().then(setHasRatedState);
     getAppIcon().then(() => forceIconLabelRefresh(n => n + 1));
-    getHapticsEnabled().then(setHapticsState);
   }, []));
 
   const handleUpgrade = () => setPremiumModalOpen(true);
@@ -223,13 +220,6 @@ export default function SettingsScreen() {
               label="Soundtrack"
               value={musicEnabled}
               onValueChange={setMusicEnabled}
-              colors={colors}
-              styles={styles}
-            />
-            <ToggleRow
-              label="Haptics"
-              value={haptics}
-              onValueChange={v => { setHapticsState(v); setHapticsEnabled(v); }}
               colors={colors}
               styles={styles}
             />

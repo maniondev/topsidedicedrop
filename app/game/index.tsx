@@ -28,7 +28,7 @@ import EmergencyCondenseOverlay from '@/components/game/EmergencyCondenseOverlay
 import { FloatingLabelsOverlay, FloatingLabelData } from '@/components/game/FloatingLabels';
 import AdBanner from '@/components/AdBanner';
 import { preloadAllAds, setGameplayActive } from '@/lib/adManager';
-import { hapticLight, hapticMedium, hapticSuccess } from '@/lib/haptics';
+import { hapticMedium, hapticSuccess } from '@/lib/haptics';
 import { saveGame, loadSavedGame, clearSavedGame, savePendingRun, clearPendingRun, hasSeenControls, markControlsSeen } from '@/lib/storage';
 import TutorialOverlay from '@/components/game/TutorialOverlay';
 import { runMergePhase, computeClearSteps } from '@/lib/condense';
@@ -436,7 +436,6 @@ export default function GameScreen() {
   // Rotate with a subtle click. Discrete action — safe for the pooled audio engine.
   const rotateWithSound = useCallback(() => {
     play('drop');
-    hapticLight();
     game.rotate();
   }, [play, game.rotate]);
 
