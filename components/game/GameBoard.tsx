@@ -333,17 +333,13 @@ function OceanDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
         {!perfMode && <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
           <RadialGradient c={vec(rx + rw * 0.5, ry + rw * 1.15)} r={rw * 1.0} colors={['rgba(0,26,48,0.30)', 'rgba(0,26,48,0)']} />
         </Rect>}
-        {/* specular gloss streak — radial-gradient circle, not a BlurMask
-            (one shader pass instead of a convolution). NOTE the flat core:
-            a blurred solid disk is FULL opacity out to near its radius with
-            only the edge feathered — a center-peak gradient reads several
-            times dimmer and killed the wet-gloss look entirely. */}
-        {!perfMode && <Circle cx={rx + rw * 0.34} cy={ry + rw * 0.24} r={rw * 0.25} color="transparent">
-          <RadialGradient
-            c={vec(rx + rw * 0.34, ry + rw * 0.24)} r={rw * 0.25}
-            colors={['rgba(255,255,255,0.62)', 'rgba(255,255,255,0.62)', 'rgba(255,255,255,0)']}
-            positions={[0, 0.66, 1]}
-          />
+        {/* specular gloss streak. Deliberately a real BlurMask: two attempts
+            at a cheaper radial-gradient stand-in read wrong on device (a
+            blur's dispersion isn't a radial falloff). One small blur per die
+            is an accepted cost — do not "optimize" this again without
+            side-by-side device screenshots. */}
+        {!perfMode && <Circle cx={rx + rw * 0.34} cy={ry + rw * 0.24} r={rw * 0.17} color="rgba(255,255,255,0.62)">
+          <BlurMask blur={rw * 0.08} style="normal" />
         </Circle>}
       </Group>
       {/* glossy rim */}
@@ -379,18 +375,14 @@ function PastelDie({ x, y, cs, value, faceColor, dotColor, perfMode }: {
         {!perfMode && <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
           <RadialGradient c={vec(rx + rw * 0.5, ry + rw * 0.02)} r={rw * 1.2} colors={['rgba(255,255,255,0.46)', 'rgba(255,255,255,0.05)', 'rgba(255,255,255,0)']} />
         </Rect>}
-        {/* big soft gloss blob for a puffy jelly look — radial-gradient
-            circle, not a BlurMask: this blur had the largest kernel of any
-            dice style (the single most expensive draw on the board). NOTE
-            the flat core: a blurred solid disk keeps FULL opacity out to
-            near its radius with only the edge feathered — a center-peak
-            gradient reads several times dimmer and flattened the jelly. */}
-        {!perfMode && <Circle cx={rx + rw * 0.5} cy={ry} r={rw * 0.8} color="transparent">
-          <RadialGradient
-            c={vec(rx + rw * 0.5, ry)} r={rw * 0.8}
-            colors={['rgba(255,255,255,0.30)', 'rgba(255,255,255,0.30)', 'rgba(255,255,255,0)']}
-            positions={[0, 0.56, 1]}
-          />
+        {/* big soft gloss blob for a puffy jelly look. Deliberately a real
+            BlurMask (the largest one on the board): two attempts at a
+            cheaper radial-gradient stand-in read wrong on device — a blur's
+            dispersion isn't a radial falloff, and this blob IS the jelly
+            identity. One blur per die is an accepted cost — do not
+            "optimize" this again without side-by-side device screenshots. */}
+        {!perfMode && <Circle cx={rx + rw * 0.5} cy={ry} r={rw * 0.6} color="rgba(255,255,255,0.30)">
+          <BlurMask blur={rw * 0.2} style="normal" />
         </Circle>}
         {/* soft inner edge shade inflates the form */}
         {!perfMode && <Rect x={rx} y={ry} width={rw} height={rw} color="transparent">
