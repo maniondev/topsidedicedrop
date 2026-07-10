@@ -16,13 +16,34 @@ const ThemeContext = createContext<ThemeContextValue>({
   setTheme: () => {},
 });
 
+// One-shot migration for the default-theme change (Classic → Dice Drop).
+// tm_theme is only ever written by an explicit pick, so users who never
+// touched the picker flip to the new default automatically on update. Users
+// with a stored 'dice' picked Classic when it WAS the default — move them to
+// the new default once. The flag makes it once-ever: anyone who re-picks
+// Classic afterwards keeps it through every future launch and update.
+const THEME_MIGRATED_KEY = 'tm_theme_default_migrated';
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [themeId, setThemeId] = useState<ThemeId>('dicedrop');
 
   useEffect(() => {
-    AsyncStorage.getItem(THEME_KEY).then((v) => {
-      if (v && v in Themes) setThemeId(v as ThemeId);
-    });
+    (async () => {
+      try {
+        const [v, migrated] = await Promise.all([
+          AsyncStorage.getItem(THEME_KEY),
+          AsyncStorage.getItem(THEME_MIGRATED_KEY),
+        ]);
+        if (!migrated) {
+          AsyncStorage.setItem(THEME_MIGRATED_KEY, '1').catch(() => {});
+          if (v === 'dice') {
+            AsyncStorage.setItem(THEME_KEY, 'dicedrop').catch(() => {});
+            return; // stay on the (new) default this launch
+          }
+        }
+        if (v && v in Themes) setThemeId(v as ThemeId);
+      } catch {}
+    })();
   }, []);
 
   const setTheme = useCallback(async (id: ThemeId) => {
