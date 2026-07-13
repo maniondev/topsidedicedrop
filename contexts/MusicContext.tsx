@@ -4,7 +4,7 @@ import Sound from 'react-native-sound';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ensureAudioSessionCategory, reactivateAudioSessionOnResume, forceReapplyAudioSessionCategory, isAdInterrupting } from '@/lib/audioSession';
-import { isOtherAudioPlaying, addAudioInterruptionListener } from '@/modules/native-audio-info';
+import { isOtherAudioPlaying, addAudioInterruptionListener, addAudioRouteChangeListener } from '@/modules/native-audio-info';
 
 const MUSIC_ENABLED_KEY = 'tm_music_enabled';
 const DEV_MUSIC_INCLUDED_KEY = 'tm_dev_music_included';
@@ -252,6 +252,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   enabledRef.current = musicEnabled;
   const devIncludedRef = useRef(true);
   devIncludedRef.current = devMusicIncluded;
+  // Read by the route-change listener (a stable-callback effect) to check
+  // "did sync ever actually succeed" without a stale closure.
+  const musicSyncStartedAtRef = useRef(0);
+  musicSyncStartedAtRef.current = musicSyncStartedAt;
 
   // True while the user's own audio (their music, a podcast, etc.) is playing.
   // We yield our soundtrack to it rather than layering a second music bed on
@@ -837,6 +841,42 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
           reloadMenuTrack();
         }
       }, 700);
+    });
+    return () => sub.remove();
+  }, [reloadMenuTrack, completeLaunchOnResume]);
+
+  // Audio ROUTE changes (Bluetooth connect/disconnect — AirPods — wired
+  // headphones, CarPlay). Route negotiation, especially Bluetooth, can take
+  // longer than waitForPlaybackStart's fixed timeout windows: audio may end
+  // up playing fine a moment later, but musicSyncStartedAt/Epoch — which only
+  // get set on a CONFIRMED start — silently never update, leaving beat-synced
+  // animations stuck at idle tier 0 (and switching soundtracks doesn't fix it
+  // either, since setSoundtrack has the same confirmed-start gate). Previously
+  // this only self-healed by luck, whenever some unrelated event next
+  // triggered a successful reload — e.g. removing the headset again, which
+  // made the bug look like it "fixed itself."
+  //
+  // Unlike the interruption-ended handler, this does NOT unconditionally
+  // restart the track — most route changes happen while music is already
+  // playing fine, and forcibly restarting it would be an audible regression
+  // (e.g. plugging in headphones mid-song). Instead: wait for the route to
+  // settle, then VERIFY — only reload if playback actually isn't running, or
+  // sync never successfully completed in the first place.
+  useEffect(() => {
+    const sub = addAudioRouteChangeListener(() => {
+      if (AppState.currentState !== 'active') return; // foreground handler owns it
+      if (!hasPlayedLaunchRef.current) return;         // cold launch owns it
+      setTimeout(() => {
+        if (AppState.currentState !== 'active') return;
+        if (isAdInterrupting()) return;
+        if (!enabledRef.current || !devIncludedRef.current) return;
+        if (launchInFlightRef.current) { completeLaunchOnResume(); return; }
+        const snd = soundsRef.current.menu;
+        if (!snd) return;
+        snd.getCurrentTime((_seconds, isPlaying) => {
+          if (!isPlaying || !musicSyncStartedAtRef.current) reloadMenuTrack();
+        });
+      }, 500);
     });
     return () => sub.remove();
   }, [reloadMenuTrack, completeLaunchOnResume]);

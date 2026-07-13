@@ -8,6 +8,15 @@ export interface AudioInterruptionEvent {
   shouldResume: boolean;
 }
 
+export interface AudioRouteChangeEvent {
+  // AVAudioSession.RouteChangeReason as a string — e.g. 'newDeviceAvailable'
+  // (a device, often Bluetooth, connected) or 'oldDeviceUnavailable'
+  // (disconnected). Informational; callers currently treat every reason the
+  // same (a cue to re-verify sync state), but it's threaded through in case
+  // that ever needs to change.
+  reason: string;
+}
+
 // Optional: absent on Android and in any build produced before this native
 // module existed. In those cases we report `false` / never fire events, so
 // callers keep their prior behavior.
@@ -16,6 +25,10 @@ const NativeAudioInfo = requireOptionalNativeModule<{
   addListener(
     eventName: 'onAudioInterruption',
     listener: (event: AudioInterruptionEvent) => void,
+  ): { remove(): void };
+  addListener(
+    eventName: 'onAudioRouteChange',
+    listener: (event: AudioRouteChangeEvent) => void,
   ): { remove(): void };
 }>('NativeAudioInfo');
 
@@ -45,6 +58,25 @@ export function addAudioInterruptionListener(
   if (!NativeAudioInfo) return { remove() {} };
   try {
     return NativeAudioInfo.addListener('onAudioInterruption', listener);
+  } catch {
+    return { remove() {} };
+  }
+}
+
+/**
+ * Subscribe to audio ROUTE changes — Bluetooth (AirPods) connect/disconnect,
+ * wired headphones, CarPlay, AirPlay. Route negotiation (Bluetooth especially)
+ * can take longer than this app's fixed "did playback actually start" checks,
+ * which can leave the music beat-sync epoch unset (animations stuck idle)
+ * even though audio eventually plays. iOS only; a no-op subscription is
+ * returned where the module is absent.
+ */
+export function addAudioRouteChangeListener(
+  listener: (event: AudioRouteChangeEvent) => void,
+): { remove(): void } {
+  if (!NativeAudioInfo) return { remove() {} };
+  try {
+    return NativeAudioInfo.addListener('onAudioRouteChange', listener);
   } catch {
     return { remove() {} };
   }

@@ -4,7 +4,7 @@ import Sound from 'react-native-sound';
 import { Asset } from 'expo-asset';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { restoreGameAudioSession, setAudioMode, ensureAudioSessionCategory, reactivateAudioSessionOnResume, isAdInterrupting } from '@/lib/audioSession';
-import { addAudioInterruptionListener } from '@/modules/native-audio-info';
+import { addAudioInterruptionListener, addAudioRouteChangeListener } from '@/modules/native-audio-info';
 import { SOUND_KEY } from '@/lib/storage';
 
 const SOUND_MODE_KEY = 'tm_sound_mode';
@@ -374,6 +374,25 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const sub = addAudioInterruptionListener(e => {
       if (e.type !== 'ended') return;
+      if (AppState.currentState !== 'active') return;
+      if (isAdInterrupting()) return;
+      (async () => {
+        await reactivateAudioSessionOnResume();
+        buildPool(soundPackRef.current, () => false);
+      })();
+    });
+    return () => sub.remove();
+  }, []);
+
+  // Audio ROUTE changes (Bluetooth connect/disconnect — AirPods — wired
+  // headphones, CarPlay) can leave the pool's players stale for the same
+  // reason backgrounding does; unlike MusicContext (which verifies before
+  // acting, to avoid an audible restart), there's no cheap "is the whole SFX
+  // pool still healthy" check, so this mirrors the interruption-ended
+  // handler above and just unconditionally rebuilds — cheap (~200-500ms,
+  // cached assets) and inaudible until the next sound plays.
+  useEffect(() => {
+    const sub = addAudioRouteChangeListener(() => {
       if (AppState.currentState !== 'active') return;
       if (isAdInterrupting()) return;
       (async () => {
