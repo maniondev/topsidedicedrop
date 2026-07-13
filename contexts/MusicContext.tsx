@@ -148,8 +148,11 @@ interface MusicCtxType {
   resumeMusic: () => void;
   // Restart the track from position 0 and re-anchor the beat grid. Used after
   // a full-screen ad (iOS) interrupts playback, so music and beat-synced UI
-  // both resume cleanly in step instead of drifting.
-  restartMusicFromTop: () => void;
+  // both resume cleanly in step instead of drifting. yieldToOtherAudio
+  // (default true) skips the restart if the user's own audio is playing —
+  // pass false for an explicit user action (e.g. the theme picker's Apply
+  // All), which should always take effect regardless of other audio.
+  restartMusicFromTop: (yieldToOtherAudio?: boolean) => void;
   // Drives the LaunchIntroOverlay (splash-matching screen + loading bar
   // shown only when the cold-launch stinger will actually play).
   launchIntroActive: boolean;
@@ -940,13 +943,22 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   // context value below.
   const restartMenuFromTopRef = useRef(restartMenuFromTop);
   restartMenuFromTopRef.current = restartMenuFromTop;
-  const restartMusicFromTop = useCallback(() => {
+  // yieldToOtherAudio defaults to true — the original ad-close callers
+  // (rewarded/interstitial) auto-resume music the player didn't explicitly
+  // ask for right now, so it's correct for them to stay out of the way if
+  // the player started their own audio during the ad. The theme picker's
+  // "Apply All" is a different case: an EXPLICIT user action (same as
+  // picking a soundtrack directly, which never yields) — pass false there.
+  // Without this distinction, Apply All silently did nothing whenever
+  // isOtherAudioPlaying() read true (a known-flaky AVAudioSession property
+  // over Bluetooth routes — can get stuck reflecting a stale/phantom media
+  // session), with no restart, no epoch bump, and animations left frozen.
+  const restartMusicFromTop = useCallback((yieldToOtherAudio: boolean = true) => {
     // No-op when music is off/not included — restartMenuFromTop calls play()
     // unconditionally, so without this guard an ad closing would start music
     // the user has disabled.
     if (!enabledRef.current || !devIncludedRef.current) return;
-    // Yield to the user's own audio if they started something during the ad.
-    if (refreshOtherAudio()) return;
+    if (yieldToOtherAudio && refreshOtherAudio()) return;
     restartMenuFromTopRef.current();
   }, [refreshOtherAudio]);
 

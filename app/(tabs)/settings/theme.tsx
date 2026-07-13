@@ -40,8 +40,11 @@ export default function ThemeScreen() {
     if (!hasCustomization) { setPremiumModalOpen(true); return; }
     if (preset.soundtrack) {
       // Restart even when it's already the current track, so "Match" always
-      // gives a fresh start (setSoundtrack no-ops on the same id).
-      if (preset.soundtrack === soundtrackId) restartMusicFromTop();
+      // gives a fresh start (setSoundtrack no-ops on the same id). This is an
+      // EXPLICIT user action, same as picking a soundtrack directly — pass
+      // false so it always restarts, never silently yielding to other audio
+      // the way the ad-close auto-resume callers correctly do.
+      if (preset.soundtrack === soundtrackId) restartMusicFromTop(false);
       else setSoundtrack(preset.soundtrack);
     }
     if (preset.diceStyle)  setDiceStyle(preset.diceStyle);
