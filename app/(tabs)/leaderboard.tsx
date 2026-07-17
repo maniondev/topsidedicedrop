@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator
 
 const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 import Animated, { useSharedValue, withTiming, Easing, useAnimatedStyle, interpolateColor } from 'react-native-reanimated';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,8 +12,9 @@ import { useStats } from '@/contexts/StatsContext';
 import { Difficulty } from '@/contexts/DifficultyContext';
 import { RunRecord } from '@/lib/storage';
 import { supabase } from '@/lib/supabase';
-import { getPlayerIdentity, regenerateName } from '@/lib/playerIdentity';
+import { getPlayerIdentity } from '@/lib/playerIdentity';
 import FindPlayerModal from '@/components/FindPlayerModal';
+import RenameModal from '@/components/RenameModal';
 
 type BestEntry     = { player_id: string; display_name: string; score: number; best_chain: number; difficulty: string; used_continue: boolean };
 type LifetimeEntry = { player_id: string; display_name: string; lifetime_score: number; run_count: number };
@@ -40,25 +42,27 @@ function DiffBadge({ diff }: { diff: Difficulty }) {
 }
 
 function RunRow({ rank, run }: { rank: number; run: RunRecord }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   return (
     <View style={[styles.runRow, { borderBottomColor: colors.border }]}>
       <Text style={[styles.runRank, { color: rank <= 3 ? colors.accent : colors.textMuted }]}>#{rank}</Text>
       <View style={styles.runInfo}>
         <Text style={[styles.runName, { color: colors.statNumColor ?? colors.text }]} numberOfLines={1}>{formatDate(run.date)}</Text>
-        <Text style={[styles.runDate, { color: colors.textMuted }]}>{run.difficulty}</Text>
+        <Text style={[styles.runDate, { color: colors.textMuted }]}>{t(`difficulty.${run.difficulty}`)}</Text>
       </View>
       <View style={styles.runRight}>
         <View style={styles.runTopRow}>
           <Text style={[styles.runScore, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>{formatScore(run.score)}</Text>
         </View>
-        <Text style={[styles.unassistedLabel, { color: colors.accent, opacity: run.usedContinue ? 0 : 1 }]}>unassisted</Text>
+        <Text style={[styles.unassistedLabel, { color: colors.accent, opacity: run.usedContinue ? 0 : 1 }]}>{t('leaderboard.unassisted')}</Text>
       </View>
     </View>
   );
 }
 
 export default function LeaderboardScreen() {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { stats } = useStats();
   const { top } = useSafeAreaInsets();
@@ -104,7 +108,7 @@ export default function LeaderboardScreen() {
   // Identity
   const [playerId,     setPlayerId]     = useState<string | null>(null);
   const [displayName,  setDisplayName]  = useState<string | null>(null);
-  const [renaming,     setRenaming]     = useState(false);
+  const [renameOpen,   setRenameOpen]   = useState(false);
 
   // Leaderboard data
   const [bestEntries,     setBestEntries]     = useState<BestEntry[]>([]);
@@ -259,7 +263,7 @@ export default function LeaderboardScreen() {
         setLifetimeRankInfo(lifetimeForRank > 0 ? (lifetimeRankData ?? null) : null);
       }
     } catch {
-      if (!isStale()) setLbError('Could not load leaderboard.');
+      if (!isStale()) setLbError(t('leaderboard.loadError'));
     } finally {
       // Only the newest fetch owns the loading flag — a stale one finishing
       // must not clear the spinner while a fresher request is still in flight.
@@ -276,19 +280,15 @@ export default function LeaderboardScreen() {
     if (activeTab === 'leaderboard') fetchLeaderboard();
   }, [filterDifficulty, filterType, filterTime, lbScope, activeTab]);
 
-  const handleRegenerate = useCallback(async () => {
-    setRenaming(true);
-    try {
-      const newName = await regenerateName();
-      setDisplayName(newName);
-      if (playerId) {
-        setBestEntries(prev => prev.map(e => e.player_id === playerId ? { ...e, display_name: newName } : e));
-        setLifetimeEntries(prev => prev.map(e => e.player_id === playerId ? { ...e, display_name: newName } : e));
-      }
-      fetchLeaderboard();
-    } catch {} finally {
-      setRenaming(false);
+  // Applies a confirmed name to the local UI (the commit itself already happened
+  // in RenameModal via the existing update_display_name RPC).
+  const handleRenamed = useCallback((newName: string) => {
+    setDisplayName(newName);
+    if (playerId) {
+      setBestEntries(prev => prev.map(e => e.player_id === playerId ? { ...e, display_name: newName } : e));
+      setLifetimeEntries(prev => prev.map(e => e.player_id === playerId ? { ...e, display_name: newName } : e));
     }
+    fetchLeaderboard();
   }, [fetchLeaderboard, playerId]);
 
   function FilterDropdown({ label, value, options, onChange, disabled }: {
@@ -350,27 +350,27 @@ export default function LeaderboardScreen() {
           onPress={onSelect}
         >
           <Text style={[styles.selectBtnText, { color: selected ? colors.accentText : colors.textSecondary }]}>
-            {selected ? 'Selected' : 'Select'}
+            {selected ? t('leaderboard.selected') : t('leaderboard.select')}
           </Text>
         </TouchableOpacity>
       </View>
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>SCORE</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('leaderboard.stats.score')}</Text>
           <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
             {score > 0 ? formatScore(score) : '—'}
           </Text>
         </View>
         <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>RANK</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('leaderboard.stats.rank')}</Text>
           <Text style={[styles.statValue, { color: rankInfo ? (colors.statNumColor ?? colors.text) : colors.textDim, fontFamily: 'Rubik_700Bold' }]}>
             {rankInfo ? `#${rankInfo.rank}` : '—'}
           </Text>
         </View>
         <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.textMuted }]}>BETTER THAN</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('leaderboard.stats.betterThan')}</Text>
           <Text style={[styles.statValue, { color: rankInfo ? (colors.statNumColor ?? colors.text) : colors.textDim, fontFamily: 'Rubik_700Bold' }]}>
             {rankInfo ? `${Math.round(rankInfo.percentile)}%` : '—'}
           </Text>
@@ -382,7 +382,7 @@ export default function LeaderboardScreen() {
   return (
     <View style={[styles.safe, { paddingTop: top }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.titleColor ?? colors.text }]}>{activeTab === 'yours' ? 'Your Stats' : 'Leaderboard'}</Text>
+        <Text style={[styles.title, { color: colors.titleColor ?? colors.text }]}>{activeTab === 'yours' ? t('leaderboard.yourStats') : t('leaderboard.leaderboard')}</Text>
         <TouchableOpacity onPress={() => setShowInfo(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
           <Ionicons name="help-circle-outline" size={26} color={colors.textMuted} />
         </TouchableOpacity>
@@ -391,25 +391,25 @@ export default function LeaderboardScreen() {
       <Modal visible={showInfo} transparent animationType="fade" onRequestClose={() => setShowInfo(false)}>
         <Pressable style={styles.infoOverlay} onPress={() => setShowInfo(false)}>
           <Pressable style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.infoTitle, { color: colors.titleColor ?? colors.text }]}>About the Leaderboard</Text>
+            <Text style={[styles.infoTitle, { color: colors.titleColor ?? colors.text }]}>{t('leaderboard.info.title')}</Text>
             <Text style={[styles.infoBody, { color: colors.titleColor ?? colors.text }]}>
-              <Text style={{ fontWeight: '700', color: colors.titleColor ?? colors.accent }}>Unassisted Runs</Text>
-              {' — scores from runs completed before using a continue.'}
+              <Text style={{ fontWeight: '700', color: colors.titleColor ?? colors.accent }}>{t('leaderboard.info.unassistedTerm')}</Text>
+              {t('leaderboard.info.unassistedDesc')}
             </Text>
             <Text style={[styles.infoBody, { color: colors.titleColor ?? colors.text }]}>
-              <Text style={{ fontWeight: '700', color: colors.titleColor ?? colors.accent }}>All Runs</Text>
-              {' — every run, including those where a continue was used to extend the game.'}
+              <Text style={{ fontWeight: '700', color: colors.titleColor ?? colors.accent }}>{t('leaderboard.info.allRunsTerm')}</Text>
+              {t('leaderboard.info.allRunsDesc')}
             </Text>
             <Text style={[styles.infoBody, { color: colors.titleColor ?? colors.text }]}>
-              <Text style={{ fontWeight: '700', color: colors.titleColor ?? colors.accent }}>Scoring</Text>
-              {' — merging dice earns points, with a multiplier for chain reactions. Clearing sixes earns a bonus, and clearing the entire board earns an even bigger bonus.'}
+              <Text style={{ fontWeight: '700', color: colors.titleColor ?? colors.accent }}>{t('leaderboard.info.scoringTerm')}</Text>
+              {t('leaderboard.info.scoringDesc')}
             </Text>
             <Text style={[styles.infoBody, { color: colors.titleColor ?? colors.text }]}>
-              <Text style={{ fontWeight: '700', color: colors.titleColor ?? colors.accent }}>Anonymous</Text>
-              {' — your display name is randomly generated. No personal information is collected or used in the leaderboard.'}
+              <Text style={{ fontWeight: '700', color: colors.titleColor ?? colors.accent }}>{t('leaderboard.info.anonymousTerm')}</Text>
+              {t('leaderboard.info.anonymousDesc')}
             </Text>
             <TouchableOpacity style={[styles.infoBtn, { backgroundColor: colors.accent }]} onPress={() => setShowInfo(false)}>
-              <Text style={[styles.infoBtnText, { color: colors.accentText }]}>Got it</Text>
+              <Text style={[styles.infoBtnText, { color: colors.accentText }]}>{t('leaderboard.info.gotIt')}</Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>
@@ -421,10 +421,8 @@ export default function LeaderboardScreen() {
         <Text style={[styles.nameText, { color: colors.text }]} numberOfLines={1}>
           {displayName ?? '…'}
         </Text>
-        <TouchableOpacity onPress={handleRegenerate} disabled={renaming} style={styles.regenBtn}>
-          {renaming
-            ? <ActivityIndicator size="small" color={colors.textMuted} />
-            : <Text style={[styles.regenText, { color: colors.textMuted }]} numberOfLines={1}>new name</Text>}
+        <TouchableOpacity onPress={() => setRenameOpen(true)} style={styles.regenBtn}>
+          <Text style={[styles.regenText, { color: colors.textMuted }]} numberOfLines={1}>{t('leaderboard.newName')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -437,10 +435,10 @@ export default function LeaderboardScreen() {
             {/* Sliding pill behind the labels */}
             <Animated.View style={[styles.segPill, { backgroundColor: colors.accent }, pillStyle]} />
             <TouchableOpacity style={styles.segBtn} onPress={() => { setActiveTab('yours'); setFilterTime('all'); }} activeOpacity={0.8}>
-              <Animated.Text style={[styles.segBtnText, leftTextStyle]}>Your Stats</Animated.Text>
+              <Animated.Text style={[styles.segBtnText, leftTextStyle]}>{t('leaderboard.yourStats')}</Animated.Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.segBtn} onPress={() => setActiveTab('leaderboard')} activeOpacity={0.8}>
-              <Animated.Text style={[styles.segBtnText, rightTextStyle]}>Leaderboard</Animated.Text>
+              <Animated.Text style={[styles.segBtnText, rightTextStyle]}>{t('leaderboard.leaderboard')}</Animated.Text>
             </TouchableOpacity>
           </View>
       </View>
@@ -448,44 +446,44 @@ export default function LeaderboardScreen() {
       {/* Filters — fixed alongside the segment tabs; only the list below scrolls */}
       <View style={[styles.filterGrid, { paddingHorizontal: 16, marginBottom: 12 }]}>
         <FilterDropdown
-          label="Difficulty"
+          label={t('leaderboard.filters.difficulty')}
           value={filterDifficulty}
           options={[
-            { label: 'All', value: 'all' },
-            { label: 'Easy', value: 'easy' },
-            { label: 'Medium', value: 'medium' },
-            { label: 'Hard', value: 'hard' },
+            { label: t('leaderboard.filters.all'), value: 'all' },
+            { label: t('difficulty.easy'), value: 'easy' },
+            { label: t('difficulty.medium'), value: 'medium' },
+            { label: t('difficulty.hard'), value: 'hard' },
           ]}
           onChange={setFilterDifficulty}
         />
         <FilterDropdown
-          label="Type"
+          label={t('leaderboard.filters.type')}
           value={filterType}
           options={[
-            { label: 'Unassisted Runs', value: 'unassisted' },
-            { label: 'All Runs', value: 'overall' },
+            { label: t('leaderboard.filters.unassistedRuns'), value: 'unassisted' },
+            { label: t('leaderboard.filters.allRuns'), value: 'overall' },
           ]}
           onChange={setFilterType}
         />
         {activeTab === 'leaderboard' && (
           <>
             <FilterDropdown
-              label="Period"
+              label={t('leaderboard.filters.period')}
               value={filterTime}
               options={[
-                { label: 'All Time', value: 'all' },
-                { label: 'This Month', value: 'month' },
-                { label: 'This Week', value: 'week' },
-                { label: 'Today', value: 'day' },
+                { label: t('leaderboard.filters.allTime'), value: 'all' },
+                { label: t('leaderboard.filters.thisMonth'), value: 'month' },
+                { label: t('leaderboard.filters.thisWeek'), value: 'week' },
+                { label: t('leaderboard.filters.today'), value: 'day' },
               ]}
               onChange={setFilterTime}
             />
             <FilterDropdown
-              label="Scope"
+              label={t('leaderboard.filters.scope')}
               value={lbScope}
               options={[
-                { label: 'Global', value: 'global' },
-                { label: 'Following', value: 'following' },
+                { label: t('leaderboard.filters.global'), value: 'global' },
+                { label: t('leaderboard.filters.following'), value: 'following' },
               ]}
               onChange={setLbScope}
             />
@@ -500,21 +498,21 @@ export default function LeaderboardScreen() {
             <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
-                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>BEST RUN</Text>
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('leaderboard.stats.bestRun')}</Text>
                   <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
                     {bestRun > 0 ? bestRun.toLocaleString() : '—'}
                   </Text>
                 </View>
                 <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.statItem}>
-                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>THIS WEEK</Text>
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('leaderboard.stats.thisWeek')}</Text>
                   <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
                     {bestThisWeek > 0 ? bestThisWeek.toLocaleString() : '—'}
                   </Text>
                 </View>
                 <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.statItem}>
-                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>THIS MONTH</Text>
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('leaderboard.stats.thisMonth')}</Text>
                   <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
                     {bestThisMonth > 0 ? bestThisMonth.toLocaleString() : '—'}
                   </Text>
@@ -525,21 +523,21 @@ export default function LeaderboardScreen() {
             <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
-                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>TOTAL RUNS</Text>
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('leaderboard.stats.totalRuns')}</Text>
                   <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
                     {totalRuns > 0 ? totalRuns : '—'}
                   </Text>
                 </View>
                 <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.statItem}>
-                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>LIFETIME</Text>
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('leaderboard.stats.lifetime')}</Text>
                   <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
                     {lifetimeScore > 0 ? formatScore(lifetimeScore) : '—'}
                   </Text>
                 </View>
                 <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.statItem}>
-                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>AVERAGE</Text>
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('leaderboard.stats.average')}</Text>
                   <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
                     {averageScore > 0 ? averageScore.toLocaleString() : '—'}
                   </Text>
@@ -549,31 +547,31 @@ export default function LeaderboardScreen() {
 
             <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
               <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>YOUR LAST 100 RUNS</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('leaderboard.stats.last100')}</Text>
                 <View style={styles.sortToggle}>
                   <TouchableOpacity onPress={() => setSortBy('score')}>
-                    <Text style={[styles.sortBtn, { color: sortBy === 'score' ? colors.accent : colors.textMuted, fontWeight: sortBy === 'score' ? '700' : '400' }]}>Score</Text>
+                    <Text style={[styles.sortBtn, { color: sortBy === 'score' ? colors.accent : colors.textMuted, fontWeight: sortBy === 'score' ? '700' : '400' }]}>{t('leaderboard.sort.score')}</Text>
                   </TouchableOpacity>
                   <Text style={[styles.sortSep, { color: colors.border }]}>|</Text>
                   <TouchableOpacity onPress={() => setSortBy('recent')}>
-                    <Text style={[styles.sortBtn, { color: sortBy === 'recent' ? colors.accent : colors.textMuted, fontWeight: sortBy === 'recent' ? '700' : '400' }]}>Recent</Text>
+                    <Text style={[styles.sortBtn, { color: sortBy === 'recent' ? colors.accent : colors.textMuted, fontWeight: sortBy === 'recent' ? '700' : '400' }]}>{t('leaderboard.sort.recent')}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
               {rankedRuns.length > 0
                 ? rankedRuns.map((run, i) => <RunRow key={`${run.date}-${run.score}`} rank={i + 1} run={run} />)
-                : <Text style={[styles.empty, { color: colors.textMuted }]}>No runs yet.</Text>}
+                : <Text style={[styles.empty, { color: colors.textMuted }]}>{t('leaderboard.noRunsYet')}</Text>}
             </View>
           </>
         ) : (
           <>
             {/* Stat cards */}
             <StatCard
-              mode="best"    label="BEST SCORE"    score={dbBestScore}     rankInfo={bestRankInfo}
+              mode="best"    label={t('leaderboard.stats.bestScore')}    score={dbBestScore}     rankInfo={bestRankInfo}
               selected={lbMode === 'best'}    onSelect={() => setLbMode('best')}
             />
             <StatCard
-              mode="lifetime" label="LIFETIME SCORE" score={dbLifetimeScore} rankInfo={lifetimeRankInfo}
+              mode="lifetime" label={t('leaderboard.stats.lifetimeScore')} score={dbLifetimeScore} rankInfo={lifetimeRankInfo}
               selected={lbMode === 'lifetime'} onSelect={() => setLbMode('lifetime')}
             />
 
@@ -583,13 +581,13 @@ export default function LeaderboardScreen() {
                   style={[styles.filterBtn, { backgroundColor: colors.accent, borderColor: colors.accent }]}
                   onPress={() => setFollowingModalVisible(true)}
                 >
-                  <Text style={[styles.filterBtnText, { color: colors.accentText }]}>View Following</Text>
+                  <Text style={[styles.filterBtnText, { color: colors.accentText }]}>{t('leaderboard.viewFollowing')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.filterBtn, { backgroundColor: colors.accent, borderColor: colors.accent }]}
                   onPress={() => setFindPlayerVisible(true)}
                 >
-                  <Text style={[styles.filterBtnText, { color: colors.accentText }]}>Find Players</Text>
+                  <Text style={[styles.filterBtnText, { color: colors.accentText }]}>{t('leaderboard.findPlayers')}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -598,7 +596,7 @@ export default function LeaderboardScreen() {
             <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
               <View style={styles.sectionHeader}>
                 <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-                  TOP 100 · {lbMode === 'best' ? 'BEST SCORE' : 'LIFETIME'}
+                  {t('leaderboard.top100', { mode: lbMode === 'best' ? t('leaderboard.stats.bestScore') : t('leaderboard.stats.lifetime') })}
                 </Text>
                 <TouchableOpacity onPress={fetchLeaderboard} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Ionicons name="refresh" size={18} color={colors.accent} />
@@ -611,7 +609,7 @@ export default function LeaderboardScreen() {
                 <Text style={[styles.empty, { color: colors.textMuted }]}>{lbError}</Text>
               ) : lbMode === 'best' ? (
                 bestEntries.length === 0
-                  ? <Text style={[styles.empty, { color: colors.textMuted }]}>{lbScope === 'following' ? 'No scores in your network yet.' : 'No scores yet — be the first!'}</Text>
+                  ? <Text style={[styles.empty, { color: colors.textMuted }]}>{lbScope === 'following' ? t('leaderboard.noScoresNetwork') : t('leaderboard.noScoresGlobal')}</Text>
                   : bestEntries.map((entry, i) => {
                       const isYou = entry.player_id === playerId;
                       return (
@@ -619,22 +617,22 @@ export default function LeaderboardScreen() {
                           <Text style={[styles.runRank, { color: i < 3 ? colors.accent : colors.textMuted }]}>#{i + 1}</Text>
                           <View style={styles.runInfo}>
                             <Text style={[styles.runName, { color: isYou ? colors.accent : (colors.statNumColor ?? colors.text) }]} numberOfLines={1}>
-                              {entry.display_name}{isYou ? ' (you)' : ''}
+                              {entry.display_name}{isYou ? t('leaderboard.youSuffix') : ''}
                             </Text>
-                            <Text style={[styles.runDate, { color: colors.textMuted }]}>{entry.difficulty}</Text>
+                            <Text style={[styles.runDate, { color: colors.textMuted }]}>{t(`difficulty.${entry.difficulty}`)}</Text>
                           </View>
                           <View style={styles.runRight}>
                             <View style={styles.runTopRow}>
                               <Text style={[styles.runScore, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>{formatScore(entry.score)}</Text>
                             </View>
-                            <Text style={[styles.unassistedLabel, { color: colors.accent, opacity: entry.used_continue ? 0 : 1 }]}>unassisted</Text>
+                            <Text style={[styles.unassistedLabel, { color: colors.accent, opacity: entry.used_continue ? 0 : 1 }]}>{t('leaderboard.unassisted')}</Text>
                           </View>
                         </View>
                       );
                     })
               ) : (
                 lifetimeEntries.length === 0
-                  ? <Text style={[styles.empty, { color: colors.textMuted }]}>{lbScope === 'following' ? 'No scores in your network yet.' : 'No scores yet — be the first!'}</Text>
+                  ? <Text style={[styles.empty, { color: colors.textMuted }]}>{lbScope === 'following' ? t('leaderboard.noScoresNetwork') : t('leaderboard.noScoresGlobal')}</Text>
                   : lifetimeEntries.map((entry, i) => {
                       const isYou = entry.player_id === playerId;
                       return (
@@ -642,9 +640,9 @@ export default function LeaderboardScreen() {
                           <Text style={[styles.runRank, { color: i < 3 ? colors.accent : colors.textMuted }]}>#{i + 1}</Text>
                           <View style={styles.runInfo}>
                             <Text style={[styles.runName, { color: isYou ? colors.accent : (colors.statNumColor ?? colors.text) }]} numberOfLines={1}>
-                              {entry.display_name}{isYou ? ' (you)' : ''}
+                              {entry.display_name}{isYou ? t('leaderboard.youSuffix') : ''}
                             </Text>
-                            <Text style={[styles.runDate, { color: colors.textMuted }]}>{entry.run_count} runs</Text>
+                            <Text style={[styles.runDate, { color: colors.textMuted }]}>{t('leaderboard.runsCount', { count: entry.run_count })}</Text>
                           </View>
                           <Text style={[styles.runScore, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
                             {formatScore(entry.lifetime_score)}
@@ -657,6 +655,13 @@ export default function LeaderboardScreen() {
           </>
         )}
       </ScrollView>
+
+      <RenameModal
+        visible={renameOpen}
+        currentName={displayName}
+        onClose={() => setRenameOpen(false)}
+        onConfirmed={handleRenamed}
+      />
 
       <FindPlayerModal
         visible={findPlayerVisible}

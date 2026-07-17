@@ -179,12 +179,27 @@ export async function getPlayerIdentity(): Promise<{ playerId: string; displayNa
   return { playerId, displayName };
 }
 
-// Retries up to 10 times on name collision (36M combos makes this extremely unlikely)
-export async function regenerateName(): Promise<string> {
+/**
+ * Generate a display-name candidate LOCALLY. Pure — no network, no persistence,
+ * and no change to the leaderboard. Lets the rename modal shuffle names freely
+ * without ever touching the player's public name.
+ */
+export function generateCandidateName(): string {
+  return generateName();
+}
+
+/**
+ * Commit a chosen display name. This performs the ONLY leaderboard write here —
+ * the existing `update_display_name` RPC, updating just this player's own name
+ * row (never anyone else's data, never scores, never schema). Retries with a
+ * fresh name solely on the astronomically rare unique-name collision (36M
+ * combos). Returns the name that actually stuck.
+ */
+export async function commitDisplayName(preferred: string): Promise<string> {
   const { playerId } = await getPlayerIdentity();
+  let candidate = preferred;
 
   for (let attempt = 0; attempt < 10; attempt++) {
-    const candidate = generateName();
     const { error } = await supabase.rpc('update_display_name', {
       p_player_id: playerId,
       p_new_name:  candidate,
@@ -198,6 +213,7 @@ export async function regenerateName(): Promise<string> {
     if (!error.message?.includes('Name already taken')) {
       throw error;
     }
+    candidate = generateName(); // collision — try a fresh one
   }
 
   throw new Error('Could not find a unique name. Please try again.');
