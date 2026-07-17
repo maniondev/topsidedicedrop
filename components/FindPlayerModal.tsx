@@ -4,8 +4,10 @@ import {
   Modal, FlatList, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLocalizedFont } from '@/lib/fonts';
 import { supabase } from '@/lib/supabase';
 
 type SearchResult   = { player_id: string; display_name: string; best_score: number; is_following: boolean };
@@ -26,6 +28,8 @@ function formatScore(n: number): string {
 }
 
 export default function FindPlayerModal({ visible, playerId, mode, onClose, onChanged }: Props) {
+  const { t } = useTranslation();
+  const font = useLocalizedFont();
   const { colors } = useTheme();
   const { top: safeTop } = useSafeAreaInsets();
   const [query,           setQuery]           = useState('');
@@ -113,8 +117,8 @@ export default function FindPlayerModal({ visible, playerId, mode, onClose, onCh
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={[styles.header, { borderBottomColor: colors.border, paddingTop: Math.max(28, safeTop + 8) }]}>
-          <Text style={[styles.title, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
-            {mode === 'following' ? 'Following' : 'Find Players'}
+          <Text style={[styles.title, { color: colors.text, fontFamily: font('Rubik_700Bold') }]}>
+            {mode === 'following' ? t('leaderboard.filters.following') : t('leaderboard.findPlayers')}
           </Text>
           <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="close" size={24} color={colors.textMuted} />
@@ -126,7 +130,7 @@ export default function FindPlayerModal({ visible, playerId, mode, onClose, onCh
             <Ionicons name="search" size={16} color={colors.textMuted} style={styles.searchIcon} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
-              placeholder="Search by name…"
+              placeholder={t('findPlayer.searchPlaceholder')}
               placeholderTextColor={colors.textMuted}
               value={query}
               onChangeText={setQuery}
@@ -151,20 +155,20 @@ export default function FindPlayerModal({ visible, playerId, mode, onClose, onCh
               {mode === 'following' && (
                 <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
                   <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-                    FOLLOWING{followingLoaded && !followingError ? ` (${following.length})` : ''}
+                    {t('findPlayer.following')}{followingLoaded && !followingError ? ` (${following.length})` : ''}
                   </Text>
                   {!followingLoaded ? (
                     <ActivityIndicator style={{ padding: 16 }} color={colors.accent} />
                   ) : followingError ? (
                     <View style={styles.errorRow}>
-                      <Text style={[styles.empty, { color: colors.textMuted }]}>Couldn't load following list.</Text>
+                      <Text style={[styles.empty, { color: colors.textMuted }]}>{t('findPlayer.loadError')}</Text>
                       <TouchableOpacity onPress={loadFollowing} style={styles.retryBtn}>
-                        <Text style={[styles.retryText, { color: colors.accent }]}>Retry</Text>
+                        <Text style={[styles.retryText, { color: colors.accent }]}>{t('findPlayer.retry')}</Text>
                       </TouchableOpacity>
                     </View>
                   ) : following.length === 0 ? (
                     <Text style={[styles.empty, { color: colors.textMuted }]}>
-                      Not following anyone yet.
+                      {t('findPlayer.noneFollowing')}
                     </Text>
                   ) : (
                     following.map(f => (
@@ -176,7 +180,7 @@ export default function FindPlayerModal({ visible, playerId, mode, onClose, onCh
                           style={[styles.actionBtn, { borderColor: colors.border }]}
                           onPress={() => handleUnfollow(f.player_id)}
                         >
-                          <Text style={[styles.actionBtnText, { color: colors.textSecondary }]}>Unfollow</Text>
+                          <Text style={[styles.actionBtnText, { color: colors.textSecondary }]}>{t('findPlayer.unfollow')}</Text>
                         </TouchableOpacity>
                       </View>
                     ))
@@ -186,18 +190,18 @@ export default function FindPlayerModal({ visible, playerId, mode, onClose, onCh
 
               {mode === 'search' && query.trim().length > 0 && (
                 <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-                  <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>RESULTS</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('findPlayer.results')}</Text>
                   {searching ? (
                     <ActivityIndicator style={{ padding: 16 }} color={colors.accent} />
                   ) : searchResults.length === 0 ? (
-                    <Text style={[styles.empty, { color: colors.textMuted }]}>No players found.</Text>
+                    <Text style={[styles.empty, { color: colors.textMuted }]}>{t('findPlayer.noPlayers')}</Text>
                   ) : (
                     searchResults.map(r => (
                       <View key={r.player_id} style={[styles.row, { borderBottomColor: colors.border }]}>
                         <View style={styles.rowInfo}>
                           <Text style={[styles.rowName, { color: colors.text }]}>{r.display_name}</Text>
                           <Text style={[styles.rowSub, { color: colors.textMuted }]}>
-                            Best {formatScore(r.best_score)}
+                            {t('findPlayer.best', { score: formatScore(r.best_score) })}
                           </Text>
                         </View>
                         {r.is_following ? (
@@ -205,14 +209,14 @@ export default function FindPlayerModal({ visible, playerId, mode, onClose, onCh
                             style={[styles.actionBtn, { borderColor: colors.border }]}
                             onPress={() => handleUnfollow(r.player_id)}
                           >
-                            <Text style={[styles.actionBtnText, { color: colors.textSecondary }]}>Following</Text>
+                            <Text style={[styles.actionBtnText, { color: colors.textSecondary }]}>{t('findPlayer.followingBtn')}</Text>
                           </TouchableOpacity>
                         ) : (
                           <TouchableOpacity
                             style={[styles.actionBtn, { backgroundColor: colors.accent, borderColor: colors.accent }]}
                             onPress={() => handleFollow(r.player_id)}
                           >
-                            <Text style={[styles.actionBtnText, { color: colors.accentText }]}>Follow</Text>
+                            <Text style={[styles.actionBtnText, { color: colors.accentText }]}>{t('findPlayer.follow')}</Text>
                           </TouchableOpacity>
                         )}
                       </View>

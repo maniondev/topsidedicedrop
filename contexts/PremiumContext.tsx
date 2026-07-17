@@ -4,6 +4,7 @@ import Purchases, { LOG_LEVEL, CustomerInfo, PurchasesOfferings, PurchasesPackag
 import { PREMIUM_PRICE, REMOVE_ADS_PRICE, CUSTOMIZATION_PRICE } from '@/constants/pricing';
 import { logPurchaseEvent } from '@/lib/appsflyer';
 import { setReviewPendingFromPurchase } from '@/lib/reviewPrompt';
+import i18n from '@/lib/i18n';
 
 const RC_IOS_KEY     = 'appl_bEfjghrErvdIBhSvAvrEMXEAInP';
 const RC_ANDROID_KEY = 'goog_eyVRQLwacLpBhQjOGFOVqesoYMT';
@@ -171,7 +172,7 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
       const pkg: PurchasesPackage | undefined = offerings.current?.availablePackages.find(
         p => p.identifier === packageId,
       );
-      if (!pkg) { Alert.alert('Error', 'No package found. Try again later.'); return; }
+      if (!pkg) { Alert.alert(i18n.t('premium.errorTitle'), i18n.t('premium.noPackage')); return; }
       const { customerInfo } = await Purchases.purchasePackage(pkg);
       const bought = readEntitlements(customerInfo);
       if (bought.customization || bought.noAds) {
@@ -182,7 +183,7 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
       }
       setRcState(bought);
     } catch (e: any) {
-      if (!e.userCancelled) Alert.alert('Purchase failed', e.message ?? 'Something went wrong.');
+      if (!e.userCancelled) Alert.alert(i18n.t('premium.purchaseFailedTitle'), e.message ?? i18n.t('premium.restoreFailedBody'));
     }
   }, []);
 
@@ -192,9 +193,12 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
       const restored = readEntitlements(info);
       setRcState(restored);
       const has = restored.customization || restored.noAds;
-      Alert.alert(has ? 'Restored!' : 'Nothing to restore', has ? 'Purchases restored.' : 'No previous purchase found.');
+      Alert.alert(
+        has ? i18n.t('premium.restoreTitle') : i18n.t('premium.nothingTitle'),
+        has ? i18n.t('premium.restoreBody') : i18n.t('premium.nothingBody'),
+      );
     } catch (e: any) {
-      Alert.alert('Restore failed', e.message ?? 'Something went wrong.');
+      Alert.alert(i18n.t('premium.restoreFailedTitle'), e.message ?? i18n.t('premium.restoreFailedBody'));
     }
   }, []);
 
@@ -207,7 +211,7 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
       try {
         await Linking.openURL('https://play.google.com/redeem');
       } catch {
-        Alert.alert('Redeem Code', 'Open the Play Store app and go to Payments & subscriptions > Redeem code.');
+        Alert.alert(i18n.t('premium.redeemTitle'), i18n.t('premium.redeemAndroidBody'));
       }
       return;
     }
@@ -220,7 +224,7 @@ export function PremiumProvider({ children }: { children: ReactNode }) {
       // the sheet reports a successful redemption — nothing else to do here.
     } catch (e: any) {
       if (__DEV__) console.warn('Code redemption error:', e);
-      Alert.alert('Redeem Code', 'Could not open the redemption screen. Make sure you\'re signed into the App Store and try again.');
+      Alert.alert(i18n.t('premium.redeemTitle'), i18n.t('premium.redeemErrorBody'));
     }
   }, []);
 

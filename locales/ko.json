@@ -1,0 +1,346 @@
+{
+  "common": {
+    "apply": "적용",
+    "cancel": "취소",
+    "ok": "확인",
+    "reset": "초기화",
+    "gotIt": "확인",
+    "restore": "복원",
+    "restorePurchases": "구매 복원",
+    "redeemCode": "코드 사용"
+  },
+  "tabs": {
+    "play": "플레이",
+    "stats": "통계",
+    "settings": "설정"
+  },
+  "settings": {
+    "title": "설정",
+    "sections": {
+      "premium": "프리미엄",
+      "sound": "사운드",
+      "customize": "커스터마이즈",
+      "gameplay": "게임플레이",
+      "about": "정보",
+      "stats": "통계"
+    },
+    "premium": {
+      "active": "프리미엄 사용 중",
+      "removeAds": "모든 광고 제거",
+      "unlockCustomization": "커스터마이즈 잠금 해제",
+      "unlockPremium": "프리미엄 잠금 해제"
+    },
+    "sound": {
+      "breakSilent": "무음 모드 무시",
+      "breakSilentSub": "스트리밍 음악이 일시정지될 수 있습니다",
+      "soundEffects": "효과음",
+      "soundtrack": "사운드트랙"
+    },
+    "customize": {
+      "theme": "테마",
+      "soundtrack": "사운드트랙",
+      "soundEffects": "효과음",
+      "animationPack": "애니메이션 팩",
+      "diceStyle": "주사위 스타일",
+      "appIcon": "앱 아이콘"
+    },
+    "gameplay": {
+      "scorePopups": "점수 팝업",
+      "performanceMode": "성능 모드",
+      "performanceModeSub": "구형 기기에서 더 부드럽게 플레이할 수 있도록 시각 및 사운드 효과를 끕니다."
+    },
+    "about": {
+      "rated": "평가 완료. 감사합니다! ★",
+      "rate": "Topside: Dice Drop 평가하기 ★",
+      "moreGames": "Topside의 다른 게임",
+      "privacy": "개인정보 처리방침",
+      "terms": "서비스 약관",
+      "contact": "문의하기",
+      "version": "버전"
+    },
+    "stats": {
+      "reset": "통계 초기화",
+      "resetConfirmTitle": "통계를 초기화할까요?",
+      "resetConfirmBody": "로컬 통계가 영구적으로 삭제되고 글로벌 순위표에서 점수가 제거됩니다. 이 작업은 되돌릴 수 없습니다.",
+      "resetDoneTitle": "통계 초기화됨",
+      "resetDoneBody": "통계가 삭제되었습니다."
+    },
+    "theme": {
+      "title": "테마",
+      "matched": "{{theme}}에 맞춤",
+      "completeLook": "{{theme}} 스타일 완성하기",
+      "matchedSub": "사운드, 주사위, 효과가 모두 일치",
+      "completeSub": "사운드, 주사위, 효과를 맞추기",
+      "apply": "적용"
+    },
+    "appIcon": {
+      "unsupported": "아이콘 변경은 이 플랫폼에서 아직 지원되지 않습니다."
+    },
+    "soundtrack": {
+      "composerLabel": "음악 작곡:"
+    },
+    "language": {
+      "title": "언어"
+    }
+  },
+  "premium": {
+    "restoreTitle": "복원됨!",
+    "restoreBody": "구매가 복원되었습니다.",
+    "nothingTitle": "복원할 항목 없음",
+    "nothingBody": "이전 구매를 찾을 수 없습니다.",
+    "restoreFailedTitle": "복원 실패",
+    "restoreFailedBody": "문제가 발생했습니다.",
+    "errorTitle": "오류",
+    "noPackage": "패키지를 찾을 수 없습니다. 나중에 다시 시도해 주세요.",
+    "purchaseFailedTitle": "구매 실패",
+    "redeemTitle": "코드 사용",
+    "redeemAndroidBody": "Play 스토어 앱을 열고 결제 및 정기 결제 > 코드 사용으로 이동하세요.",
+    "redeemErrorBody": "사용 화면을 열 수 없습니다. App Store에 로그인되어 있는지 확인하고 다시 시도해 주세요.",
+    "perkNoAds": "광고 없음",
+    "perkFreeContinues": "무료 이어하기",
+    "perkThemes": "모든 테마 및 사운드 팩",
+    "perkDiceAnims": "모든 주사위 애니메이션 및 스타일",
+    "allInTitle": "Topside: Dice Drop 프리미엄",
+    "removeAdsTitle": "광고 제거",
+    "customizationTitle": "커스터마이즈 잠금 해제",
+    "everythingUnlocked": "모든 항목을 잠금 해제했습니다!",
+    "close": "닫기",
+    "notNow": "나중에",
+    "restorePurchase": "구매 복원",
+    "upgradePrice": "업그레이드 — {{price}}",
+    "titlePrice": "{{title}} — {{price}}",
+    "orCustomization": "커스터마이즈만 — {{price}}",
+    "orRemoveAds": "광고 제거만 — {{price}}"
+  },
+  "difficulty": {
+    "easy": "쉬움",
+    "medium": "보통",
+    "hard": "어려움"
+  },
+  "themeNames": {
+    "dicedrop": "Dice Drop",
+    "dice": "클래식",
+    "light": "라이트",
+    "dark": "다크",
+    "pastel": "파스텔",
+    "grayscale": "그레이스케일",
+    "ocean": "오션",
+    "forest": "포레스트",
+    "neon": "네온"
+  },
+  "diceStyleNames": {
+    "classic": "클래식",
+    "sketch": "스케치",
+    "pixel": "8비트",
+    "neon": "네온",
+    "raised": "입체",
+    "wooden": "우드",
+    "ocean": "씨글라스",
+    "pastel": "젤리",
+    "comic": "팝아트"
+  },
+  "soundtrackNames": {
+    "classic": "Dice Drop",
+    "dicedrop": "드리프트",
+    "forest": "포레스트",
+    "neon": "네온",
+    "underwater": "오션"
+  },
+  "animPackNames": {
+    "classic": "클래식",
+    "extra": "엑스트라",
+    "minimal": "미니멀",
+    "retro": "레트로",
+    "electric": "일렉트릭",
+    "twist": "트위스트",
+    "flip": "플립",
+    "shatter": "산산조각",
+    "glitch": "글리치"
+  },
+  "soundPackNames": {
+    "topside": "클래식",
+    "splash": "스플래시",
+    "dig": "디그",
+    "marimba": "마림바",
+    "bubbles": "버블",
+    "snow": "스노우",
+    "fight": "파이트",
+    "coins": "코인",
+    "metal": "메탈",
+    "rubber": "러버"
+  },
+  "appIconNames": {
+    "default": "브라운 스택",
+    "AppIcon-Cream": "크림 스택",
+    "AppIcon-Neon": "네온 스택",
+    "AppIcon-Blue": "블루 스택",
+    "AppIcon-IconBrown": "브라운 아이콘",
+    "AppIcon-IconCream": "크림 아이콘",
+    "AppIcon-IconNeon": "네온 아이콘",
+    "AppIcon-IconBlue": "블루 아이콘"
+  },
+  "home": {
+    "subtitle": "떨어뜨려 합치는 게임.",
+    "continue": "계속하기",
+    "newGame": "새 게임",
+    "play": "플레이",
+    "howToPlay": "게임 방법",
+    "soundOn": "사운드 켜짐",
+    "soundOff": "사운드 꺼짐",
+    "removeAds": "모든 광고 제거",
+    "unlockBanner": "사운드 팩, 테마 등 잠금 해제",
+    "stats": {
+      "bestUnassisted": "최고 (도움 없음)",
+      "bestOverall": "최고 (전체)",
+      "lastRun": "지난 게임",
+      "dayStreak": "연속 일수"
+    },
+    "newGameConfirm": {
+      "title": "새 게임을 시작할까요?",
+      "body": "현재 저장된 게임이 삭제됩니다.",
+      "continueSaved": "저장된 게임 계속하기",
+      "startNew": "새 게임 시작",
+      "back": "← 뒤로"
+    }
+  },
+  "leaderboard": {
+    "yourStats": "내 통계",
+    "leaderboard": "순위표",
+    "newName": "새 이름",
+    "renameModal": {
+      "title": "새 이름",
+      "current": "현재",
+      "shuffle": "셔플",
+      "confirm": "확인",
+      "errorTitle": "이름을 변경할 수 없습니다",
+      "errorBody": "다시 시도해 주세요."
+    },
+    "youSuffix": " (나)",
+    "unassisted": "도움 없음",
+    "runsCount_one": "{{count}}게임",
+    "runsCount_other": "{{count}}게임",
+    "loadError": "순위표를 불러올 수 없습니다.",
+    "noRunsYet": "아직 게임이 없습니다.",
+    "noScoresNetwork": "아직 네트워크에 점수가 없습니다.",
+    "noScoresGlobal": "아직 점수가 없습니다 — 첫 번째 플레이어가 되어보세요!",
+    "viewFollowing": "팔로잉 보기",
+    "findPlayers": "플레이어 찾기",
+    "top100": "TOP 100 · {{mode}}",
+    "select": "선택",
+    "selected": "선택됨",
+    "sort": {
+      "score": "점수",
+      "recent": "최근"
+    },
+    "stats": {
+      "score": "점수",
+      "rank": "순위",
+      "betterThan": "능가한 비율",
+      "bestScore": "최고 점수",
+      "lifetimeScore": "누적 점수",
+      "bestRun": "최고 게임",
+      "thisWeek": "이번 주",
+      "thisMonth": "이번 달",
+      "totalRuns": "총 게임 수",
+      "lifetime": "누적",
+      "average": "평균",
+      "last100": "최근 100게임"
+    },
+    "filters": {
+      "difficulty": "난이도",
+      "type": "유형",
+      "period": "기간",
+      "scope": "범위",
+      "all": "전체",
+      "unassistedRuns": "도움 없는 게임",
+      "allRuns": "모든 게임",
+      "allTime": "전체 기간",
+      "thisMonth": "이번 달",
+      "thisWeek": "이번 주",
+      "today": "오늘",
+      "global": "글로벌",
+      "following": "팔로잉"
+    },
+    "info": {
+      "title": "순위표 정보",
+      "unassistedTerm": "도움 없는 게임",
+      "unassistedDesc": " — 이어하기를 사용하기 전에 완료한 게임의 점수입니다.",
+      "allRunsTerm": "모든 게임",
+      "allRunsDesc": " — 이어하기로 게임을 연장한 경우를 포함한 모든 게임입니다.",
+      "scoringTerm": "점수 계산",
+      "scoringDesc": " — 주사위를 합치면 점수를 얻으며, 연쇄 반응에는 배수가 적용됩니다. 6을 없애면 보너스를, 보드 전체를 비우면 더 큰 보너스를 얻습니다.",
+      "anonymousTerm": "익명",
+      "anonymousDesc": " — 표시 이름은 무작위로 생성됩니다. 순위표에서는 개인정보를 수집하거나 사용하지 않습니다.",
+      "gotIt": "확인"
+    }
+  },
+  "findPlayer": {
+    "searchPlaceholder": "이름으로 검색…",
+    "following": "팔로잉",
+    "loadError": "팔로잉 목록을 불러올 수 없습니다.",
+    "retry": "다시 시도",
+    "noneFollowing": "아직 아무도 팔로우하지 않았습니다.",
+    "unfollow": "언팔로우",
+    "followingBtn": "팔로잉",
+    "follow": "팔로우",
+    "results": "검색 결과",
+    "noPlayers": "플레이어를 찾을 수 없습니다.",
+    "best": "최고 {{score}}"
+  },
+  "game": {
+    "over": "게임 오버",
+    "newBest": "최고 기록 갱신!",
+    "previousBest": "이전 최고: {{score}}",
+    "best": "최고: {{score}}",
+    "continue": "계속하기",
+    "continueAd": "▶ 계속하기",
+    "watchLongerAd": "더 긴 광고 보기",
+    "home": "← 홈",
+    "paused": "일시정지",
+    "resume": "▶  다시 시작",
+    "saveQuit": "저장 후 종료",
+    "quitWithoutSaving": "✕  저장하지 않고 종료",
+    "quitConfirmTitle": "저장하지 않고 종료할까요?",
+    "quitConfirmBody": "진행 상황이 저장되지 않습니다. 점수를 순위표에 기록하거나 버리세요.",
+    "logScore": "점수 기록",
+    "discardScore": "점수 버리기",
+    "back": "← 뒤로",
+    "condensing": "압축 중…",
+    "hud": {
+      "score": "점수",
+      "best": "최고",
+      "next": "다음"
+    },
+    "tutorial": {
+      "move": "스와이프하여 이동",
+      "rotate": "탭하여 회전",
+      "drop": "아래로 스와이프하여 떨어뜨리기"
+    }
+  },
+  "howToPlay": {
+    "dropTitle": "주사위 떨어뜨리기",
+    "controls": {
+      "move": "좌우로 스와이프하여 이동",
+      "rotate": "탭하여 회전",
+      "drop": "아래로 스와이프하여 더 빨리 떨어뜨리기"
+    },
+    "rules": {
+      "mergeTitle": "같은 값 합치기",
+      "mergeBody": "같은 값의 주사위가 두 개 이상 맞닿으면 다음 값의 주사위 하나로 합쳐집니다: 1+1→2, 2+2→3, 계속 이어집니다.",
+      "sixesTitle": "6 없애기",
+      "sixesBody": "6을 두 개 이상 합쳐 보드에서 없애면 큰 보너스를 얻습니다. 공간을 확보하는 가장 좋은 방법입니다.",
+      "chainsTitle": "연쇄 만들기",
+      "chainsBody": "주사위가 자리를 잡는 동안 합치기가 또 다른 합치기를 일으킬 수 있습니다. 연쇄가 길수록 점수 배수가 커집니다.",
+      "surviveTitle": "살아남기",
+      "surviveBody": "받쳐지지 않은 더미는 무너집니다. 새 조각이 더 이상 들어갈 수 없으면 게임이 끝납니다. 최고 기록을 갱신하고 순위표를 올라가세요!"
+    },
+    "consent": "계속하면 <terms>약관</terms> 및 <privacy>개인정보 처리방침</privacy>에 동의하는 것으로 간주됩니다."
+  },
+  "review": {
+    "title": "Dice Drop이 재미있으신가요?",
+    "body": "즐기고 계신다면, 평가는 큰 힘이 되고 다른 사람들이 게임을 발견하는 데 도움이 됩니다.",
+    "rate": "평가 남기기",
+    "notNow": "나중에",
+    "dontAsk": "다시 묻지 않기"
+  }
+}

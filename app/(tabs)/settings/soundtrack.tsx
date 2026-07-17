@@ -1,9 +1,10 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { View, ScrollView, Text, Pressable } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePremium } from '@/contexts/PremiumContext';
-import { useMusic, SoundtrackMeta, SOUNDTRACK_IDS, SoundtrackId } from '@/contexts/MusicContext';
+import { useMusic, SOUNDTRACK_IDS, SoundtrackId } from '@/contexts/MusicContext';
 import { makeSettingsStyles, PickerRow, SettingsSubHeader, IS_LARGE } from '@/components/settings/SettingsShared';
 import PremiumModal from '@/components/PremiumModal';
 import { COMPOSER_NAME, openComposerIG } from '@/lib/composer';
@@ -15,6 +16,7 @@ const FREE_SOUNDTRACK: SoundtrackId = 'classic';
 const PREVIEW_MODAL_DELAY_MS = 2500;
 
 export default function SoundtrackScreen() {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   const { hasCustomization } = usePremium();
@@ -48,7 +50,7 @@ export default function SoundtrackScreen() {
 
   return (
     <View style={[styles.safe]}>
-      <SettingsSubHeader title="Soundtrack" colors={colors} />
+      <SettingsSubHeader title={t('settings.customize.soundtrack')} colors={colors} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.section, { marginBottom: 24 }]}>
           <View style={styles.sectionCard}>
@@ -57,7 +59,7 @@ export default function SoundtrackScreen() {
               return (
                 <PickerRow
                   key={id}
-                  label={SoundtrackMeta[id].label}
+                  label={t(`soundtrackNames.${id}`)}
                   selected={soundtrackId === id}
                   locked={locked}
                   onSelect={() => {
@@ -98,7 +100,7 @@ export default function SoundtrackScreen() {
           style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 12 }}
         >
           <Text style={{ color: colors.textSecondary, fontSize: IS_LARGE ? 16 : 13, fontWeight: '600', textAlign: 'center' }}>
-            Audio Composer: <Text style={{ color: colors.accent }}>{COMPOSER_NAME}</Text>
+            {t('settings.soundtrack.composerLabel')} <Text style={{ color: colors.accent }}>{COMPOSER_NAME}</Text>
           </Text>
           <Ionicons name="open-outline" size={IS_LARGE ? 17 : 14} color={colors.accent} />
         </Pressable>

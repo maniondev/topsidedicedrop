@@ -1,0 +1,346 @@
+{
+  "common": {
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "ok": "OK",
+    "reset": "Reset",
+    "gotIt": "Got it",
+    "restore": "Restore",
+    "restorePurchases": "Restore Purchases",
+    "redeemCode": "Redeem Code"
+  },
+  "tabs": {
+    "play": "Play",
+    "stats": "Stats",
+    "settings": "Settings"
+  },
+  "settings": {
+    "title": "Settings",
+    "sections": {
+      "premium": "Premium",
+      "sound": "Sound",
+      "customize": "Customize",
+      "gameplay": "Gameplay",
+      "about": "About",
+      "stats": "Stats"
+    },
+    "premium": {
+      "active": "Premium Active",
+      "removeAds": "Remove All Ads",
+      "unlockCustomization": "Unlock Customization",
+      "unlockPremium": "Unlock Premium"
+    },
+    "sound": {
+      "breakSilent": "Break Through Silent Mode",
+      "breakSilentSub": "May pause streaming music",
+      "soundEffects": "Sound Effects",
+      "soundtrack": "Soundtrack"
+    },
+    "customize": {
+      "theme": "Theme",
+      "soundtrack": "Soundtrack",
+      "soundEffects": "Sound Effects",
+      "animationPack": "Animation Pack",
+      "diceStyle": "Dice Style",
+      "appIcon": "App Icon"
+    },
+    "gameplay": {
+      "scorePopups": "Score Popups",
+      "performanceMode": "Performance Mode",
+      "performanceModeSub": "Turns off visual & sound effects for smoother gameplay on older devices."
+    },
+    "about": {
+      "rated": "Rated — thank you! ★",
+      "rate": "Rate Topside: Dice Drop ★",
+      "moreGames": "More Games by Topside",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service",
+      "contact": "Contact",
+      "version": "Version"
+    },
+    "stats": {
+      "reset": "Reset Stats",
+      "resetConfirmTitle": "Reset Stats?",
+      "resetConfirmBody": "This permanently erases your local stats and removes your scores from the global leaderboard. This cannot be undone.",
+      "resetDoneTitle": "Stats Reset",
+      "resetDoneBody": "Your stats have been cleared."
+    },
+    "theme": {
+      "title": "Theme",
+      "matched": "Matched to {{theme}}",
+      "completeLook": "Complete the {{theme}} look",
+      "matchedSub": "Sounds, dice & effects all match",
+      "completeSub": "Set the sounds, dice & effects to match",
+      "apply": "Apply"
+    },
+    "appIcon": {
+      "unsupported": "App icon switching isn't available on this platform yet."
+    },
+    "soundtrack": {
+      "composerLabel": "Audio Composer:"
+    },
+    "language": {
+      "title": "Language"
+    }
+  },
+  "premium": {
+    "restoreTitle": "Restored!",
+    "restoreBody": "Purchases restored.",
+    "nothingTitle": "Nothing to restore",
+    "nothingBody": "No previous purchase found.",
+    "restoreFailedTitle": "Restore failed",
+    "restoreFailedBody": "Something went wrong.",
+    "errorTitle": "Error",
+    "noPackage": "No package found. Try again later.",
+    "purchaseFailedTitle": "Purchase failed",
+    "redeemTitle": "Redeem Code",
+    "redeemAndroidBody": "Open the Play Store app and go to Payments & subscriptions > Redeem code.",
+    "redeemErrorBody": "Could not open the redemption screen. Make sure you're signed into the App Store and try again.",
+    "perkNoAds": "No ads",
+    "perkFreeContinues": "Free continues",
+    "perkThemes": "All themes & sound packs",
+    "perkDiceAnims": "All dice animations & styles",
+    "allInTitle": "Topside: Dice Drop Premium",
+    "removeAdsTitle": "Remove Ads",
+    "customizationTitle": "Unlock Customization",
+    "everythingUnlocked": "You have everything unlocked!",
+    "close": "Close",
+    "notNow": "Not now",
+    "restorePurchase": "Restore Purchase",
+    "upgradePrice": "Upgrade — {{price}}",
+    "titlePrice": "{{title}} — {{price}}",
+    "orCustomization": "Or just Customization — {{price}}",
+    "orRemoveAds": "Or just Remove Ads — {{price}}"
+  },
+  "difficulty": {
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard"
+  },
+  "themeNames": {
+    "dicedrop": "Dice Drop",
+    "dice": "Classic",
+    "light": "Light",
+    "dark": "Dark",
+    "pastel": "Pastel",
+    "grayscale": "Grayscale",
+    "ocean": "Ocean",
+    "forest": "Forest",
+    "neon": "Neon"
+  },
+  "diceStyleNames": {
+    "classic": "Classic",
+    "sketch": "Sketch",
+    "pixel": "8-Bit",
+    "neon": "Neon",
+    "raised": "Raised",
+    "wooden": "Wooden",
+    "ocean": "Sea Glass",
+    "pastel": "Jelly",
+    "comic": "Pop Art"
+  },
+  "soundtrackNames": {
+    "classic": "Dice Drop",
+    "dicedrop": "Drift",
+    "forest": "Forest",
+    "neon": "Neon",
+    "underwater": "Ocean"
+  },
+  "animPackNames": {
+    "classic": "Classic",
+    "extra": "Extra",
+    "minimal": "Minimal",
+    "retro": "Retro",
+    "electric": "Electric",
+    "twist": "Twist",
+    "flip": "Flip",
+    "shatter": "Shatter",
+    "glitch": "Glitch"
+  },
+  "soundPackNames": {
+    "topside": "Classic",
+    "splash": "Splash",
+    "dig": "Dig",
+    "marimba": "Marimba",
+    "bubbles": "Bubbles",
+    "snow": "Snow",
+    "fight": "Fight",
+    "coins": "Coins",
+    "metal": "Metal",
+    "rubber": "Rubber"
+  },
+  "appIconNames": {
+    "default": "Brown Stack",
+    "AppIcon-Cream": "Cream Stack",
+    "AppIcon-Neon": "Neon Stack",
+    "AppIcon-Blue": "Blue Stack",
+    "AppIcon-IconBrown": "Brown Icon",
+    "AppIcon-IconCream": "Cream Icon",
+    "AppIcon-IconNeon": "Neon Icon",
+    "AppIcon-IconBlue": "Blue Icon"
+  },
+  "home": {
+    "subtitle": "A drop and merge game.",
+    "continue": "Continue",
+    "newGame": "New Game",
+    "play": "Play",
+    "howToPlay": "How to Play",
+    "soundOn": "Sound On",
+    "soundOff": "Sound Off",
+    "removeAds": "Remove All Ads",
+    "unlockBanner": "Unlock Sound Packs, Themes, and More",
+    "stats": {
+      "bestUnassisted": "BEST UNASSISTED",
+      "bestOverall": "BEST OVERALL",
+      "lastRun": "LAST RUN",
+      "dayStreak": "DAY STREAK"
+    },
+    "newGameConfirm": {
+      "title": "Start New Game?",
+      "body": "This will discard your currently saved run.",
+      "continueSaved": "Continue Saved Run",
+      "startNew": "Start New Game",
+      "back": "← Back"
+    }
+  },
+  "leaderboard": {
+    "yourStats": "Your Stats",
+    "leaderboard": "Leaderboard",
+    "newName": "new name",
+    "renameModal": {
+      "title": "New Name",
+      "current": "Current",
+      "shuffle": "Shuffle",
+      "confirm": "Confirm",
+      "errorTitle": "Couldn't change name",
+      "errorBody": "Please try again."
+    },
+    "youSuffix": " (you)",
+    "unassisted": "unassisted",
+    "runsCount_one": "{{count}} run",
+    "runsCount_other": "{{count}} runs",
+    "loadError": "Could not load leaderboard.",
+    "noRunsYet": "No runs yet.",
+    "noScoresNetwork": "No scores in your network yet.",
+    "noScoresGlobal": "No scores yet — be the first!",
+    "viewFollowing": "View Following",
+    "findPlayers": "Find Players",
+    "top100": "TOP 100 · {{mode}}",
+    "select": "Select",
+    "selected": "Selected",
+    "sort": {
+      "score": "Score",
+      "recent": "Recent"
+    },
+    "stats": {
+      "score": "SCORE",
+      "rank": "RANK",
+      "betterThan": "BETTER THAN",
+      "bestScore": "BEST SCORE",
+      "lifetimeScore": "LIFETIME SCORE",
+      "bestRun": "BEST RUN",
+      "thisWeek": "THIS WEEK",
+      "thisMonth": "THIS MONTH",
+      "totalRuns": "TOTAL RUNS",
+      "lifetime": "LIFETIME",
+      "average": "AVERAGE",
+      "last100": "YOUR LAST 100 RUNS"
+    },
+    "filters": {
+      "difficulty": "Difficulty",
+      "type": "Type",
+      "period": "Period",
+      "scope": "Scope",
+      "all": "All",
+      "unassistedRuns": "Unassisted Runs",
+      "allRuns": "All Runs",
+      "allTime": "All Time",
+      "thisMonth": "This Month",
+      "thisWeek": "This Week",
+      "today": "Today",
+      "global": "Global",
+      "following": "Following"
+    },
+    "info": {
+      "title": "About the Leaderboard",
+      "unassistedTerm": "Unassisted Runs",
+      "unassistedDesc": " — scores from runs completed before using a continue.",
+      "allRunsTerm": "All Runs",
+      "allRunsDesc": " — every run, including those where a continue was used to extend the game.",
+      "scoringTerm": "Scoring",
+      "scoringDesc": " — merging dice earns points, with a multiplier for chain reactions. Clearing sixes earns a bonus, and clearing the entire board earns an even bigger bonus.",
+      "anonymousTerm": "Anonymous",
+      "anonymousDesc": " — your display name is randomly generated. No personal information is collected or used in the leaderboard.",
+      "gotIt": "Got it"
+    }
+  },
+  "findPlayer": {
+    "searchPlaceholder": "Search by name…",
+    "following": "FOLLOWING",
+    "loadError": "Couldn't load following list.",
+    "retry": "Retry",
+    "noneFollowing": "Not following anyone yet.",
+    "unfollow": "Unfollow",
+    "followingBtn": "Following",
+    "follow": "Follow",
+    "results": "RESULTS",
+    "noPlayers": "No players found.",
+    "best": "Best {{score}}"
+  },
+  "game": {
+    "over": "Game Over",
+    "newBest": "New Best!",
+    "previousBest": "Previous best: {{score}}",
+    "best": "Best: {{score}}",
+    "continue": "Continue",
+    "continueAd": "▶ Continue",
+    "watchLongerAd": "Watch a longer ad",
+    "home": "← Home",
+    "paused": "Paused",
+    "resume": "▶  Resume",
+    "saveQuit": "Save & Quit",
+    "quitWithoutSaving": "✕  Quit Without Saving",
+    "quitConfirmTitle": "Quit Without Saving?",
+    "quitConfirmBody": "Your progress won't be saved. Log your score to the leaderboard or discard it.",
+    "logScore": "Log Score",
+    "discardScore": "Discard Score",
+    "back": "← Back",
+    "condensing": "Condensing…",
+    "hud": {
+      "score": "SCORE",
+      "best": "BEST",
+      "next": "NEXT"
+    },
+    "tutorial": {
+      "move": "Swipe to move",
+      "rotate": "Tap to rotate",
+      "drop": "Swipe down to drop"
+    }
+  },
+  "howToPlay": {
+    "dropTitle": "Drop the dice",
+    "controls": {
+      "move": "Swipe left/right to move",
+      "rotate": "Tap to rotate",
+      "drop": "Swipe down to drop faster"
+    },
+    "rules": {
+      "mergeTitle": "Merge matching values",
+      "mergeBody": "Two or more touching dice of the same value merge into one die of the next value: 1+1→2, 2+2→3, all the way up.",
+      "sixesTitle": "Clear the sixes",
+      "sixesBody": "Merge two or more 6s to clear them off the board for a big bonus. The best way to free up space.",
+      "chainsTitle": "Build chains",
+      "chainsBody": "A merge can trigger more merges as dice settle. The longer the chain, the bigger the score multiplier.",
+      "surviveTitle": "Survive",
+      "surviveBody": "Unsupported stacks fall. The run ends when a new piece can no longer fit. Beat your best score and climb the leaderboard!"
+    },
+    "consent": "By continuing, you agree to our <terms>Terms</terms> and <privacy>Privacy Policy</privacy>."
+  },
+  "review": {
+    "title": "Enjoying Dice Drop?",
+    "body": "If you're having fun, a rating means a lot and helps others find the game.",
+    "rate": "Leave a Rating",
+    "notNow": "Not Now",
+    "dontAsk": "Don't Ask Again"
+  }
+}

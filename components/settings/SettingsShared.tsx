@@ -1,5 +1,6 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Switch, Platform, Dimensions } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring, withSequence, Easing,
 } from 'react-native-reanimated';
@@ -18,6 +19,7 @@ export const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').widt
 // can't be stripped from JS. This gives full control: plain chevron + label,
 // no background, centered title.
 export function SettingsSubHeader({ title, colors }: { title: string; colors: ThemeColors }) {
+  const { t } = useTranslation();
   const { top } = useSafeAreaInsets();
   return (
     <View style={[subHeaderStyles.container, { paddingTop: top + 8, backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
@@ -27,7 +29,7 @@ export function SettingsSubHeader({ title, colors }: { title: string; colors: Th
         style={subHeaderStyles.backBtn}
       >
         <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
-        <Text style={[subHeaderStyles.backLabel, { color: colors.textSecondary }]}>Settings</Text>
+        <Text style={[subHeaderStyles.backLabel, { color: colors.textSecondary }]}>{t('settings.title')}</Text>
       </TouchableOpacity>
       <Text style={[subHeaderStyles.title, { color: colors.text }]} numberOfLines={1}>{title}</Text>
       <View style={subHeaderStyles.backBtn} />

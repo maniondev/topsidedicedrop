@@ -1,0 +1,346 @@
+{
+  "common": {
+    "apply": "应用",
+    "cancel": "取消",
+    "ok": "确定",
+    "reset": "重置",
+    "gotIt": "知道了",
+    "restore": "恢复",
+    "restorePurchases": "恢复购买",
+    "redeemCode": "兑换代码"
+  },
+  "tabs": {
+    "play": "游戏",
+    "stats": "统计",
+    "settings": "设置"
+  },
+  "settings": {
+    "title": "设置",
+    "sections": {
+      "premium": "高级版",
+      "sound": "声音",
+      "customize": "自定义",
+      "gameplay": "玩法",
+      "about": "关于",
+      "stats": "统计"
+    },
+    "premium": {
+      "active": "高级版已激活",
+      "removeAds": "移除所有广告",
+      "unlockCustomization": "解锁自定义",
+      "unlockPremium": "解锁高级版"
+    },
+    "sound": {
+      "breakSilent": "忽略静音模式",
+      "breakSilentSub": "可能会暂停流媒体音乐",
+      "soundEffects": "音效",
+      "soundtrack": "配乐"
+    },
+    "customize": {
+      "theme": "主题",
+      "soundtrack": "配乐",
+      "soundEffects": "音效",
+      "animationPack": "动画包",
+      "diceStyle": "骰子样式",
+      "appIcon": "应用图标"
+    },
+    "gameplay": {
+      "scorePopups": "分数弹窗",
+      "performanceMode": "性能模式",
+      "performanceModeSub": "关闭视觉和音效，让旧设备运行更流畅。"
+    },
+    "about": {
+      "rated": "已评分。谢谢！ ★",
+      "rate": "评价 Topside: Dice Drop ★",
+      "moreGames": "Topside 的更多游戏",
+      "privacy": "隐私政策",
+      "terms": "服务条款",
+      "contact": "联系我们",
+      "version": "版本"
+    },
+    "stats": {
+      "reset": "重置统计",
+      "resetConfirmTitle": "重置统计？",
+      "resetConfirmBody": "这将永久删除你的本地统计，并从全球排行榜中移除你的分数。此操作无法撤销。",
+      "resetDoneTitle": "统计已重置",
+      "resetDoneBody": "你的统计已清除。"
+    },
+    "theme": {
+      "title": "主题",
+      "matched": "已匹配 {{theme}}",
+      "completeLook": "完成 {{theme}} 风格",
+      "matchedSub": "声音、骰子和特效全部匹配",
+      "completeSub": "让声音、骰子和特效相匹配",
+      "apply": "应用"
+    },
+    "appIcon": {
+      "unsupported": "此平台暂不支持切换图标。"
+    },
+    "soundtrack": {
+      "composerLabel": "音乐制作："
+    },
+    "language": {
+      "title": "语言"
+    }
+  },
+  "premium": {
+    "restoreTitle": "已恢复！",
+    "restoreBody": "购买已恢复。",
+    "nothingTitle": "没有可恢复的内容",
+    "nothingBody": "未找到以往的购买。",
+    "restoreFailedTitle": "恢复失败",
+    "restoreFailedBody": "出了点问题。",
+    "errorTitle": "错误",
+    "noPackage": "未找到套餐。请稍后再试。",
+    "purchaseFailedTitle": "购买失败",
+    "redeemTitle": "兑换代码",
+    "redeemAndroidBody": "打开 Play 商店应用，进入“付款和订阅”>“兑换代码”。",
+    "redeemErrorBody": "无法打开兑换页面。请确认已登录 App Store，然后重试。",
+    "perkNoAds": "无广告",
+    "perkFreeContinues": "免费续玩",
+    "perkThemes": "所有主题和音效包",
+    "perkDiceAnims": "所有骰子动画和样式",
+    "allInTitle": "Topside: Dice Drop 高级版",
+    "removeAdsTitle": "移除广告",
+    "customizationTitle": "解锁自定义",
+    "everythingUnlocked": "你已解锁全部内容！",
+    "close": "关闭",
+    "notNow": "以后再说",
+    "restorePurchase": "恢复购买",
+    "upgradePrice": "升级 — {{price}}",
+    "titlePrice": "{{title}} — {{price}}",
+    "orCustomization": "或仅自定义 — {{price}}",
+    "orRemoveAds": "或仅移除广告 — {{price}}"
+  },
+  "difficulty": {
+    "easy": "简单",
+    "medium": "中等",
+    "hard": "困难"
+  },
+  "themeNames": {
+    "dicedrop": "Dice Drop",
+    "dice": "经典",
+    "light": "浅色",
+    "dark": "深色",
+    "pastel": "粉彩",
+    "grayscale": "灰度",
+    "ocean": "海洋",
+    "forest": "森林",
+    "neon": "霓虹"
+  },
+  "diceStyleNames": {
+    "classic": "经典",
+    "sketch": "素描",
+    "pixel": "8位",
+    "neon": "霓虹",
+    "raised": "立体",
+    "wooden": "木质",
+    "ocean": "海玻璃",
+    "pastel": "果冻",
+    "comic": "波普艺术"
+  },
+  "soundtrackNames": {
+    "classic": "Dice Drop",
+    "dicedrop": "漂流",
+    "forest": "森林",
+    "neon": "霓虹",
+    "underwater": "海洋"
+  },
+  "animPackNames": {
+    "classic": "经典",
+    "extra": "强化",
+    "minimal": "极简",
+    "retro": "复古",
+    "electric": "电击",
+    "twist": "旋转",
+    "flip": "翻转",
+    "shatter": "碎裂",
+    "glitch": "故障"
+  },
+  "soundPackNames": {
+    "topside": "经典",
+    "splash": "水花",
+    "dig": "挖掘",
+    "marimba": "马林巴",
+    "bubbles": "气泡",
+    "snow": "雪",
+    "fight": "格斗",
+    "coins": "金币",
+    "metal": "金属",
+    "rubber": "橡胶"
+  },
+  "appIconNames": {
+    "default": "棕色堆叠",
+    "AppIcon-Cream": "米色堆叠",
+    "AppIcon-Neon": "霓虹堆叠",
+    "AppIcon-Blue": "蓝色堆叠",
+    "AppIcon-IconBrown": "棕色图标",
+    "AppIcon-IconCream": "米色图标",
+    "AppIcon-IconNeon": "霓虹图标",
+    "AppIcon-IconBlue": "蓝色图标"
+  },
+  "home": {
+    "subtitle": "一款下落合成游戏。",
+    "continue": "继续",
+    "newGame": "新游戏",
+    "play": "开始",
+    "howToPlay": "玩法说明",
+    "soundOn": "声音开",
+    "soundOff": "声音关",
+    "removeAds": "移除所有广告",
+    "unlockBanner": "解锁音效包、主题等更多内容",
+    "stats": {
+      "bestUnassisted": "最佳（无助攻）",
+      "bestOverall": "最佳（总）",
+      "lastRun": "上一局",
+      "dayStreak": "连续天数"
+    },
+    "newGameConfirm": {
+      "title": "开始新游戏？",
+      "body": "这将放弃你当前保存的游戏。",
+      "continueSaved": "继续已保存的游戏",
+      "startNew": "开始新游戏",
+      "back": "← 返回"
+    }
+  },
+  "leaderboard": {
+    "yourStats": "你的统计",
+    "leaderboard": "排行榜",
+    "newName": "换名字",
+    "renameModal": {
+      "title": "新名字",
+      "current": "当前",
+      "shuffle": "换一个",
+      "confirm": "确认",
+      "errorTitle": "无法更改名字",
+      "errorBody": "请重试。"
+    },
+    "youSuffix": "（你）",
+    "unassisted": "无助攻",
+    "runsCount_one": "{{count}} 局",
+    "runsCount_other": "{{count}} 局",
+    "loadError": "无法加载排行榜。",
+    "noRunsYet": "还没有游戏记录。",
+    "noScoresNetwork": "你的网络中还没有分数。",
+    "noScoresGlobal": "还没有分数——来当第一名吧！",
+    "viewFollowing": "查看关注",
+    "findPlayers": "查找玩家",
+    "top100": "前100名 · {{mode}}",
+    "select": "选择",
+    "selected": "已选择",
+    "sort": {
+      "score": "分数",
+      "recent": "最近"
+    },
+    "stats": {
+      "score": "分数",
+      "rank": "排名",
+      "betterThan": "超越",
+      "bestScore": "最高分",
+      "lifetimeScore": "累计分数",
+      "bestRun": "最佳一局",
+      "thisWeek": "本周",
+      "thisMonth": "本月",
+      "totalRuns": "总局数",
+      "lifetime": "累计",
+      "average": "平均",
+      "last100": "你最近100局"
+    },
+    "filters": {
+      "difficulty": "难度",
+      "type": "类型",
+      "period": "时间段",
+      "scope": "范围",
+      "all": "全部",
+      "unassistedRuns": "无助攻游戏",
+      "allRuns": "所有游戏",
+      "allTime": "全部时间",
+      "thisMonth": "本月",
+      "thisWeek": "本周",
+      "today": "今天",
+      "global": "全球",
+      "following": "关注中"
+    },
+    "info": {
+      "title": "关于排行榜",
+      "unassistedTerm": "无助攻游戏",
+      "unassistedDesc": "——使用续玩之前完成的游戏分数。",
+      "allRunsTerm": "所有游戏",
+      "allRunsDesc": "——所有游戏，包括使用续玩来延长游戏的那些。",
+      "scoringTerm": "计分",
+      "scoringDesc": "——合成骰子可得分，连锁反应有倍率加成。消除六点可获得奖励，清空整个棋盘可获得更大的奖励。",
+      "anonymousTerm": "匿名",
+      "anonymousDesc": "——你的显示名称是随机生成的。排行榜不会收集或使用任何个人信息。",
+      "gotIt": "知道了"
+    }
+  },
+  "findPlayer": {
+    "searchPlaceholder": "按名称搜索…",
+    "following": "关注中",
+    "loadError": "无法加载关注列表。",
+    "retry": "重试",
+    "noneFollowing": "你还没有关注任何人。",
+    "unfollow": "取消关注",
+    "followingBtn": "已关注",
+    "follow": "关注",
+    "results": "搜索结果",
+    "noPlayers": "未找到玩家。",
+    "best": "最高 {{score}}"
+  },
+  "game": {
+    "over": "游戏结束",
+    "newBest": "新纪录！",
+    "previousBest": "之前最佳：{{score}}",
+    "best": "最佳：{{score}}",
+    "continue": "继续",
+    "continueAd": "▶ 继续",
+    "watchLongerAd": "观看较长广告",
+    "home": "← 主页",
+    "paused": "已暂停",
+    "resume": "▶  继续",
+    "saveQuit": "保存并退出",
+    "quitWithoutSaving": "✕  不保存退出",
+    "quitConfirmTitle": "不保存就退出？",
+    "quitConfirmBody": "你的进度不会被保存。将分数记录到排行榜，或将其舍弃。",
+    "logScore": "记录分数",
+    "discardScore": "舍弃分数",
+    "back": "← 返回",
+    "condensing": "压缩中…",
+    "hud": {
+      "score": "分数",
+      "best": "最佳",
+      "next": "下一个"
+    },
+    "tutorial": {
+      "move": "滑动移动",
+      "rotate": "点击旋转",
+      "drop": "向下滑动落下"
+    }
+  },
+  "howToPlay": {
+    "dropTitle": "落下骰子",
+    "controls": {
+      "move": "左右滑动移动",
+      "rotate": "点击旋转",
+      "drop": "向下滑动加速落下"
+    },
+    "rules": {
+      "mergeTitle": "合成相同数值",
+      "mergeBody": "两个或更多相邻的相同数值骰子会合成为下一数值的骰子：1+1→2，2+2→3，依此类推。",
+      "sixesTitle": "消除六点",
+      "sixesBody": "合成两个或更多六点，将其从棋盘上消除，可获得丰厚奖励。这是腾出空间的最佳方式。",
+      "chainsTitle": "制造连锁",
+      "chainsBody": "骰子落定时，一次合成可能引发更多合成。连锁越长，得分倍率越高。",
+      "surviveTitle": "生存",
+      "surviveBody": "无支撑的堆叠会坍塌。当新方块无法放入时，本局结束。打破你的纪录，登上排行榜吧！"
+    },
+    "consent": "继续即表示你同意我们的<terms>服务条款</terms>和<privacy>隐私政策</privacy>。"
+  },
+  "review": {
+    "title": "喜欢 Dice Drop 吗？",
+    "body": "如果你玩得开心，一个评分意义重大，也能帮助更多人发现这款游戏。",
+    "rate": "去评分",
+    "notNow": "以后再说",
+    "dontAsk": "不再询问"
+  }
+}

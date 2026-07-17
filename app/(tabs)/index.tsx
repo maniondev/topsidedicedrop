@@ -5,6 +5,8 @@ import {
 
 const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
+import { useLocalizedFont } from '@/lib/fonts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,10 +28,10 @@ import { useInterstitialAd } from '@/hooks/useInterstitialAd';
 import { useMusicIdleTier } from '@/hooks/useMusicIdleTier';
 import { isFirstRunOfSession, markFirstRunUsed } from '@/lib/sessionTracker';
 
-const DIFFICULTIES: { id: Difficulty; label: string }[] = [
-  { id: 'easy',   label: 'Easy'   },
-  { id: 'medium', label: 'Medium' },
-  { id: 'hard',   label: 'Hard'   },
+const DIFFICULTIES: { id: Difficulty }[] = [
+  { id: 'easy'   },
+  { id: 'medium' },
+  { id: 'hard'   },
 ];
 
 // "Topside: Dice Drop" as eighth-note-timed flying units: T-o-p-s-i-d-e:
@@ -51,6 +53,8 @@ const TITLE_UNITS: { index: number; text: string; kind: 'topside' | 'diceDrop' }
 ];
 
 export default function LobbyScreen() {
+  const { t } = useTranslation();
+  const font = useLocalizedFont();
   const { colors } = useTheme();
   const { statsFor, stats } = useStats();
   const { difficulty, setDifficulty } = useDifficulty();
@@ -319,7 +323,7 @@ export default function LobbyScreen() {
               ))}
             </View>
             <Text style={[styles.subtitleText, { color: colors.textSecondary, fontSize: f(13), marginTop: Platform.OS === 'android' ? 1 : f(3) }]}>
-              A drop and merge game.
+              {t('home.subtitle')}
             </Text>
           </View>
         </View>
@@ -344,7 +348,7 @@ export default function LobbyScreen() {
                     styles.diffLabel,
                     { fontSize: f(15), color: active ? colors.accentText : colors.textSecondary, fontWeight: active ? '700' : '400' },
                   ]}>
-                    {d.label}
+                    {t(`difficulty.${d.id}`)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -359,15 +363,15 @@ export default function LobbyScreen() {
                 style={[styles.playBtn, { width: continueW, height: rowH, borderRadius: r14, backgroundColor: colors.accent }]}
                 onPress={handleContinue}
               >
-                <SpinningLabel active={constantAnimsActive} style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'Rubik_700Bold', fontSize: f(24) }]}>
-                  Continue
+                <SpinningLabel active={constantAnimsActive} style={[styles.playBtnText, { color: colors.accentText, fontFamily: font('Rubik_700Bold'), fontSize: f(24) }]}>
+                  {t('home.continue')}
                 </SpinningLabel>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.diffBtn, { width: newGameW, height: rowH, borderRadius: r14, backgroundColor: colors.card, borderColor: colors.border }]}
                 onPress={handleNewGame}
               >
-                <Text style={[styles.diffLabel, { fontSize: f(15), color: colors.textSecondary, fontWeight: '400' }]}>New Game</Text>
+                <Text style={[styles.diffLabel, { fontSize: f(15), color: colors.textSecondary, fontWeight: '400' }]}>{t('home.newGame')}</Text>
               </TouchableOpacity>
             </>
           ) : (
@@ -375,8 +379,8 @@ export default function LobbyScreen() {
               style={[styles.playBtn, { height: rowH, borderRadius: r14, backgroundColor: colors.accent }]}
               onPress={handleNewGame}
             >
-              <SpinningLabel active={constantAnimsActive} style={[styles.playBtnText, { color: colors.accentText, fontFamily: 'Rubik_700Bold', fontSize: f(24) }]}>
-                Play
+              <SpinningLabel active={constantAnimsActive} style={[styles.playBtnText, { color: colors.accentText, fontFamily: font('Rubik_700Bold'), fontSize: f(24) }]}>
+                {t('home.play')}
               </SpinningLabel>
             </TouchableOpacity>
           )}
@@ -403,14 +407,14 @@ export default function LobbyScreen() {
             <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} key={`bu:${dstats.bestUnassisted}`}>
               {dstats.bestUnassisted > 0 ? dstats.bestUnassisted.toLocaleString() : '—'}
             </Text>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>BEST UNASSISTED</Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>{t('home.stats.bestUnassisted')}</Text>
           </PulsingCard>
           <PulsingCard beatIndex={1} epoch={animPhaseEpoch} active={statsPulseActive} style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
             <Ionicons name="trophy-outline" size={f(22)} color={colors.accent} />
             <Text style={[styles.heroValue, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} key={`bs:${dstats.bestScore}`}>
               {dstats.bestScore > 0 ? dstats.bestScore.toLocaleString() : '—'}
             </Text>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>BEST OVERALL</Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>{t('home.stats.bestOverall')}</Text>
           </PulsingCard>
         </View>
         <View style={[styles.statsRow, { gap: f(12) }]}>
@@ -419,14 +423,14 @@ export default function LobbyScreen() {
             <Text style={[styles.heroValue, { color: colors.textSecondary, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} key={`lr:${lastRunScore}`}>
               {lastRunScore > 0 ? lastRunScore.toLocaleString() : '—'}
             </Text>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>LAST RUN</Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>{t('home.stats.lastRun')}</Text>
           </PulsingCard>
           <PulsingCard beatIndex={3} epoch={animPhaseEpoch} active={statsPulseActive} style={[styles.bestScoreCard, { backgroundColor: colors.card, borderColor: colors.cardBorder, borderRadius: r16, gap: f(6) }]}>
             <Ionicons name="flame-outline" size={f(22)} color={colors.textSecondary} />
             <Text style={[styles.heroValue, { color: colors.textSecondary, fontFamily: 'Rubik_700Bold', fontSize: f(36), lineHeight: f(38) }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5} key={`st:${currentStreak}`}>
               {currentStreak > 0 ? currentStreak.toLocaleString() : '—'}
             </Text>
-            <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>DAY STREAK</Text>
+            <Text style={[styles.heroLabel, { color: colors.textSecondary, fontSize: f(10) }]}>{t('home.stats.dayStreak')}</Text>
           </PulsingCard>
         </View>
       </View>
@@ -451,7 +455,7 @@ export default function LobbyScreen() {
             onPress={() => { setHowToIsFirstOpen(false); setHowToOpen(true); }}
           >
             <Ionicons name="book-outline" size={f(18)} color={colors.accent} />
-            <Text style={[styles.rowBtnText, { color: colors.textSecondary, fontSize: f(15) }]}>How to Play</Text>
+            <Text style={[styles.rowBtnText, { color: colors.textSecondary, fontSize: f(15) }]}>{t('home.howToPlay')}</Text>
           </TouchableOpacity>
           {devMusicIncluded ? (
             <View style={[styles.bottomRow, { flex: 1, gap: f(8) }]}>
@@ -479,7 +483,7 @@ export default function LobbyScreen() {
                 color={soundEnabled ? colors.accent : colors.textMuted}
               />
               <Text style={[styles.rowBtnText, { color: colors.textSecondary, fontSize: f(15), width: f(76) }]}>
-                {soundEnabled ? 'Sound On' : 'Sound Off'}
+                {soundEnabled ? t('home.soundOn') : t('home.soundOff')}
               </Text>
             </TouchableOpacity>
           )}
@@ -498,7 +502,7 @@ export default function LobbyScreen() {
               adjustsFontSizeToFit
               minimumFontScale={0.75}
             >
-              {hasCustomization ? 'Remove All Ads' : 'Unlock Sound Packs, Themes, and More'}
+              {hasCustomization ? t('home.removeAds') : t('home.unlockBanner')}
             </Text>
           </TouchableOpacity>
         )}
@@ -511,29 +515,29 @@ export default function LobbyScreen() {
       <Modal visible={newGameConfirmOpen} transparent animationType="fade" onRequestClose={() => setNewGameConfirmOpen(false)}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.modalTitle, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
-              Start New Game?
+            <Text style={[styles.modalTitle, { color: colors.text, fontFamily: font('Rubik_700Bold') }]}>
+              {t('home.newGameConfirm.title')}
             </Text>
             <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>
-              This will discard your currently saved run.
+              {t('home.newGameConfirm.body')}
             </Text>
             <TouchableOpacity
               style={[styles.modalBtn, { backgroundColor: colors.accent }]}
               onPress={() => { setNewGameConfirmOpen(false); setTimeout(handleContinue, 200); }}
             >
-              <Text style={[styles.modalBtnText, { color: colors.accentText }]}>Continue Saved Run</Text>
+              <Text style={[styles.modalBtnText, { color: colors.accentText }]}>{t('home.newGameConfirm.continueSaved')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.modalOutlineBtn, { borderColor: colors.accent }]}
               onPress={handleNewGameConfirmed}
             >
-              <Text style={[styles.modalOutlineText, { color: colors.accent }]}>Start New Game</Text>
+              <Text style={[styles.modalOutlineText, { color: colors.accent }]}>{t('home.newGameConfirm.startNew')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.modalOutlineBtn, { borderColor: colors.border }]}
               onPress={() => setNewGameConfirmOpen(false)}
             >
-              <Text style={[styles.modalOutlineText, { color: colors.textSecondary }]}>← Back</Text>
+              <Text style={[styles.modalOutlineText, { color: colors.textSecondary }]}>{t('home.newGameConfirm.back')}</Text>
             </TouchableOpacity>
           </View>
         </View>

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Canvas, RoundedRect, Circle, Rect, Group, BlurMask, Line, RadialGradient, vec, rrect, rect } from '@shopify/react-native-skia';
 import { QueuedPiece } from '@/hooks/useGame';
 import { useDieColors, useTheme } from '@/contexts/ThemeContext';
@@ -145,6 +146,7 @@ interface Props {
 }
 
 function NextQueue({ queue }: Props) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { diceStyle } = useDiceStyle();
   const next = queue[0];
@@ -152,7 +154,7 @@ function NextQueue({ queue }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, { color: colors.textMuted }]}>NEXT</Text>
+      <Text style={[styles.label, { color: colors.textMuted }]}>{t('game.hud.next')}</Text>
       <View style={[styles.slot, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
         <PiecePreview piece={next} diceStyle={diceStyle} />
       </View>

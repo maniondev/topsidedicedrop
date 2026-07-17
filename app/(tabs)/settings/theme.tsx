@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePremium } from '@/contexts/PremiumContext';
@@ -7,7 +8,7 @@ import { useMusic } from '@/contexts/MusicContext';
 import { useDiceStyle } from '@/contexts/DiceStyleContext';
 import { useSound } from '@/contexts/SoundContext';
 import { useAnimation } from '@/contexts/AnimationContext';
-import { ThemeId, THEME_IDS, ThemeMeta, Themes } from '@/constants/theme';
+import { ThemeId, THEME_IDS, Themes } from '@/constants/theme';
 import { THEME_PRESETS } from '@/constants/themePresets';
 import { makeSettingsStyles, SettingsSubHeader } from '@/components/settings/SettingsShared';
 import PremiumModal from '@/components/PremiumModal';
@@ -15,6 +16,7 @@ import PremiumModal from '@/components/PremiumModal';
 const FREE_THEMES: ThemeId[] = ['dicedrop', 'dice', 'light', 'dark'];
 
 export default function ThemeScreen() {
+  const { t } = useTranslation();
   const { colors, themeId, setTheme } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   const { hasCustomization } = usePremium();
@@ -52,11 +54,9 @@ export default function ThemeScreen() {
     if (preset.animPack)   setAnimPack(preset.animPack);
   };
 
-  const selectedMeta = ThemeMeta[themeId];
-
   return (
     <View style={[styles.safe]}>
-      <SettingsSubHeader title="Theme" colors={colors} />
+      <SettingsSubHeader title={t('settings.theme.title')} colors={colors} />
 
       {preset && (
         <TouchableOpacity
@@ -67,19 +67,21 @@ export default function ThemeScreen() {
         >
           <View style={bannerStyles.textCol}>
             <Text style={[bannerStyles.title, { color: colors.text }]} numberOfLines={1}>
-              {matched ? `Matched to ${selectedMeta.label}` : `Complete the ${selectedMeta.label} look`}
+              {matched
+                ? t('settings.theme.matched', { theme: t(`themeNames.${themeId}`) })
+                : t('settings.theme.completeLook', { theme: t(`themeNames.${themeId}`) })}
             </Text>
             <Text style={[bannerStyles.sub, { color: colors.textSecondary }]} numberOfLines={2}>
               {matched
-                ? 'Sounds, dice & effects all match'
-                : 'Set the sounds, dice & effects to match'}
+                ? t('settings.theme.matchedSub')
+                : t('settings.theme.completeSub')}
             </Text>
           </View>
           {matched
             ? <Ionicons name="checkmark-circle" size={26} color={colors.accent} />
             : (
               <View style={[bannerStyles.applyBtn, { backgroundColor: colors.accent }]}>
-                <Text style={[bannerStyles.applyText, { color: colors.accentText }]}>Apply</Text>
+                <Text style={[bannerStyles.applyText, { color: colors.accentText }]}>{t('settings.theme.apply')}</Text>
               </View>
             )
           }
@@ -88,7 +90,6 @@ export default function ThemeScreen() {
 
       <ScrollView contentContainerStyle={[styles.content, { gap: 8, paddingTop: 10 }]} showsVerticalScrollIndicator={false}>
         {THEME_IDS.map(id => {
-          const meta = ThemeMeta[id];
           const theme = Themes[id];
           const selected = themeId === id;
           const locked = !hasCustomization && !FREE_THEMES.includes(id);
@@ -110,7 +111,7 @@ export default function ThemeScreen() {
               }}
             >
               <View style={[rowStyles.dot, { backgroundColor: theme.accent }]} />
-              <Text style={[rowStyles.label, { color: theme.text }]} numberOfLines={1}>{meta.label}</Text>
+              <Text style={[rowStyles.label, { color: theme.text }]} numberOfLines={1}>{t(`themeNames.${id}`)}</Text>
               {locked
                 ? <Ionicons name="lock-closed" size={18} color={theme.accent} />
                 : selected && <Ionicons name="checkmark-circle" size={22} color={theme.accent} />

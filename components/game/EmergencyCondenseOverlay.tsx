@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLocalizedFont } from '@/lib/fonts';
 
 interface Props {
   visible: boolean;
@@ -13,6 +15,8 @@ interface Props {
  * transition that used to strand the game in a non-playable state.
  */
 export default function EmergencyCondenseOverlay({ visible }: Props) {
+  const { t } = useTranslation();
+  const font = useLocalizedFont();
   const { colors } = useTheme();
   const opacity = useRef(new Animated.Value(0)).current;
   // Stay mounted through the fade-out — unmounting the instant `visible` flips
@@ -35,8 +39,8 @@ export default function EmergencyCondenseOverlay({ visible }: Props) {
   return (
     <Animated.View style={[styles.overlay, { opacity }]} pointerEvents="none">
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.accent }]}>
-        <Text style={[styles.title, { color: colors.accent, fontFamily: 'Rubik_700Bold' }]}>
-          Condensing…
+        <Text style={[styles.title, { color: colors.accent, fontFamily: font('Rubik_700Bold') }]}>
+          {t('game.condensing')}
         </Text>
       </View>
     </Animated.View>

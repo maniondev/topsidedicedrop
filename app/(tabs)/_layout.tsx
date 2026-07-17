@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { useIsFocused } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Dimensions, Platform, View } from 'react-native';
 import { HapticTab } from '@/components/haptic-tab';
@@ -10,6 +11,7 @@ import ThemeAtmosphere from '@/components/ThemeAtmosphere';
 const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 
 export default function TabLayout() {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { bottom } = useSafeAreaInsets();
   // The game screen stacks ON TOP of the tabs, which stay mounted beneath it
@@ -60,7 +62,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Play',
+          title: t('tabs.play'),
           tabBarItemStyle: { marginLeft: 20 },
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="dice-5" size={size + 2} color={color} />
@@ -70,7 +72,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="leaderboard"
         options={{
-          title: 'Stats',
+          title: t('tabs.stats'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="trophy-outline" size={size} color={color} />
           ),
@@ -79,7 +81,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
+          title: t('tabs.settings'),
           tabBarItemStyle: { marginRight: 20 },
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="settings-outline" size={size} color={color} />

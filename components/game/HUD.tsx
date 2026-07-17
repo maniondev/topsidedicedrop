@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Canvas, RoundedRect, Circle, Rect, Group, BlurMask, Line, RadialGradient, vec, rrect, rect } from '@shopify/react-native-skia';
 import { useTheme, useDieColors } from '@/contexts/ThemeContext';
 import { useDiceStyle, DiceStyleId } from '@/contexts/DiceStyleContext';
@@ -249,6 +250,7 @@ function valueFontSize(n: number): number {
 }
 
 function HUD({ score, bestScore, nextPiece, onLogoPress, isLarge, scoreGain, scoreGainKey, scoreGainActive = false }: Props) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const { faceColor, dotColor } = useDieColors();
   const { diceStyle } = useDiceStyle();
@@ -270,7 +272,7 @@ function HUD({ score, bestScore, nextPiece, onLogoPress, isLarge, scoreGain, sco
 
       <View style={styles.columns}>
         <View style={styles.col}>
-          <Text style={[styles.label, { color: colors.textMuted }]}>SCORE</Text>
+          <Text style={[styles.label, { color: colors.textMuted }]}>{t('game.hud.score')}</Text>
           <View style={styles.valueArea}>
             <View>
               <Text style={[styles.value, { color: colors.titleColor ?? colors.text, fontFamily: 'Rubik_700Bold', fontSize: valueFontSize(score) }]}>
@@ -288,7 +290,7 @@ function HUD({ score, bestScore, nextPiece, onLogoPress, isLarge, scoreGain, sco
         <View style={[styles.divider, { backgroundColor: colors.separator }]} />
 
         <View style={styles.col}>
-          <Text style={[styles.label, { color: colors.textMuted }]}>BEST</Text>
+          <Text style={[styles.label, { color: colors.textMuted }]}>{t('game.hud.best')}</Text>
           <View style={styles.valueArea}>
             <Text style={[styles.value, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: valueFontSize(bestScore) }]}>
               {bestScore.toLocaleString()}
@@ -299,7 +301,7 @@ function HUD({ score, bestScore, nextPiece, onLogoPress, isLarge, scoreGain, sco
         <View style={[styles.divider, { backgroundColor: colors.separator }]} />
 
         <View style={styles.col}>
-          <Text style={[styles.label, { color: colors.textMuted }]}>NEXT</Text>
+          <Text style={[styles.label, { color: colors.textMuted }]}>{t('game.hud.next')}</Text>
           <View style={[styles.valueArea, { width: NEXT_CANVAS_W }]}>
             {nextPiece && (
               <InlinePiece piece={nextPiece} faceColor={faceColor} dotColor={dotColor} diceStyle={diceStyle} />

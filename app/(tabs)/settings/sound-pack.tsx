@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { View, ScrollView } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useSound, SoundPackMeta, SOUND_PACK_IDS } from '@/contexts/SoundContext';
@@ -7,6 +8,7 @@ import { makeSettingsStyles, PickerRow, SettingsSubHeader } from '@/components/s
 import PremiumModal from '@/components/PremiumModal';
 
 export default function SoundPackScreen() {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   const { hasCustomization } = usePremium();
@@ -43,7 +45,7 @@ export default function SoundPackScreen() {
 
   return (
     <View style={[styles.safe]}>
-      <SettingsSubHeader title="Sound Effects" colors={colors} />
+      <SettingsSubHeader title={t('settings.customize.soundEffects')} colors={colors} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.section, { marginBottom: 24 }]}>
           <View style={styles.sectionCard}>
@@ -52,7 +54,7 @@ export default function SoundPackScreen() {
               return (
                 <PickerRow
                   key={id}
-                  label={SoundPackMeta[id].label}
+                  label={t(`soundPackNames.${id}`)}
                   selected={soundPack === id}
                   locked={locked}
                   onSelect={async () => {

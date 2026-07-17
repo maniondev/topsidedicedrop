@@ -1,0 +1,346 @@
+{
+  "common": {
+    "apply": "Aplicar",
+    "cancel": "Cancelar",
+    "ok": "OK",
+    "reset": "Redefinir",
+    "gotIt": "Entendi",
+    "restore": "Restaurar",
+    "restorePurchases": "Restaurar compras",
+    "redeemCode": "Resgatar código"
+  },
+  "tabs": {
+    "play": "Jogar",
+    "stats": "Estatísticas",
+    "settings": "Ajustes"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "sections": {
+      "premium": "Premium",
+      "sound": "Som",
+      "customize": "Personalizar",
+      "gameplay": "Jogo",
+      "about": "Sobre",
+      "stats": "Estatísticas"
+    },
+    "premium": {
+      "active": "Premium ativo",
+      "removeAds": "Remover todos os anúncios",
+      "unlockCustomization": "Desbloquear personalização",
+      "unlockPremium": "Desbloquear Premium"
+    },
+    "sound": {
+      "breakSilent": "Ignorar o modo silencioso",
+      "breakSilentSub": "Pode pausar a música em streaming",
+      "soundEffects": "Efeitos sonoros",
+      "soundtrack": "Trilha sonora"
+    },
+    "customize": {
+      "theme": "Tema",
+      "soundtrack": "Trilha sonora",
+      "soundEffects": "Efeitos sonoros",
+      "animationPack": "Pacote de animações",
+      "diceStyle": "Estilo dos dados",
+      "appIcon": "Ícone do app"
+    },
+    "gameplay": {
+      "scorePopups": "Pontos flutuantes",
+      "performanceMode": "Modo desempenho",
+      "performanceModeSub": "Desativa os efeitos visuais e sonoros para um jogo mais fluido em aparelhos antigos."
+    },
+    "about": {
+      "rated": "Avaliado. Obrigado! ★",
+      "rate": "Avaliar Topside: Dice Drop ★",
+      "moreGames": "Mais jogos da Topside",
+      "privacy": "Política de privacidade",
+      "terms": "Termos de serviço",
+      "contact": "Contato",
+      "version": "Versão"
+    },
+    "stats": {
+      "reset": "Redefinir estatísticas",
+      "resetConfirmTitle": "Redefinir estatísticas?",
+      "resetConfirmBody": "Isso apaga permanentemente suas estatísticas locais e remove suas pontuações do ranking global. Não é possível desfazer.",
+      "resetDoneTitle": "Estatísticas redefinidas",
+      "resetDoneBody": "Suas estatísticas foram apagadas."
+    },
+    "theme": {
+      "title": "Tema",
+      "matched": "Combinado com {{theme}}",
+      "completeLook": "Complete o visual {{theme}}",
+      "matchedSub": "Sons, dados e efeitos combinam",
+      "completeSub": "Ajuste sons, dados e efeitos para combinar",
+      "apply": "Aplicar"
+    },
+    "appIcon": {
+      "unsupported": "A troca de ícone ainda não está disponível nesta plataforma."
+    },
+    "soundtrack": {
+      "composerLabel": "Compositor de áudio:"
+    },
+    "language": {
+      "title": "Idioma"
+    }
+  },
+  "premium": {
+    "restoreTitle": "Restaurado!",
+    "restoreBody": "Compras restauradas.",
+    "nothingTitle": "Nada para restaurar",
+    "nothingBody": "Nenhuma compra anterior encontrada.",
+    "restoreFailedTitle": "Falha ao restaurar",
+    "restoreFailedBody": "Algo deu errado.",
+    "errorTitle": "Erro",
+    "noPackage": "Nenhum pacote encontrado. Tente novamente mais tarde.",
+    "purchaseFailedTitle": "Falha na compra",
+    "redeemTitle": "Resgatar código",
+    "redeemAndroidBody": "Abra o app da Play Store e vá em Pagamentos e assinaturas > Resgatar código.",
+    "redeemErrorBody": "Não foi possível abrir a tela de resgate. Confirme se você está conectado à App Store e tente novamente.",
+    "perkNoAds": "Sem anúncios",
+    "perkFreeContinues": "Continuações grátis",
+    "perkThemes": "Todos os temas e pacotes de som",
+    "perkDiceAnims": "Todas as animações e estilos de dados",
+    "allInTitle": "Topside: Dice Drop Premium",
+    "removeAdsTitle": "Remover anúncios",
+    "customizationTitle": "Desbloquear personalização",
+    "everythingUnlocked": "Você desbloqueou tudo!",
+    "close": "Fechar",
+    "notNow": "Agora não",
+    "restorePurchase": "Restaurar compra",
+    "upgradePrice": "Fazer upgrade — {{price}}",
+    "titlePrice": "{{title}} — {{price}}",
+    "orCustomization": "Ou só Personalização — {{price}}",
+    "orRemoveAds": "Ou só Remover anúncios — {{price}}"
+  },
+  "difficulty": {
+    "easy": "Fácil",
+    "medium": "Médio",
+    "hard": "Difícil"
+  },
+  "themeNames": {
+    "dicedrop": "Dice Drop",
+    "dice": "Clássico",
+    "light": "Claro",
+    "dark": "Escuro",
+    "pastel": "Pastel",
+    "grayscale": "Escala de cinza",
+    "ocean": "Oceano",
+    "forest": "Floresta",
+    "neon": "Neon"
+  },
+  "diceStyleNames": {
+    "classic": "Clássico",
+    "sketch": "Esboço",
+    "pixel": "8 bits",
+    "neon": "Neon",
+    "raised": "Relevo",
+    "wooden": "Madeira",
+    "ocean": "Vidro do mar",
+    "pastel": "Geleia",
+    "comic": "Pop Art"
+  },
+  "soundtrackNames": {
+    "classic": "Dice Drop",
+    "dicedrop": "Deriva",
+    "forest": "Floresta",
+    "neon": "Neon",
+    "underwater": "Oceano"
+  },
+  "animPackNames": {
+    "classic": "Clássico",
+    "extra": "Extra",
+    "minimal": "Mínimo",
+    "retro": "Retrô",
+    "electric": "Elétrico",
+    "twist": "Giro",
+    "flip": "Virar",
+    "shatter": "Estilhaçar",
+    "glitch": "Glitch"
+  },
+  "soundPackNames": {
+    "topside": "Clássico",
+    "splash": "Splash",
+    "dig": "Cavar",
+    "marimba": "Marimba",
+    "bubbles": "Bolhas",
+    "snow": "Neve",
+    "fight": "Luta",
+    "coins": "Moedas",
+    "metal": "Metal",
+    "rubber": "Borracha"
+  },
+  "appIconNames": {
+    "default": "Pilha marrom",
+    "AppIcon-Cream": "Pilha creme",
+    "AppIcon-Neon": "Pilha neon",
+    "AppIcon-Blue": "Pilha azul",
+    "AppIcon-IconBrown": "Ícone marrom",
+    "AppIcon-IconCream": "Ícone creme",
+    "AppIcon-IconNeon": "Ícone neon",
+    "AppIcon-IconBlue": "Ícone azul"
+  },
+  "home": {
+    "subtitle": "Um jogo de soltar e combinar.",
+    "continue": "Continuar",
+    "newGame": "Novo jogo",
+    "play": "Jogar",
+    "howToPlay": "Como jogar",
+    "soundOn": "Som ligado",
+    "soundOff": "Som desligado",
+    "removeAds": "Remover todos os anúncios",
+    "unlockBanner": "Desbloqueie pacotes de som, temas e mais",
+    "stats": {
+      "bestUnassisted": "MELHOR SEM AJUDA",
+      "bestOverall": "MELHOR GERAL",
+      "lastRun": "ÚLTIMO JOGO",
+      "dayStreak": "SEQUÊNCIA DE DIAS"
+    },
+    "newGameConfirm": {
+      "title": "Começar novo jogo?",
+      "body": "Isso descartará seu jogo salvo atual.",
+      "continueSaved": "Continuar jogo salvo",
+      "startNew": "Começar novo jogo",
+      "back": "← Voltar"
+    }
+  },
+  "leaderboard": {
+    "yourStats": "Suas estatísticas",
+    "leaderboard": "Ranking",
+    "newName": "novo nome",
+    "renameModal": {
+      "title": "Novo nome",
+      "current": "Atual",
+      "shuffle": "Outro",
+      "confirm": "Confirmar",
+      "errorTitle": "Não foi possível mudar o nome",
+      "errorBody": "Tente novamente."
+    },
+    "youSuffix": " (você)",
+    "unassisted": "sem ajuda",
+    "runsCount_one": "{{count}} jogo",
+    "runsCount_other": "{{count}} jogos",
+    "loadError": "Não foi possível carregar o ranking.",
+    "noRunsYet": "Nenhum jogo ainda.",
+    "noScoresNetwork": "Nenhuma pontuação na sua rede ainda.",
+    "noScoresGlobal": "Nenhuma pontuação ainda — seja o primeiro!",
+    "viewFollowing": "Ver seguindo",
+    "findPlayers": "Encontrar jogadores",
+    "top100": "TOP 100 · {{mode}}",
+    "select": "Selecionar",
+    "selected": "Selecionado",
+    "sort": {
+      "score": "Pontuação",
+      "recent": "Recente"
+    },
+    "stats": {
+      "score": "PONTUAÇÃO",
+      "rank": "POSIÇÃO",
+      "betterThan": "MELHOR QUE",
+      "bestScore": "MELHOR PONTUAÇÃO",
+      "lifetimeScore": "PONTUAÇÃO TOTAL",
+      "bestRun": "MELHOR JOGO",
+      "thisWeek": "ESTA SEMANA",
+      "thisMonth": "ESTE MÊS",
+      "totalRuns": "JOGOS TOTAIS",
+      "lifetime": "TOTAL",
+      "average": "MÉDIA",
+      "last100": "SEUS ÚLTIMOS 100 JOGOS"
+    },
+    "filters": {
+      "difficulty": "Dificuldade",
+      "type": "Tipo",
+      "period": "Período",
+      "scope": "Escopo",
+      "all": "Todos",
+      "unassistedRuns": "Jogos sem ajuda",
+      "allRuns": "Todos os jogos",
+      "allTime": "Desde o início",
+      "thisMonth": "Este mês",
+      "thisWeek": "Esta semana",
+      "today": "Hoje",
+      "global": "Global",
+      "following": "Seguindo"
+    },
+    "info": {
+      "title": "Sobre o ranking",
+      "unassistedTerm": "Jogos sem ajuda",
+      "unassistedDesc": " — pontuações de jogos concluídos antes de usar uma continuação.",
+      "allRunsTerm": "Todos os jogos",
+      "allRunsDesc": " — todos os jogos, incluindo aqueles em que uma continuação foi usada para estender a partida.",
+      "scoringTerm": "Pontuação",
+      "scoringDesc": " — combinar dados rende pontos, com um multiplicador para reações em cadeia. Eliminar seis dá um bônus, e limpar o tabuleiro inteiro dá um bônus ainda maior.",
+      "anonymousTerm": "Anônimo",
+      "anonymousDesc": " — seu nome de exibição é gerado aleatoriamente. Nenhuma informação pessoal é coletada ou usada no ranking.",
+      "gotIt": "Entendi"
+    }
+  },
+  "findPlayer": {
+    "searchPlaceholder": "Buscar por nome…",
+    "following": "SEGUINDO",
+    "loadError": "Não foi possível carregar a lista de seguindo.",
+    "retry": "Tentar de novo",
+    "noneFollowing": "Você ainda não segue ninguém.",
+    "unfollow": "Deixar de seguir",
+    "followingBtn": "Seguindo",
+    "follow": "Seguir",
+    "results": "RESULTADOS",
+    "noPlayers": "Nenhum jogador encontrado.",
+    "best": "Melhor {{score}}"
+  },
+  "game": {
+    "over": "Fim de jogo",
+    "newBest": "Novo recorde!",
+    "previousBest": "Recorde anterior: {{score}}",
+    "best": "Melhor: {{score}}",
+    "continue": "Continuar",
+    "continueAd": "▶ Continuar",
+    "watchLongerAd": "Assistir a um anúncio mais longo",
+    "home": "← Início",
+    "paused": "Pausado",
+    "resume": "▶  Retomar",
+    "saveQuit": "Salvar e sair",
+    "quitWithoutSaving": "✕  Sair sem salvar",
+    "quitConfirmTitle": "Sair sem salvar?",
+    "quitConfirmBody": "Seu progresso não será salvo. Registre sua pontuação no ranking ou descarte-a.",
+    "logScore": "Registrar pontuação",
+    "discardScore": "Descartar pontuação",
+    "back": "← Voltar",
+    "condensing": "Condensando…",
+    "hud": {
+      "score": "PONTUAÇÃO",
+      "best": "MELHOR",
+      "next": "PRÓXIMO"
+    },
+    "tutorial": {
+      "move": "Deslize para mover",
+      "rotate": "Toque para girar",
+      "drop": "Deslize para baixo para soltar"
+    }
+  },
+  "howToPlay": {
+    "dropTitle": "Solte os dados",
+    "controls": {
+      "move": "Deslize para a esquerda/direita para mover",
+      "rotate": "Toque para girar",
+      "drop": "Deslize para baixo para soltar mais rápido"
+    },
+    "rules": {
+      "mergeTitle": "Combine valores iguais",
+      "mergeBody": "Dois ou mais dados encostados de mesmo valor se combinam em um dado do valor seguinte: 1+1→2, 2+2→3, e assim por diante.",
+      "sixesTitle": "Elimine os seis",
+      "sixesBody": "Combine dois ou mais seis para removê-los do tabuleiro e ganhar um grande bônus. A melhor forma de liberar espaço.",
+      "chainsTitle": "Crie correntes",
+      "chainsBody": "Uma combinação pode desencadear outras conforme os dados se assentam. Quanto mais longa a corrente, maior o multiplicador de pontos.",
+      "surviveTitle": "Sobreviva",
+      "surviveBody": "Pilhas sem apoio caem. A partida termina quando uma nova peça não cabe mais. Bata seu recorde e suba no ranking!"
+    },
+    "consent": "Ao continuar, você concorda com nossos <terms>Termos</terms> e nossa <privacy>Política de privacidade</privacy>."
+  },
+  "review": {
+    "title": "Curtindo o Dice Drop?",
+    "body": "Se você está se divertindo, uma avaliação significa muito e ajuda outras pessoas a descobrir o jogo.",
+    "rate": "Deixar uma avaliação",
+    "notNow": "Agora não",
+    "dontAsk": "Não perguntar de novo"
+  }
+}

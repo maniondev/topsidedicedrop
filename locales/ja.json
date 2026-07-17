@@ -1,0 +1,346 @@
+{
+  "common": {
+    "apply": "適用",
+    "cancel": "キャンセル",
+    "ok": "OK",
+    "reset": "リセット",
+    "gotIt": "OK",
+    "restore": "復元",
+    "restorePurchases": "購入を復元",
+    "redeemCode": "コードを利用"
+  },
+  "tabs": {
+    "play": "プレイ",
+    "stats": "統計",
+    "settings": "設定"
+  },
+  "settings": {
+    "title": "設定",
+    "sections": {
+      "premium": "プレミアム",
+      "sound": "サウンド",
+      "customize": "カスタマイズ",
+      "gameplay": "ゲームプレイ",
+      "about": "情報",
+      "stats": "統計"
+    },
+    "premium": {
+      "active": "プレミアム有効",
+      "removeAds": "すべての広告を削除",
+      "unlockCustomization": "カスタマイズをアンロック",
+      "unlockPremium": "プレミアムをアンロック"
+    },
+    "sound": {
+      "breakSilent": "サイレントモードを無視",
+      "breakSilentSub": "ストリーミング音楽が一時停止する場合があります",
+      "soundEffects": "効果音",
+      "soundtrack": "サウンドトラック"
+    },
+    "customize": {
+      "theme": "テーマ",
+      "soundtrack": "サウンドトラック",
+      "soundEffects": "効果音",
+      "animationPack": "アニメーションパック",
+      "diceStyle": "サイコロのスタイル",
+      "appIcon": "アプリアイコン"
+    },
+    "gameplay": {
+      "scorePopups": "スコアのポップアップ",
+      "performanceMode": "パフォーマンスモード",
+      "performanceModeSub": "古いデバイスでも滑らかに動作するよう、視覚効果と効果音をオフにします。"
+    },
+    "about": {
+      "rated": "評価済み。ありがとうございます！ ★",
+      "rate": "Topside: Dice Drop を評価する ★",
+      "moreGames": "Topside の他のゲーム",
+      "privacy": "プライバシーポリシー",
+      "terms": "利用規約",
+      "contact": "お問い合わせ",
+      "version": "バージョン"
+    },
+    "stats": {
+      "reset": "統計をリセット",
+      "resetConfirmTitle": "統計をリセットしますか？",
+      "resetConfirmBody": "ローカルの統計が完全に消去され、グローバルランキングからスコアが削除されます。この操作は元に戻せません。",
+      "resetDoneTitle": "統計をリセットしました",
+      "resetDoneBody": "統計が消去されました。"
+    },
+    "theme": {
+      "title": "テーマ",
+      "matched": "{{theme}} に合わせました",
+      "completeLook": "{{theme}} のスタイルを完成させる",
+      "matchedSub": "サウンド、サイコロ、エフェクトがすべて一致",
+      "completeSub": "サウンド、サイコロ、エフェクトを合わせる",
+      "apply": "適用"
+    },
+    "appIcon": {
+      "unsupported": "アイコンの切り替えはこのプラットフォームではまだ利用できません。"
+    },
+    "soundtrack": {
+      "composerLabel": "音楽制作:"
+    },
+    "language": {
+      "title": "言語"
+    }
+  },
+  "premium": {
+    "restoreTitle": "復元しました！",
+    "restoreBody": "購入を復元しました。",
+    "nothingTitle": "復元するものがありません",
+    "nothingBody": "以前の購入が見つかりませんでした。",
+    "restoreFailedTitle": "復元に失敗しました",
+    "restoreFailedBody": "問題が発生しました。",
+    "errorTitle": "エラー",
+    "noPackage": "パッケージが見つかりません。後でもう一度お試しください。",
+    "purchaseFailedTitle": "購入に失敗しました",
+    "redeemTitle": "コードを利用",
+    "redeemAndroidBody": "Play ストアアプリを開き、「お支払いと定期購入」＞「コードを利用」に進んでください。",
+    "redeemErrorBody": "利用画面を開けませんでした。App Store にサインインしていることを確認して、もう一度お試しください。",
+    "perkNoAds": "広告なし",
+    "perkFreeContinues": "無料コンティニュー",
+    "perkThemes": "すべてのテーマとサウンドパック",
+    "perkDiceAnims": "すべてのサイコロアニメーションとスタイル",
+    "allInTitle": "Topside: Dice Drop プレミアム",
+    "removeAdsTitle": "広告を削除",
+    "customizationTitle": "カスタマイズをアンロック",
+    "everythingUnlocked": "すべてアンロック済みです！",
+    "close": "閉じる",
+    "notNow": "後で",
+    "restorePurchase": "購入を復元",
+    "upgradePrice": "アップグレード — {{price}}",
+    "titlePrice": "{{title}} — {{price}}",
+    "orCustomization": "カスタマイズのみ — {{price}}",
+    "orRemoveAds": "広告削除のみ — {{price}}"
+  },
+  "difficulty": {
+    "easy": "かんたん",
+    "medium": "ふつう",
+    "hard": "むずかしい"
+  },
+  "themeNames": {
+    "dicedrop": "Dice Drop",
+    "dice": "クラシック",
+    "light": "ライト",
+    "dark": "ダーク",
+    "pastel": "パステル",
+    "grayscale": "グレースケール",
+    "ocean": "オーシャン",
+    "forest": "フォレスト",
+    "neon": "ネオン"
+  },
+  "diceStyleNames": {
+    "classic": "クラシック",
+    "sketch": "スケッチ",
+    "pixel": "8ビット",
+    "neon": "ネオン",
+    "raised": "立体",
+    "wooden": "ウッド",
+    "ocean": "シーグラス",
+    "pastel": "ゼリー",
+    "comic": "ポップアート"
+  },
+  "soundtrackNames": {
+    "classic": "Dice Drop",
+    "dicedrop": "ドリフト",
+    "forest": "フォレスト",
+    "neon": "ネオン",
+    "underwater": "オーシャン"
+  },
+  "animPackNames": {
+    "classic": "クラシック",
+    "extra": "エクストラ",
+    "minimal": "ミニマル",
+    "retro": "レトロ",
+    "electric": "エレクトリック",
+    "twist": "ツイスト",
+    "flip": "フリップ",
+    "shatter": "シャッター",
+    "glitch": "グリッチ"
+  },
+  "soundPackNames": {
+    "topside": "クラシック",
+    "splash": "スプラッシュ",
+    "dig": "ディグ",
+    "marimba": "マリンバ",
+    "bubbles": "バブル",
+    "snow": "スノー",
+    "fight": "ファイト",
+    "coins": "コイン",
+    "metal": "メタル",
+    "rubber": "ラバー"
+  },
+  "appIconNames": {
+    "default": "ブラウンスタック",
+    "AppIcon-Cream": "クリームスタック",
+    "AppIcon-Neon": "ネオンスタック",
+    "AppIcon-Blue": "ブルースタック",
+    "AppIcon-IconBrown": "ブラウンアイコン",
+    "AppIcon-IconCream": "クリームアイコン",
+    "AppIcon-IconNeon": "ネオンアイコン",
+    "AppIcon-IconBlue": "ブルーアイコン"
+  },
+  "home": {
+    "subtitle": "落として合体させるゲーム。",
+    "continue": "つづける",
+    "newGame": "新しいゲーム",
+    "play": "プレイ",
+    "howToPlay": "遊び方",
+    "soundOn": "サウンド オン",
+    "soundOff": "サウンド オフ",
+    "removeAds": "すべての広告を削除",
+    "unlockBanner": "サウンドパック、テーマなどをアンロック",
+    "stats": {
+      "bestUnassisted": "ベスト（ノーヘルプ）",
+      "bestOverall": "ベスト（総合）",
+      "lastRun": "前回のゲーム",
+      "dayStreak": "連続日数"
+    },
+    "newGameConfirm": {
+      "title": "新しいゲームを始めますか？",
+      "body": "現在保存されているゲームは破棄されます。",
+      "continueSaved": "保存したゲームをつづける",
+      "startNew": "新しいゲームを始める",
+      "back": "← 戻る"
+    }
+  },
+  "leaderboard": {
+    "yourStats": "あなたの統計",
+    "leaderboard": "ランキング",
+    "newName": "名前を変更",
+    "renameModal": {
+      "title": "新しい名前",
+      "current": "現在",
+      "shuffle": "シャッフル",
+      "confirm": "確定",
+      "errorTitle": "名前を変更できませんでした",
+      "errorBody": "もう一度お試しください。"
+    },
+    "youSuffix": "（あなた）",
+    "unassisted": "ノーヘルプ",
+    "runsCount_one": "{{count}}ゲーム",
+    "runsCount_other": "{{count}}ゲーム",
+    "loadError": "ランキングを読み込めませんでした。",
+    "noRunsYet": "まだゲームがありません。",
+    "noScoresNetwork": "ネットワークにまだスコアがありません。",
+    "noScoresGlobal": "まだスコアがありません — 最初のプレイヤーになろう！",
+    "viewFollowing": "フォロー中を見る",
+    "findPlayers": "プレイヤーを探す",
+    "top100": "トップ100 · {{mode}}",
+    "select": "選択",
+    "selected": "選択中",
+    "sort": {
+      "score": "スコア",
+      "recent": "最近"
+    },
+    "stats": {
+      "score": "スコア",
+      "rank": "順位",
+      "betterThan": "上回る割合",
+      "bestScore": "ベストスコア",
+      "lifetimeScore": "累計スコア",
+      "bestRun": "ベストゲーム",
+      "thisWeek": "今週",
+      "thisMonth": "今月",
+      "totalRuns": "総ゲーム数",
+      "lifetime": "累計",
+      "average": "平均",
+      "last100": "直近100ゲーム"
+    },
+    "filters": {
+      "difficulty": "難易度",
+      "type": "種類",
+      "period": "期間",
+      "scope": "範囲",
+      "all": "すべて",
+      "unassistedRuns": "ノーヘルプのゲーム",
+      "allRuns": "すべてのゲーム",
+      "allTime": "全期間",
+      "thisMonth": "今月",
+      "thisWeek": "今週",
+      "today": "今日",
+      "global": "グローバル",
+      "following": "フォロー中"
+    },
+    "info": {
+      "title": "ランキングについて",
+      "unassistedTerm": "ノーヘルプのゲーム",
+      "unassistedDesc": " — コンティニューを使う前に完了したゲームのスコアです。",
+      "allRunsTerm": "すべてのゲーム",
+      "allRunsDesc": " — コンティニューでゲームを延長したものを含む、すべてのゲームです。",
+      "scoringTerm": "スコア計算",
+      "scoringDesc": " — サイコロを合体させると得点でき、連鎖反応には倍率がかかります。6を消すとボーナス、盤面全体を消すとさらに大きなボーナスが得られます。",
+      "anonymousTerm": "匿名",
+      "anonymousDesc": " — 表示名はランダムに生成されます。ランキングでは個人情報の収集・使用は行いません。",
+      "gotIt": "OK"
+    }
+  },
+  "findPlayer": {
+    "searchPlaceholder": "名前で検索…",
+    "following": "フォロー中",
+    "loadError": "フォロー中リストを読み込めませんでした。",
+    "retry": "再試行",
+    "noneFollowing": "まだ誰もフォローしていません。",
+    "unfollow": "フォロー解除",
+    "followingBtn": "フォロー中",
+    "follow": "フォロー",
+    "results": "検索結果",
+    "noPlayers": "プレイヤーが見つかりません。",
+    "best": "ベスト {{score}}"
+  },
+  "game": {
+    "over": "ゲームオーバー",
+    "newBest": "自己ベスト更新！",
+    "previousBest": "前回のベスト: {{score}}",
+    "best": "ベスト: {{score}}",
+    "continue": "つづける",
+    "continueAd": "▶ つづける",
+    "watchLongerAd": "長い広告を見る",
+    "home": "← ホーム",
+    "paused": "一時停止",
+    "resume": "▶  再開",
+    "saveQuit": "保存して終了",
+    "quitWithoutSaving": "✕  保存せずに終了",
+    "quitConfirmTitle": "保存せずに終了しますか？",
+    "quitConfirmBody": "進行状況は保存されません。スコアをランキングに記録するか、破棄してください。",
+    "logScore": "スコアを記録",
+    "discardScore": "スコアを破棄",
+    "back": "← 戻る",
+    "condensing": "圧縮中…",
+    "hud": {
+      "score": "スコア",
+      "best": "ベスト",
+      "next": "次"
+    },
+    "tutorial": {
+      "move": "スワイプで移動",
+      "rotate": "タップで回転",
+      "drop": "下にスワイプで落下"
+    }
+  },
+  "howToPlay": {
+    "dropTitle": "サイコロを落とす",
+    "controls": {
+      "move": "左右にスワイプで移動",
+      "rotate": "タップで回転",
+      "drop": "下にスワイプで速く落下"
+    },
+    "rules": {
+      "mergeTitle": "同じ数字を合体",
+      "mergeBody": "同じ数字のサイコロが2つ以上隣り合うと、1つ上の数字のサイコロに合体します：1+1→2、2+2→3、と続きます。",
+      "sixesTitle": "6を消す",
+      "sixesBody": "6を2つ以上合体させて盤面から消すと、大きなボーナスが得られます。スペースを空ける最善の方法です。",
+      "chainsTitle": "連鎖を作る",
+      "chainsBody": "サイコロが落ち着く際に、合体がさらなる合体を引き起こすことがあります。連鎖が長いほど、スコア倍率が大きくなります。",
+      "surviveTitle": "生き残る",
+      "surviveBody": "支えのない山は崩れます。新しいピースが入らなくなるとゲーム終了です。自己ベストを更新してランキングを駆け上がろう！"
+    },
+    "consent": "続行すると、<terms>利用規約</terms>と<privacy>プライバシーポリシー</privacy>に同意したものとみなされます。"
+  },
+  "review": {
+    "title": "Dice Drop を楽しんでいますか？",
+    "body": "楽しんでいただけているなら、評価はとても励みになり、他の人がゲームを見つける助けにもなります。",
+    "rate": "評価する",
+    "notNow": "後で",
+    "dontAsk": "今後表示しない"
+  }
+}

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeColors } from '@/constants/theme';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function ReviewPromptModal({ visible, onRate, onLater, onDontAsk }: Props) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -26,23 +28,23 @@ export default function ReviewPromptModal({ visible, onRate, onLater, onDontAsk 
             </View>
           </View>
 
-          <Text style={styles.title}>Enjoying Dice Drop?</Text>
+          <Text style={styles.title}>{t('review.title')}</Text>
           <Text style={styles.body}>
-            If you're having fun, a rating means a lot and helps others find the game.
+            {t('review.body')}
           </Text>
 
           <View style={styles.buttons}>
             <TouchableOpacity style={styles.rateBtn} onPress={onRate} activeOpacity={0.85}>
               <Ionicons name="star" size={16} color={colors.accentText} />
-              <Text style={styles.rateBtnText}>Leave a Rating</Text>
+              <Text style={styles.rateBtnText}>{t('review.rate')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.laterBtn} onPress={onLater} activeOpacity={0.7}>
-              <Text style={styles.laterBtnText}>Not Now</Text>
+              <Text style={styles.laterBtnText}>{t('review.notNow')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.dontAskBtn} onPress={onDontAsk} activeOpacity={0.7}>
-              <Text style={styles.dontAskBtnText}>Don't Ask Again</Text>
+              <Text style={styles.dontAskBtnText}>{t('review.dontAsk')}</Text>
             </TouchableOpacity>
           </View>
 

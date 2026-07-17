@@ -1,9 +1,10 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { View, Text, ScrollView, Image } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
 import { makeSettingsStyles, PickerRow, SettingsSubHeader } from '@/components/settings/SettingsShared';
-import { APP_ICON_IDS, APP_ICON_META, APP_ICON_SUPPORTED, AppIconId, getAppIcon, setAppIcon } from '@/lib/appIcon';
+import { APP_ICON_IDS, APP_ICON_SUPPORTED, AppIconId, getAppIcon, setAppIcon } from '@/lib/appIcon';
 
 const PREVIEW_SOURCES: Record<AppIconId, any> = {
   'default':            require('@/assets/images/app-icons/default.png'),
@@ -17,6 +18,7 @@ const PREVIEW_SOURCES: Record<AppIconId, any> = {
 };
 
 export default function AppIconScreen() {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   const [current, setCurrent] = useState<AppIconId>('default');
@@ -29,12 +31,12 @@ export default function AppIconScreen() {
   if (!APP_ICON_SUPPORTED) {
     return (
       <View style={styles.safe}>
-        <SettingsSubHeader title="App Icon" colors={colors} />
+        <SettingsSubHeader title={t('settings.customize.appIcon')} colors={colors} />
         <ScrollView contentContainerStyle={styles.content}>
           <View style={[styles.section, { marginBottom: 24 }]}>
             <View style={[styles.sectionCard, { padding: 16 }]}>
               <Text style={{ color: colors.textSecondary, fontSize: 14, lineHeight: 20 }}>
-                App icon switching isn't available on this platform yet.
+                {t('settings.appIcon.unsupported')}
               </Text>
             </View>
           </View>
@@ -56,13 +58,13 @@ export default function AppIconScreen() {
 
   return (
     <View style={styles.safe}>
-      <SettingsSubHeader title="App Icon" colors={colors} />
+      <SettingsSubHeader title={t('settings.customize.appIcon')} colors={colors} />
       <ScrollView contentContainerStyle={[styles.content, { gap: 16 }]}>
         <View style={styles.sectionCard}>
           {firstGroup.map((id, i) => (
             <PickerRow
               key={id}
-              label={APP_ICON_META[id].label}
+              label={t(`appIconNames.${id}`)}
               selected={current === id}
               locked={false}
               onSelect={() => handleSelect(id)}
@@ -77,7 +79,7 @@ export default function AppIconScreen() {
           {secondGroup.map((id, i) => (
             <PickerRow
               key={id}
-              label={APP_ICON_META[id].label}
+              label={t(`appIconNames.${id}`)}
               selected={current === id}
               locked={false}
               onSelect={() => handleSelect(id)}

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, ScrollView } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useDiceStyle, DiceStyleMeta, DICE_STYLE_IDS } from '@/contexts/DiceStyleContext';
@@ -7,6 +8,7 @@ import { makeSettingsStyles, PickerRow, DiceStylePreview, SettingsSubHeader } fr
 import PremiumModal from '@/components/PremiumModal';
 
 export default function DiceStyleScreen() {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   const { hasCustomization } = usePremium();
@@ -15,7 +17,7 @@ export default function DiceStyleScreen() {
 
   return (
     <View style={[styles.safe]}>
-      <SettingsSubHeader title="Dice Style" colors={colors} />
+      <SettingsSubHeader title={t('settings.customize.diceStyle')} colors={colors} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.section, { marginBottom: 24 }]}>
           <View style={styles.sectionCard}>
@@ -25,7 +27,7 @@ export default function DiceStyleScreen() {
               return (
                 <PickerRow
                   key={id}
-                  label={meta.label}
+                  label={t(`diceStyleNames.${id}`)}
                   selected={diceStyle === id}
                   locked={locked}
                   onSelect={() => {

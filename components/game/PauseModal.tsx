@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 
 const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLocalizedFont } from '@/lib/fonts';
 import { useSound } from '@/contexts/SoundContext';
 import { useMusic } from '@/contexts/MusicContext';
 
@@ -17,6 +19,8 @@ interface Props {
 }
 
 export default function PauseModal({ visible, onResume, onContinueLater, onQuitAndLog, onQuitDiscard, hasProgress = true }: Props) {
+  const { t } = useTranslation();
+  const font = useLocalizedFont();
   const { colors } = useTheme();
   const { soundEnabled, setSoundEnabled } = useSound();
   const { musicEnabled, setMusicEnabled, devMusicIncluded } = useMusic();
@@ -33,32 +37,32 @@ export default function PauseModal({ visible, onResume, onContinueLater, onQuitA
       <Modal visible={visible} transparent animationType="fade" onRequestClose={handleRequestClose}>
         <View style={styles.overlay}>
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.title, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
-              Quit Without Saving?
+            <Text style={[styles.title, { color: colors.text, fontFamily: font('Rubik_700Bold') }]}>
+              {t('game.quitConfirmTitle')}
             </Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-              Your progress won't be saved. Log your score to the leaderboard or discard it.
+              {t('game.quitConfirmBody')}
             </Text>
 
             <TouchableOpacity
               style={[styles.btn, { backgroundColor: colors.accent }]}
               onPress={onQuitAndLog}
             >
-              <Text style={[styles.btnText, { color: colors.accentText }]}>Log Score</Text>
+              <Text style={[styles.btnText, { color: colors.accentText }]}>{t('game.logScore')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.outlineBtn, { borderColor: colors.accent }]}
               onPress={onQuitDiscard}
             >
-              <Text style={[styles.outlineText, { color: colors.accent }]}>Discard Score</Text>
+              <Text style={[styles.outlineText, { color: colors.accent }]}>{t('game.discardScore')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.outlineBtn, { borderColor: colors.border }]}
               onPress={() => setConfirming(false)}
             >
-              <Text style={[styles.outlineText, { color: colors.textSecondary }]}>← Back</Text>
+              <Text style={[styles.outlineText, { color: colors.textSecondary }]}>{t('game.back')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -97,26 +101,26 @@ export default function PauseModal({ visible, onResume, onContinueLater, onQuitA
             )}
           </View>
 
-          <Text style={[styles.title, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
-            Paused
+          <Text style={[styles.title, { color: colors.text, fontFamily: font('Rubik_700Bold') }]}>
+            {t('game.paused')}
           </Text>
 
           <TouchableOpacity style={[styles.btn, { backgroundColor: colors.accent }]} onPress={onResume}>
-            <Text style={[styles.btnText, { color: colors.accentText }]}>▶  Resume</Text>
+            <Text style={[styles.btnText, { color: colors.accentText }]}>{t('game.resume')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.outlineBtn, { borderColor: colors.accent }]}
             onPress={onContinueLater}
           >
-            <Text style={[styles.outlineText, { color: colors.accent }]}>Save & Quit</Text>
+            <Text style={[styles.outlineText, { color: colors.accent }]}>{t('game.saveQuit')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.outlineBtn, { borderColor: colors.border }]}
             onPress={() => hasProgress ? setConfirming(true) : onQuitDiscard()}
           >
-            <Text style={[styles.outlineText, { color: colors.textSecondary }]}>✕  Quit Without Saving</Text>
+            <Text style={[styles.outlineText, { color: colors.textSecondary }]}>{t('game.quitWithoutSaving')}</Text>
           </TouchableOpacity>
         </View>
       </View>

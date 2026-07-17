@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View, Platform, Dimensions } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLocalizedFont } from '@/lib/fonts';
 
 const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 
 const HINTS = [
-  { icon: '← →', label: 'Swipe to move' },
-  { icon: '↻',   label: 'Tap to rotate' },
-  { icon: '↓',   label: 'Swipe down to drop' },
+  { icon: '← →', key: 'game.tutorial.move' },
+  { icon: '↻',   key: 'game.tutorial.rotate' },
+  { icon: '↓',   key: 'game.tutorial.drop' },
 ];
 
 interface Props {
@@ -15,6 +17,8 @@ interface Props {
 }
 
 export default function TutorialOverlay({ onDismiss }: Props) {
+  const { t } = useTranslation();
+  const font = useLocalizedFont();
   const { colors } = useTheme();
   const opacity = useRef(new Animated.Value(0)).current;
 
@@ -33,11 +37,11 @@ export default function TutorialOverlay({ onDismiss }: Props) {
           {HINTS.map((h, i) => (
             <View key={i} style={[styles.row, i < HINTS.length - 1 && { borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth }]}>
               <Text style={[styles.icon, { color: colors.accent }]}>{h.icon}</Text>
-              <Text style={[styles.label, { color: colors.text }]}>{h.label}</Text>
+              <Text style={[styles.label, { color: colors.text }]}>{t(h.key)}</Text>
             </View>
           ))}
           <TouchableOpacity style={[styles.btn, { backgroundColor: colors.accent }]} onPress={dismiss} activeOpacity={0.8}>
-            <Text style={[styles.btnText, { color: colors.accentText }]}>Got it</Text>
+            <Text style={[styles.btnText, { color: colors.accentText, fontFamily: font('Rubik_700Bold') }]}>{t('common.gotIt')}</Text>
           </TouchableOpacity>
         </View>
       </Animated.View>

@@ -1,9 +1,10 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { loadStoredLanguage } from '@/lib/i18n';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, Platform, AppState } from 'react-native';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFonts, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
 import { Fredoka_400Regular, Fredoka_600SemiBold, Fredoka_700Bold } from '@expo-google-fonts/fredoka';
 import { Rubik_700Bold } from '@expo-google-fonts/rubik';
@@ -47,9 +48,17 @@ function AppShell() {
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({ PlayfairDisplay_700Bold, Fredoka_400Regular, Fredoka_600SemiBold, Fredoka_700Bold, Rubik_700Bold });
 
+  // Apply any saved manual language choice before first render so the UI never
+  // flashes the device language first. Falls through to device language if
+  // nothing is stored (or on error).
+  const [langLoaded, setLangLoaded] = useState(false);
   useEffect(() => {
-    if (fontsLoaded || fontError) SplashScreen.hideAsync();
-  }, [fontsLoaded, fontError]);
+    loadStoredLanguage().finally(() => setLangLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    if ((fontsLoaded || fontError) && langLoaded) SplashScreen.hideAsync();
+  }, [fontsLoaded, fontError, langLoaded]);
 
   useEffect(() => {
     let initialActive = true; // skip the first 'active' event which fires on cold launch
@@ -125,7 +134,7 @@ export default function RootLayout() {
     return () => { if (preloadTimer) clearTimeout(preloadTimer); };
   }, []);
 
-  if (!fontsLoaded && !fontError) return null;
+  if ((!fontsLoaded && !fontError) || !langLoaded) return null;
 
   return (
     <GestureHandlerRootView style={styles.root}>

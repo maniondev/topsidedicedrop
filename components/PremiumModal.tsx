@@ -1,6 +1,8 @@
 import React, { useRef, useEffect } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLocalizedFont } from '@/lib/fonts';
 import { usePremium, PurchaseTarget } from '@/contexts/PremiumContext';
 
 const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
@@ -15,12 +17,14 @@ interface Props {
   intent?: 'default' | 'customization';
 }
 
-const ALL_IN_PERKS = ['No ads', 'Free continues', 'All themes & sound packs', 'All dice animations & styles'];
-const ALL_IN_PERKS_CUSTOMIZATION = ['All themes & sound packs', 'All dice animations & styles', 'No ads', 'Free continues'];
-const REMOVE_ADS_PERKS = ['No ads', 'Free continues'];
-const CUSTOMIZATION_PERKS = ['All themes & sound packs', 'All dice animations & styles'];
+const ALL_IN_PERKS = ['premium.perkNoAds', 'premium.perkFreeContinues', 'premium.perkThemes', 'premium.perkDiceAnims'];
+const ALL_IN_PERKS_CUSTOMIZATION = ['premium.perkThemes', 'premium.perkDiceAnims', 'premium.perkNoAds', 'premium.perkFreeContinues'];
+const REMOVE_ADS_PERKS = ['premium.perkNoAds', 'premium.perkFreeContinues'];
+const CUSTOMIZATION_PERKS = ['premium.perkThemes', 'premium.perkDiceAnims'];
 
 export default function PremiumModal({ visible, onClose, intent = 'default' }: Props) {
+  const { t } = useTranslation();
+  const font = useLocalizedFont();
   const { colors } = useTheme();
   const { hasCustomization, hasNoAds, upgrade, restorePurchases, prices, ensureLocalizedPrices } = usePremium();
   const pendingTargetRef = useRef<PurchaseTarget | null>(null);
@@ -45,9 +49,9 @@ export default function PremiumModal({ visible, onClose, intent = 'default' }: P
   const custIntent = intent === 'customization' && offer === 'allIn';
 
   const config: Record<Exclude<typeof offer, 'complete'>, { title: string; perks: string[]; price: string; target: PurchaseTarget }> = {
-    allIn: { title: 'Topside: Dice Drop Premium', perks: custIntent ? ALL_IN_PERKS_CUSTOMIZATION : ALL_IN_PERKS, price: prices.allIn, target: 'allIn' },
-    removeAds: { title: 'Remove Ads', perks: REMOVE_ADS_PERKS, price: prices.removeAds, target: 'removeAds' },
-    customization: { title: 'Unlock Customization', perks: CUSTOMIZATION_PERKS, price: prices.customization, target: 'customization' },
+    allIn: { title: t('premium.allInTitle'), perks: custIntent ? ALL_IN_PERKS_CUSTOMIZATION : ALL_IN_PERKS, price: prices.allIn, target: 'allIn' },
+    removeAds: { title: t('premium.removeAdsTitle'), perks: REMOVE_ADS_PERKS, price: prices.removeAds, target: 'removeAds' },
+    customization: { title: t('premium.customizationTitle'), perks: CUSTOMIZATION_PERKS, price: prices.customization, target: 'customization' },
   };
 
   if (offer === 'complete') {
@@ -55,11 +59,11 @@ export default function PremiumModal({ visible, onClose, intent = 'default' }: P
       <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
         <View style={styles.overlay}>
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <Text style={[styles.title, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
-              You have everything unlocked!
+            <Text style={[styles.title, { color: colors.text, fontFamily: font('Rubik_700Bold') }]}>
+              {t('premium.everythingUnlocked')}
             </Text>
             <TouchableOpacity onPress={onClose}>
-              <Text style={[styles.close, { color: colors.textMuted }]}>Close</Text>
+              <Text style={[styles.close, { color: colors.textMuted }]}>{t('premium.close')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -95,10 +99,10 @@ export default function PremiumModal({ visible, onClose, intent = 'default' }: P
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} onDismiss={handleDismiss}>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.title, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>{title}</Text>
+          <Text style={[styles.title, { color: colors.text, fontFamily: font('Rubik_700Bold') }]}>{title}</Text>
           <View style={styles.perks}>
             {perks.map(p => (
-              <Text key={p} style={[styles.perk, { color: colors.textSecondary }]}>• {p}</Text>
+              <Text key={p} style={[styles.perk, { color: colors.textSecondary }]}>• {t(p)}</Text>
             ))}
           </View>
           <TouchableOpacity
@@ -106,7 +110,7 @@ export default function PremiumModal({ visible, onClose, intent = 'default' }: P
             onPress={() => startPurchase(target)}
           >
             <Text style={[styles.btnText, { color: colors.accentText }]}>
-              {offer === 'allIn' ? `Upgrade — ${price}` : `${title} — ${price}`}
+              {offer === 'allIn' ? t('premium.upgradePrice', { price }) : t('premium.titlePrice', { title, price })}
             </Text>
           </TouchableOpacity>
           {offer === 'allIn' && (
@@ -116,15 +120,15 @@ export default function PremiumModal({ visible, onClose, intent = 'default' }: P
               style={styles.secondaryOfferBtn}
             >
               <Text style={[styles.secondaryOffer, { color: colors.textSecondary }]} numberOfLines={1} adjustsFontSizeToFit>
-                {custIntent ? `Or just Customization — ${prices.customization}` : `Or just Remove Ads — ${prices.removeAds}`}
+                {custIntent ? t('premium.orCustomization', { price: prices.customization }) : t('premium.orRemoveAds', { price: prices.removeAds })}
               </Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity onPress={restorePurchases}>
-            <Text style={[styles.restore, { color: colors.textMuted }]}>Restore Purchase</Text>
+            <Text style={[styles.restore, { color: colors.textMuted }]}>{t('premium.restorePurchase')}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onClose}>
-            <Text style={[styles.close, { color: colors.textMuted }]}>Not now</Text>
+            <Text style={[styles.close, { color: colors.textMuted }]}>{t('premium.notNow')}</Text>
           </TouchableOpacity>
         </View>
       </View>

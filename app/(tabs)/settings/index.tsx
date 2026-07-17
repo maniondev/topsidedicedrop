@@ -1,14 +1,15 @@
 import React, { useMemo, useState, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Pressable, Alert, Linking } from 'react-native';
-import { useFocusEffect, router } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { useFocusEffect, router, type Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useTheme } from '@/contexts/ThemeContext';
-import { useSound, SoundPackMeta } from '@/contexts/SoundContext';
-import { useMusic, SoundtrackMeta } from '@/contexts/MusicContext';
-import { useAnimation, AnimPackMeta } from '@/contexts/AnimationContext';
-import { useDiceStyle, DiceStyleMeta } from '@/contexts/DiceStyleContext';
+import { useSound } from '@/contexts/SoundContext';
+import { useMusic } from '@/contexts/MusicContext';
+import { useAnimation } from '@/contexts/AnimationContext';
+import { useDiceStyle } from '@/contexts/DiceStyleContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useStats } from '@/contexts/StatsContext';
 import { CONTROLS_SEEN_KEY, saveGame } from '@/lib/storage';
@@ -16,13 +17,14 @@ import { buildDemoSave } from '@/lib/demoBoard';
 import { useDifficulty } from '@/contexts/DifficultyContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PremiumModal from '@/components/PremiumModal';
-import { ThemeMeta } from '@/constants/theme';
+import { LANGUAGE_NAMES, type SupportedLanguage } from '@/lib/i18n';
 import { openNativeReview, getHasRated } from '@/lib/reviewPrompt';
 import { Section, RowItem, ToggleRow, makeSettingsStyles } from '@/components/settings/SettingsShared';
-import { getAppIcon, getCurrentAppIconLabel, APP_ICON_SUPPORTED } from '@/lib/appIcon';
-import { COMPOSER_CREDIT_LABEL, openComposerIG } from '@/lib/composer';
+import { getAppIcon, APP_ICON_SUPPORTED, type AppIconId } from '@/lib/appIcon';
+import { COMPOSER_NAME, openComposerIG } from '@/lib/composer';
 
 export default function SettingsScreen() {
+  const { t, i18n } = useTranslation();
   const { top } = useSafeAreaInsets();
   const { colors, themeId } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
@@ -37,12 +39,12 @@ export default function SettingsScreen() {
   const [devControlsRevealed, setDevControlsRevealed] = useState(false);
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
   const [hasRated, setHasRatedState] = useState(false);
-  const [, forceIconLabelRefresh] = useState(0);
+  const [currentIcon, setCurrentIcon] = useState<AppIconId>('default');
   const scrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(useCallback(() => {
     getHasRated().then(setHasRatedState);
-    getAppIcon().then(() => forceIconLabelRefresh(n => n + 1));
+    getAppIcon().then(setCurrentIcon);
   }, []));
 
   const handleUpgrade = () => setPremiumModalOpen(true);
@@ -92,13 +94,13 @@ export default function SettingsScreen() {
 
   const confirmReset = () => {
     Alert.alert(
-      'Reset Stats?',
-      'This permanently erases your local stats and removes your scores from the global leaderboard. This cannot be undone.',
+      t('settings.stats.resetConfirmTitle'),
+      t('settings.stats.resetConfirmBody'),
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Reset', style: 'destructive', onPress: async () => {
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.reset'), style: 'destructive', onPress: async () => {
           await resetStats();
-          Alert.alert('Stats Reset', 'Your stats have been cleared.');
+          Alert.alert(t('settings.stats.resetDoneTitle'), t('settings.stats.resetDoneBody'));
         }},
       ],
     );
@@ -109,15 +111,15 @@ export default function SettingsScreen() {
       <ScrollView ref={scrollRef} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
         <Pressable onPressIn={handleTitlePressIn} onPressOut={handleTitlePressOut}>
-          <Text style={styles.screenTitle}>Settings</Text>
+          <Text style={styles.screenTitle}>{t('settings.title')}</Text>
         </Pressable>
 
         {/* Premium */}
-        <Section label="Premium" styles={styles}>
+        <Section label={t('settings.sections.premium')} styles={styles}>
           {isFullyUnlocked ? (
             <View style={styles.premiumActive}>
               <Ionicons name="star" size={20} color={colors.premiumGold} />
-              <Text style={[styles.premiumTitle, { color: colors.premiumGold }]}>Premium Active</Text>
+              <Text style={[styles.premiumTitle, { color: colors.premiumGold }]}>{t('settings.premium.active')}</Text>
             </View>
           ) : (
             <TouchableOpacity
@@ -127,15 +129,15 @@ export default function SettingsScreen() {
             >
               <Ionicons name="star" size={16} color={colors.accentText} />
               <Text style={[styles.upgradeBtnText, { color: colors.accentText }]}>
-                {hasCustomization ? 'Remove All Ads' : hasNoAds ? 'Unlock Customization' : 'Unlock Premium'}
+                {hasCustomization ? t('settings.premium.removeAds') : hasNoAds ? t('settings.premium.unlockCustomization') : t('settings.premium.unlockPremium')}
               </Text>
             </TouchableOpacity>
           )}
           {!isFullyUnlocked && (
-            <RowItem label="Restore Purchases" onPress={restorePurchases} colors={colors} styles={styles} />
+            <RowItem label={t('common.restorePurchases')} onPress={restorePurchases} colors={colors} styles={styles} />
           )}
           {!hasCustomization && (
-            <RowItem label="Redeem Code" onPress={redeemCode} colors={colors} styles={styles} />
+            <RowItem label={t('common.redeemCode')} onPress={redeemCode} colors={colors} styles={styles} />
           )}
           {__DEV__ && devControlsRevealed && (
             <RowItem
@@ -196,28 +198,28 @@ export default function SettingsScreen() {
         </Section>
 
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Sound</Text>
+          <Text style={styles.sectionLabel}>{t('settings.sections.sound')}</Text>
           <View style={styles.sectionCard}>
             {/* Always visible — the audio-session category governs the
                 soundtrack too, not just SFX, so hiding it behind the Sound
                 Effects toggle stranded music-only users on the wrong mode. */}
             <ToggleRow
-              label="Break Through Silent Mode"
-              sublabel="May pause streaming music"
+              label={t('settings.sound.breakSilent')}
+              sublabel={t('settings.sound.breakSilentSub')}
               value={soundMode === 'playback'}
               onValueChange={v => setSoundMode(v ? 'playback' : 'ambient')}
               colors={colors}
               styles={styles}
             />
             <ToggleRow
-              label="Sound Effects"
+              label={t('settings.sound.soundEffects')}
               value={soundEnabled}
               onValueChange={setSoundEnabled}
               colors={colors}
               styles={styles}
             />
             <ToggleRow
-              label="Soundtrack"
+              label={t('settings.sound.soundtrack')}
               value={musicEnabled}
               onValueChange={setMusicEnabled}
               colors={colors}
@@ -227,29 +229,32 @@ export default function SettingsScreen() {
         </View>
 
         {/* Customize */}
-        <Section label="Customize" styles={styles}>
-          <RowItem label="Theme" value={ThemeMeta[themeId].label} onPress={() => router.push('/settings/theme')} colors={colors} styles={styles} />
-          <RowItem label="Soundtrack" value={SoundtrackMeta[soundtrackId].label} onPress={() => router.push('/settings/soundtrack')} colors={colors} styles={styles} />
-          <RowItem label="Sound Effects" value={SoundPackMeta[soundPack].label} onPress={() => router.push('/settings/sound-pack')} colors={colors} styles={styles} />
-          <RowItem label="Animation Pack" value={AnimPackMeta[animPack].label} onPress={() => router.push('/settings/animation-pack')} colors={colors} styles={styles} />
-          <RowItem label="Dice Style" value={DiceStyleMeta[diceStyle].label} onPress={() => router.push('/settings/dice-style')} colors={colors} styles={styles} />
+        <Section label={t('settings.sections.customize')} styles={styles}>
+          <RowItem label={t('settings.customize.theme')} value={t(`themeNames.${themeId}`)} onPress={() => router.push('/settings/theme')} colors={colors} styles={styles} />
+          <RowItem label={t('settings.customize.soundtrack')} value={t(`soundtrackNames.${soundtrackId}`)} onPress={() => router.push('/settings/soundtrack')} colors={colors} styles={styles} />
+          <RowItem label={t('settings.customize.soundEffects')} value={t(`soundPackNames.${soundPack}`)} onPress={() => router.push('/settings/sound-pack')} colors={colors} styles={styles} />
+          <RowItem label={t('settings.customize.animationPack')} value={t(`animPackNames.${animPack}`)} onPress={() => router.push('/settings/animation-pack')} colors={colors} styles={styles} />
+          <RowItem label={t('settings.customize.diceStyle')} value={t(`diceStyleNames.${diceStyle}`)} onPress={() => router.push('/settings/dice-style')} colors={colors} styles={styles} />
           {APP_ICON_SUPPORTED && (
-            <RowItem label="App Icon" value={getCurrentAppIconLabel()} onPress={() => router.push('/settings/app-icon')} colors={colors} styles={styles} />
+            <RowItem label={t('settings.customize.appIcon')} value={t(`appIconNames.${currentIcon}`)} onPress={() => router.push('/settings/app-icon')} colors={colors} styles={styles} />
           )}
+          {/* Language route isn't in the generated typed-routes map until the
+              dev server regenerates it; the cast bridges tsc until then. */}
+          <RowItem label={t('settings.language.title')} value={LANGUAGE_NAMES[i18n.language as SupportedLanguage] ?? i18n.language} onPress={() => router.push('/settings/language' as Href)} colors={colors} styles={styles} />
         </Section>
 
         {/* Gameplay toggles */}
-        <Section label="Gameplay" styles={styles}>
+        <Section label={t('settings.sections.gameplay')} styles={styles}>
           <ToggleRow
-            label="Score Popups"
+            label={t('settings.gameplay.scorePopups')}
             value={showChainPopups}
             onValueChange={setShowChainPopups}
             colors={colors}
             styles={styles}
           />
           <ToggleRow
-            label="Performance Mode"
-            sublabel="Turns off visual & sound effects for smoother gameplay on older devices."
+            label={t('settings.gameplay.performanceMode')}
+            sublabel={t('settings.gameplay.performanceModeSub')}
             value={performanceMode}
             onValueChange={v => {
               setPerformanceMode(v);
@@ -261,23 +266,23 @@ export default function SettingsScreen() {
         </Section>
 
         {/* About */}
-        <Section label="About" styles={styles}>
+        <Section label={t('settings.sections.about')} styles={styles}>
           {hasRated ? (
-            <RowItem label="Rated — thank you! ★" colors={colors} styles={styles} />
+            <RowItem label={t('settings.about.rated')} colors={colors} styles={styles} />
           ) : (
-            <RowItem label="Rate Topside: Dice Drop ★" colors={colors} styles={styles} onPress={openNativeReview} />
+            <RowItem label={t('settings.about.rate')} colors={colors} styles={styles} onPress={openNativeReview} />
           )}
-          <RowItem label="More Games by Topside" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games')} />
-          <RowItem label={COMPOSER_CREDIT_LABEL} colors={colors} styles={styles} onPress={openComposerIG} />
-          <RowItem label="Privacy Policy" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/dicedrop/privacy')} />
-          <RowItem label="Terms of Service" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/dicedrop/tos')} />
-          <RowItem label="Contact" colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/contact')} />
-          <RowItem label="Version" value={Constants.expoConfig?.version ?? '—'} colors={colors} styles={styles} />
+          <RowItem label={t('settings.about.moreGames')} colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games')} />
+          <RowItem label={`${t('settings.soundtrack.composerLabel')} ${COMPOSER_NAME}`} colors={colors} styles={styles} onPress={openComposerIG} />
+          <RowItem label={t('settings.about.privacy')} colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/dicedrop/privacy')} />
+          <RowItem label={t('settings.about.terms')} colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/dicedrop/tos')} />
+          <RowItem label={t('settings.about.contact')} colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/contact')} />
+          <RowItem label={t('settings.about.version')} value={Constants.expoConfig?.version ?? '—'} colors={colors} styles={styles} />
         </Section>
 
         {/* Stats */}
-        <Section label="Stats" styles={styles}>
-          <RowItem label="Reset Stats" onPress={confirmReset} danger colors={colors} styles={styles} />
+        <Section label={t('settings.sections.stats')} styles={styles}>
+          <RowItem label={t('settings.stats.reset')} onPress={confirmReset} danger colors={colors} styles={styles} />
         </Section>
 
         <View style={{ height: 8 }} />

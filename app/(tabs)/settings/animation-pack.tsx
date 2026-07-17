@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { View, ScrollView } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useAnimation, AnimPackMeta, ANIM_PACK_IDS, AnimPackId } from '@/contexts/AnimationContext';
@@ -7,6 +8,7 @@ import { makeSettingsStyles, PickerRow, AnimatedDie, SettingsSubHeader } from '@
 import PremiumModal from '@/components/PremiumModal';
 
 export default function AnimationPackScreen() {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = useMemo(() => makeSettingsStyles(colors), [colors]);
   const { hasCustomization } = usePremium();
@@ -18,7 +20,7 @@ export default function AnimationPackScreen() {
 
   return (
     <View style={[styles.safe]}>
-      <SettingsSubHeader title="Animation Pack" colors={colors} />
+      <SettingsSubHeader title={t('settings.customize.animationPack')} colors={colors} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={[styles.section, { marginBottom: 24 }]}>
           <View style={styles.sectionCard}>
@@ -28,7 +30,7 @@ export default function AnimationPackScreen() {
               return (
                 <PickerRow
                   key={id}
-                  label={meta.label}
+                  label={t(`animPackNames.${id}`)}
                   selected={animPack === id}
                   locked={locked}
                   onSelect={() => {

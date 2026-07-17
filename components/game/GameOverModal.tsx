@@ -1,6 +1,8 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLocalizedFont } from '@/lib/fonts';
 
 const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 
@@ -21,6 +23,8 @@ export default function GameOverModal({
   freeContinueAvailable,
   onFreeContinue, onContinue, onNewGame, onHome,
 }: Props) {
+  const { t } = useTranslation();
+  const font = useLocalizedFont();
   const { colors } = useTheme();
   const isNewBest = score > prevBest && score > 0;
 
@@ -36,11 +40,11 @@ export default function GameOverModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onNewGame}>
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.title, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
-            Game Over
+          <Text style={[styles.title, { color: colors.text, fontFamily: font('Rubik_700Bold') }]}>
+            {t('game.over')}
           </Text>
           {isNewBest && (
-            <Text style={[styles.newBest, { color: colors.accent }]}>New Best!</Text>
+            <Text style={[styles.newBest, { color: colors.accent }]}>{t('game.newBest')}</Text>
           )}
           <View style={styles.scoreGroup}>
             <Text style={[styles.score, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
@@ -48,8 +52,8 @@ export default function GameOverModal({
             </Text>
             <Text style={[styles.bestLabel, { color: colors.textMuted }]}>
               {isNewBest
-                ? `Previous best: ${prevBest.toLocaleString()}`
-                : `Best: ${bestScore.toLocaleString()}`}
+                ? t('game.previousBest', { score: prevBest.toLocaleString() })
+                : t('game.best', { score: bestScore.toLocaleString() })}
             </Text>
           </View>
 
@@ -59,7 +63,7 @@ export default function GameOverModal({
               onPress={handleFreeContinue}
               disabled={continuePending}
             >
-              <Text style={[styles.continueBtnText, { color: colors.accentText }]}>Continue</Text>
+              <Text style={[styles.continueBtnText, { color: colors.accentText }]}>{t('game.continue')}</Text>
             </TouchableOpacity>
           )}
 
@@ -70,8 +74,8 @@ export default function GameOverModal({
               onPress={handleAdContinue}
               disabled={continuePending}
             >
-              <Text style={[styles.continueBtnText, { color: colors.accentText }]}>▶ Continue</Text>
-              <Text style={[styles.continueSub, { color: colors.accentText }]}>Watch a longer ad</Text>
+              <Text style={[styles.continueBtnText, { color: colors.accentText }]}>{t('game.continueAd')}</Text>
+              <Text style={[styles.continueSub, { color: colors.accentText }]}>{t('game.watchLongerAd')}</Text>
             </TouchableOpacity>
           )}
 
@@ -79,11 +83,11 @@ export default function GameOverModal({
             style={[styles.newGameBtn, { borderColor: colors.border }]}
             onPress={onNewGame}
           >
-            <Text style={[styles.newGameText, { color: colors.text }]}>New Game</Text>
+            <Text style={[styles.newGameText, { color: colors.text }]}>{t('home.newGame')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.homeBtn} onPress={onHome}>
-            <Text style={[styles.homeBtnText, { color: colors.textDim }]}>← Home</Text>
+            <Text style={[styles.homeBtnText, { color: colors.textDim }]}>{t('game.home')}</Text>
           </TouchableOpacity>
         </View>
       </View>
