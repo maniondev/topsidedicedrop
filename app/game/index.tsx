@@ -38,6 +38,8 @@ import { submitScoreForCurrentPlayer, updateBestUnassistedForCurrentPlayer } fro
 import { getReviewOptedOut, setReviewOptedOut, reviewRunGateOpen, openNativeReview, getReviewLastPrompted, setReviewLastPrompted, setHasRated, reviewCooldownPassed, getReviewPendingFromPurchase, clearReviewPendingFromPurchase, getNativeReviewQuotaAvailable, recordNativeReviewRequest } from '@/lib/reviewPrompt';
 import ReviewPromptModal from '@/components/ReviewPromptModal';
 import { formatNumber } from '@/lib/i18n';
+import { useTranslation } from 'react-i18next';
+import { useLocalizedFont } from '@/lib/fonts';
 
 // No tab bar in this screen — more space for the board
 const HUD_H    = 96;
@@ -52,6 +54,8 @@ const S2       = 12; // board → controls, controls → ad (scaled per-instance
 
 export default function GameScreen() {
   const { fresh } = useLocalSearchParams<{ fresh?: string }>();
+  const { t } = useTranslation();
+  const font = useLocalizedFont();
   const { colors } = useTheme();
   const { statsFor, submitRun, submitPreContinueRun } = useStats();
   const { play, soundPack } = useSound();
@@ -369,8 +373,8 @@ export default function GameScreen() {
     const topY    = Math.max(cy - 112 * popScale, 4);    // 'All' baseline, clamped to board top
     setFloatingLabels(prev => [
       ...prev.filter(l => l.type !== 'chain'),
-      { id: id1, type: 'chain', text: 'All',   x: cx, y: topY,                                          color: colors.accent, fontSize: 62 * popScale, rotation: -9, fontFamily: 'Fredoka_700Bold',     travelY: -35, glowColor: outline, centerH: true },
-      { id: id2, type: 'chain', text: 'Clear', x: cx, y: topY + gap,                                    color: colors.accent, fontSize: 62 * popScale, rotation:  9, fontFamily: 'Fredoka_700Bold',     travelY: -35, glowColor: outline, centerH: true },
+      { id: id1, type: 'chain', text: t('game.allClearLine1'), x: cx, y: topY,       color: colors.accent, fontSize: 62 * popScale, rotation: -9, fontFamily: font('Fredoka_700Bold'), travelY: -35, glowColor: outline, centerH: true },
+      { id: id2, type: 'chain', text: t('game.allClearLine2'), x: cx, y: topY + gap, color: colors.accent, fontSize: 62 * popScale, rotation:  9, fontFamily: font('Fredoka_700Bold'), travelY: -35, glowColor: outline, centerH: true },
       { id: id3, type: 'chain', text: '+500',  x: cx, y: Math.min(topY + gap * 2, boardH - 58 * popScale), color: colors.accent, fontSize: 44 * popScale, rotation: -7, fontFamily: 'Fredoka_600SemiBold', travelY: -35, glowColor: outline, centerH: true },
     ]);
   // eslint-disable-next-line react-hooks/exhaustive-deps

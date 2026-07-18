@@ -290,6 +290,8 @@
   "game": {
     "over": "게임 오버",
     "newBest": "최고 기록 갱신!",
+    "allClearLine1": "올",
+    "allClearLine2": "클리어!",
     "previousBest": "이전 최고: {{score}}",
     "best": "최고: {{score}}",
     "continue": "계속하기",

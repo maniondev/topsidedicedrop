@@ -290,6 +290,8 @@
   "game": {
     "over": "Game Over",
     "newBest": "New Best!",
+    "allClearLine1": "All",
+    "allClearLine2": "Clear!",
     "previousBest": "Previous best: {{score}}",
     "best": "Best: {{score}}",
     "continue": "Continue",

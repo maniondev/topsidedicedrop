@@ -290,6 +290,8 @@
   "game": {
     "over": "Spiel vorbei",
     "newBest": "Neuer Rekord!",
+    "allClearLine1": "Alles",
+    "allClearLine2": "Leer!",
     "previousBest": "Vorheriger Rekord: {{score}}",
     "best": "Beste: {{score}}",
     "continue": "Fortsetzen",

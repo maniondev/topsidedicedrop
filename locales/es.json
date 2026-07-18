@@ -290,6 +290,8 @@
   "game": {
     "over": "Fin del juego",
     "newBest": "¡Nuevo récord!",
+    "allClearLine1": "¡Todo",
+    "allClearLine2": "Limpio!",
     "previousBest": "Récord anterior: {{score}}",
     "best": "Mejor: {{score}}",
     "continue": "Continuar",
