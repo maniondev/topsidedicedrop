@@ -378,7 +378,7 @@ function Ember({ clock, s, H, color }: { clock: SharedValue<number>; s: SeedEmbe
 
 function DiceDropAmbient({ clock, W, H, particle }: { clock: SharedValue<number>; W: number; H: number; particle: string }) {
   const embers = useMemo<SeedEmber[]>(() => {
-    const n = LOW ? 7 : 12;
+    const n = LOW ? 9 : 15;
     return Array.from({ length: n }, () => ({
       baseX: Math.random() * W,
       offset: Math.random() * (H + 60),
@@ -389,8 +389,8 @@ function DiceDropAmbient({ clock, W, H, particle }: { clock: SharedValue<number>
       blink: 0.6 + Math.random() * 1.4,
       pb: Math.random() * Math.PI * 2,
       r: 1.2 + Math.random() * 2.0,
-      base: 0.10,
-      amp: 0.20,
+      base: 0.14,
+      amp: 0.24,
     }));
   }, [W, H]);
   return <>{embers.map((s, i) => <Ember key={`e${i}`} clock={clock} s={s} H={H} color={particle} />)}</>;

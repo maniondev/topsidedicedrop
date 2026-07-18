@@ -28,10 +28,12 @@ export interface Atmosphere {
 export const ATMOSPHERE: Partial<Record<ThemeId, Atmosphere>> = {
   dicedrop: {
     background: 'dicedrop',
-    // Fireside warmth: slightly darker overhead, warming toward the hearth
-    // below. Centered on the theme's flat #1C1008 so the overall feel (and
-    // every surface color tuned against it) is unchanged.
-    gradient: ['#160D06', '#1C1008', '#231409'],
+    // Fireside warmth: darker overhead, warming toward the hearth below.
+    // Centered on the theme's flat #1C1008 so the overall feel (and every
+    // surface color tuned against it) is unchanged; the top/bottom stops are
+    // pushed ~1.6x further from that anchor than the original subtle version
+    // for a more pronounced sweep.
+    gradient: ['#130B05', '#1C1008', '#28170B'],
     glow: '#7A3A20',      // low hearth glow
     ambient: ['embers'],
     particle: '#FFB067',  // warm ember motes
