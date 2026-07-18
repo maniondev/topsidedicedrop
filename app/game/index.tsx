@@ -35,7 +35,7 @@ import TutorialOverlay from '@/components/game/TutorialOverlay';
 import { runMergePhase, computeClearSteps } from '@/lib/condense';
 import { COLS, ROWS } from '@/constants/game';
 import { submitScoreForCurrentPlayer, updateBestUnassistedForCurrentPlayer } from '@/lib/scoreQueue';
-import { getReviewOptedOut, setReviewOptedOut, isReviewMilestone, openNativeReview, getReviewLastPrompted, setReviewLastPrompted, setHasRated, reviewCooldownPassed, getReviewPendingFromPurchase, clearReviewPendingFromPurchase } from '@/lib/reviewPrompt';
+import { getReviewOptedOut, setReviewOptedOut, reviewRunGateOpen, openNativeReview, getReviewLastPrompted, setReviewLastPrompted, setHasRated, reviewCooldownPassed, getReviewPendingFromPurchase, clearReviewPendingFromPurchase, getNativeReviewQuotaAvailable, recordNativeReviewRequest } from '@/lib/reviewPrompt';
 import ReviewPromptModal from '@/components/ReviewPromptModal';
 
 // No tab bar in this screen — more space for the board
@@ -87,6 +87,10 @@ export default function GameScreen() {
   const reviewLastPromptedRef  = useRef(0);
   const reviewPendingCountRef  = useRef(0);
   const reviewFromPurchaseRef  = useRef(false);
+  // False once 3 native review sheets were triggered in the trailing 365 days
+  // (Apple's quota) — the gate is suppressed entirely rather than shown with a
+  // "Rate" button that would silently no-op.
+  const reviewQuotaOkRef       = useRef(true);
 
   // Measured height of the gameArea container — the only reliable way to know available
   // vertical space on Android, where useWindowDimensions and useSafeAreaInsets can disagree.
@@ -196,6 +200,7 @@ export default function GameScreen() {
     getReviewOptedOut().then(v  => { reviewOptedOutRef.current = v; });
     getReviewLastPrompted().then(n => { reviewLastPromptedRef.current = n; });
     getReviewPendingFromPurchase().then(v => { reviewFromPurchaseRef.current = v; });
+    getNativeReviewQuotaAvailable().then(v => { reviewQuotaOkRef.current = v; });
   }, []);
 
   // When the game-over modal closes (phase leaves 'gameOver'), show review if pending.
@@ -496,15 +501,25 @@ export default function GameScreen() {
     // A New Game from the game-over modal is a normal run from here on.
     demoRunRef.current = false;
 
-    // Queue a review prompt for after the game-over modal closes. Two sources —
-    // a run-count milestone, or a recent premium purchase — share one cooldown so
-    // no two prompts ever land within REVIEW_EVERY games (avoids back-to-back).
+    // Queue a review prompt for after the game-over modal closes. Two sources
+    // share the games-since-last-prompt spacing so no two prompts land
+    // back-to-back:
+    //  - Milestone: the run-count gate is open (more than 3 games ever for the
+    //    first prompt; more than 10 games since the last prompt for repeats)
+    //    AND this run set a new best score for its difficulty — so the prompt
+    //    always rides the NEW BEST celebration, not an arbitrary Nth game.
+    //  - Purchase: a recent premium purchase, at the next eligible game over
+    //    (no new-best requirement — the purchase is its own good moment).
+    // Both are suppressed while Apple's 3-per-365-days native-sheet quota is
+    // spent (reviewQuotaOkRef) — otherwise "Rate" would silently do nothing.
     const totalRuns = (['easy', 'medium', 'hard'] as const)
       .reduce((sum, d) => sum + statsFor(d).totalRuns, 0) + 1;
-    const cooldownOk = reviewCooldownPassed(totalRuns, reviewLastPromptedRef.current);
-    const wantMilestone = isReviewMilestone(totalRuns) && cooldownOk;
-    const wantPurchase  = reviewFromPurchaseRef.current && cooldownOk;
-    if (!reviewOptedOutRef.current && (wantMilestone || wantPurchase)) {
+    // prevBest was locked at this run's first game-over: the pre-run best for
+    // this difficulty (bestScore itself updates when submitRun lands above).
+    const isNewBest     = game.score > prevBest;
+    const wantMilestone = reviewRunGateOpen(totalRuns, reviewLastPromptedRef.current) && isNewBest;
+    const wantPurchase  = reviewFromPurchaseRef.current && reviewCooldownPassed(totalRuns, reviewLastPromptedRef.current);
+    if (!reviewOptedOutRef.current && reviewQuotaOkRef.current && (wantMilestone || wantPurchase)) {
       reviewPendingRef.current = true;
       reviewPendingCountRef.current = totalRuns;
       if (wantPurchase) {
@@ -526,7 +541,7 @@ export default function GameScreen() {
     } else {
       game.resetGame();
     }
-  }, [game.score, game.runBestChain, difficulty, freeContinueUsed, adContinueUsed, submitRun, statsFor, game.resetGame, hasNoAds, showInterstitial]);
+  }, [game.score, game.runBestChain, difficulty, freeContinueUsed, adContinueUsed, submitRun, statsFor, game.resetGame, hasNoAds, showInterstitial, prevBest]);
 
   const handleGoHome = useCallback(() => {
     const continueUsed = freeContinueUsed || adContinueUsed;
@@ -829,6 +844,7 @@ export default function GameScreen() {
           setReviewOptedOut();
           clearReviewPendingFromPurchase();
           setHasRated();
+          recordNativeReviewRequest();
           openNativeReview();
         }}
         onLater={() => {

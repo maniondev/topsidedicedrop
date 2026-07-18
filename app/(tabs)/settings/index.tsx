@@ -18,7 +18,7 @@ import { useDifficulty } from '@/contexts/DifficultyContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PremiumModal from '@/components/PremiumModal';
 import { LANGUAGE_NAMES, type SupportedLanguage } from '@/lib/i18n';
-import { openNativeReview, getHasRated } from '@/lib/reviewPrompt';
+import { openStoreReviewPage, getHasRated, setHasRated, setReviewOptedOut } from '@/lib/reviewPrompt';
 import { Section, RowItem, ToggleRow, makeSettingsStyles } from '@/components/settings/SettingsShared';
 import { getAppIcon, APP_ICON_SUPPORTED, type AppIconId } from '@/lib/appIcon';
 import { COMPOSER_NAME, openComposerIG } from '@/lib/composer';
@@ -48,6 +48,19 @@ export default function SettingsScreen() {
   }, []));
 
   const handleUpgrade = () => setPremiumModalOpen(true);
+
+  // Explicit "Rate" tap → the store's write-review page (no quota, always
+  // works — unlike requestReview(), which is reserved for the unprompted
+  // game-over popup). The store opens outside the app, so completion can't be
+  // observed; treat the deliberate tap itself as "rated" (same convention as
+  // the popup's Rate button): flip the row to the thank-you state and opt out
+  // of all future unprompted popups.
+  const handleRate = () => {
+    setHasRatedState(true);
+    setHasRated();
+    setReviewOptedOut();
+    openStoreReviewPage();
+  };
 
 
   // Hidden gesture: tap the "Settings" title 5x, holding the 5th tap for 2s,
@@ -270,7 +283,7 @@ export default function SettingsScreen() {
           {hasRated ? (
             <RowItem label={t('settings.about.rated')} colors={colors} styles={styles} />
           ) : (
-            <RowItem label={t('settings.about.rate')} colors={colors} styles={styles} onPress={openNativeReview} />
+            <RowItem label={t('settings.about.rate')} colors={colors} styles={styles} onPress={handleRate} />
           )}
           <RowItem label={t('settings.about.moreGames')} colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games')} />
           <RowItem label={`${t('settings.soundtrack.composerLabel')} ${COMPOSER_NAME}`} colors={colors} styles={styles} onPress={openComposerIG} />
