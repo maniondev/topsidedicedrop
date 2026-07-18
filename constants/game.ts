@@ -43,7 +43,7 @@ export const VALUE_DOT_COLORS_DEFAULT: Record<number, string> = {
   6: '#ffffff',
 };
 
-export const CHAIN_MULTIPLIERS = [1.0, 1.2, 1.4, 1.6, 1.8, 2.0];
+export const CHAIN_MULTIPLIERS = [1.0, 1.4, 1.8, 2.2, 2.6, 3.0];
 export const SIX_CLEAR_BASE    = 20;
 
 // Delay before the next chain resolution pass. First two merges are fast, then
