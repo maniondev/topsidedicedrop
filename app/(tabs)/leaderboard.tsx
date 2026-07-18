@@ -4,6 +4,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator
 const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 import Animated, { useSharedValue, withTiming, Easing, useAnimatedStyle, interpolateColor } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
+import { formatDate, formatNumber } from '@/lib/i18n';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,13 +23,11 @@ type RankInfo      = { rank: number; percentile: number } | null;
 type LbMode        = 'best' | 'lifetime';
 type TimePeriod    = 'all' | 'day' | 'week' | 'month';
 
-function formatDate(ts: number): string {
-  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
 function formatScore(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}K`;
-  return n.toLocaleString();
+  // Localized decimal separator in the abbreviated forms too (de "1,2K").
+  if (n >= 1_000_000) return `${formatNumber(n / 1_000_000, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
+  if (n >= 1_000)     return `${formatNumber(n / 1_000, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}K`;
+  return formatNumber(n);
 }
 
 const DIFF_COLOR: Record<Difficulty, string> = { easy: '#27AE60', medium: '#F5A623', hard: '#E45757' };
@@ -500,21 +499,21 @@ export default function LeaderboardScreen() {
                 <View style={styles.statItem}>
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('leaderboard.stats.bestRun')}</Text>
                   <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
-                    {bestRun > 0 ? bestRun.toLocaleString() : '—'}
+                    {bestRun > 0 ? formatNumber(bestRun) : '—'}
                   </Text>
                 </View>
                 <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.statItem}>
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('leaderboard.stats.thisWeek')}</Text>
                   <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
-                    {bestThisWeek > 0 ? bestThisWeek.toLocaleString() : '—'}
+                    {bestThisWeek > 0 ? formatNumber(bestThisWeek) : '—'}
                   </Text>
                 </View>
                 <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
                 <View style={styles.statItem}>
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('leaderboard.stats.thisMonth')}</Text>
                   <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
-                    {bestThisMonth > 0 ? bestThisMonth.toLocaleString() : '—'}
+                    {bestThisMonth > 0 ? formatNumber(bestThisMonth) : '—'}
                   </Text>
                 </View>
               </View>
@@ -539,7 +538,7 @@ export default function LeaderboardScreen() {
                 <View style={styles.statItem}>
                   <Text style={[styles.statLabel, { color: colors.textMuted }]}>{t('leaderboard.stats.average')}</Text>
                   <Text style={[styles.statValue, { color: colors.statNumColor ?? colors.text, fontFamily: 'Rubik_700Bold' }]}>
-                    {averageScore > 0 ? averageScore.toLocaleString() : '—'}
+                    {averageScore > 0 ? formatNumber(averageScore) : '—'}
                   </Text>
                 </View>
               </View>

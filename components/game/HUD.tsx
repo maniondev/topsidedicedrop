@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { formatNumber } from '@/lib/i18n';
 import { Canvas, RoundedRect, Circle, Rect, Group, BlurMask, Line, RadialGradient, vec, rrect, rect } from '@shopify/react-native-skia';
 import { useTheme, useDieColors } from '@/contexts/ThemeContext';
 import { useDiceStyle, DiceStyleId } from '@/contexts/DiceStyleContext';
@@ -149,7 +150,7 @@ const InlinePiece = React.memo(function InlinePiece({ piece, faceColor, dotColor
 function useCountingScore(target: number): string {
   const { performanceMode } = useAnimation();
   const animVal = useRef(new Animated.Value(target)).current;
-  const [display, setDisplay] = useState(() => target.toLocaleString());
+  const [display, setDisplay] = useState(() => formatNumber(target));
   const animRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
@@ -160,7 +161,7 @@ function useCountingScore(target: number): string {
     // is busiest.
     if (performanceMode) {
       animVal.setValue(target);
-      setDisplay(target.toLocaleString());
+      setDisplay(formatNumber(target));
       return;
     }
     animRef.current = Animated.timing(animVal, {
@@ -172,7 +173,7 @@ function useCountingScore(target: number): string {
   }, [target, performanceMode]);
 
   useEffect(() => {
-    const id = animVal.addListener(({ value }) => setDisplay(Math.round(value).toLocaleString()));
+    const id = animVal.addListener(({ value }) => setDisplay(formatNumber(Math.round(value))));
     return () => animVal.removeListener(id);
   }, []);
 
@@ -236,7 +237,7 @@ interface Props {
 }
 
 function valueFontSize(n: number): number {
-  const len = Math.round(n).toLocaleString().length;
+  const len = formatNumber(Math.round(n)).length;
   if (IS_LARGE) {
     if (len <= 5) return 38;
     if (len === 6) return 32;
@@ -293,7 +294,7 @@ function HUD({ score, bestScore, nextPiece, onLogoPress, isLarge, scoreGain, sco
           <Text style={[styles.label, { color: colors.textMuted }]}>{t('game.hud.best')}</Text>
           <View style={styles.valueArea}>
             <Text style={[styles.value, { color: colors.accent, fontFamily: 'Rubik_700Bold', fontSize: valueFontSize(bestScore) }]}>
-              {bestScore.toLocaleString()}
+              {formatNumber(bestScore)}
             </Text>
           </View>
         </View>

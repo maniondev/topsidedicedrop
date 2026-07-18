@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { formatNumber } from '@/lib/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLocalizedFont } from '@/lib/fonts';
@@ -24,7 +25,7 @@ interface Props {
 function formatScore(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}K`;
-  return n > 0 ? n.toLocaleString() : '—';
+  return n > 0 ? formatNumber(n) : '—';
 }
 
 export default function FindPlayerModal({ visible, playerId, mode, onClose, onChanged }: Props) {

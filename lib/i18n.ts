@@ -109,4 +109,25 @@ export async function setLanguage(code: SupportedLanguage): Promise<void> {
   await i18n.changeLanguage(code);
 }
 
+// ── Locale-aware formatting ──────────────────────────────────────────────────
+// Always format against the APP's active language, never the device locale —
+// they can differ once the user picks a language in Settings, and a raw
+// `toLocaleString()`/`toLocaleDateString()` (locale `undefined` = device)
+// would then show e.g. "Jul 17, 2026" inside a Japanese UI. Components that
+// render these all use useTranslation(), so a language switch re-renders them
+// and the helpers pick up the new language on that render.
+
+/** App-language digit grouping (en 12,345 / de 12.345 / fr 12 345). */
+export function formatNumber(n: number, options?: Intl.NumberFormatOptions): string {
+  try { return n.toLocaleString(i18n.language, options); }
+  catch { return n.toLocaleString(); }
+}
+
+/** App-language short date (en "Jul 17, 2026" / de "17. Juli 2026" / ja "2026年7月17日"). */
+export function formatDate(ts: number): string {
+  const opts = { month: 'short', day: 'numeric', year: 'numeric' } as const;
+  try { return new Date(ts).toLocaleDateString(i18n.language, opts); }
+  catch { return new Date(ts).toLocaleDateString(undefined, opts); }
+}
+
 export default i18n;

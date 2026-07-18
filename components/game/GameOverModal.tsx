@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { formatNumber } from '@/lib/i18n';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLocalizedFont } from '@/lib/fonts';
 
@@ -48,12 +49,12 @@ export default function GameOverModal({
           )}
           <View style={styles.scoreGroup}>
             <Text style={[styles.score, { color: colors.text, fontFamily: 'Rubik_700Bold' }]}>
-              {score.toLocaleString()}
+              {formatNumber(score)}
             </Text>
             <Text style={[styles.bestLabel, { color: colors.textMuted }]}>
               {isNewBest
-                ? t('game.previousBest', { score: prevBest.toLocaleString() })
-                : t('game.best', { score: bestScore.toLocaleString() })}
+                ? t('game.previousBest', { score: formatNumber(prevBest) })
+                : t('game.best', { score: formatNumber(bestScore) })}
             </Text>
           </View>
 

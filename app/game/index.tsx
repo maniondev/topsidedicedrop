@@ -37,6 +37,7 @@ import { COLS, ROWS } from '@/constants/game';
 import { submitScoreForCurrentPlayer, updateBestUnassistedForCurrentPlayer } from '@/lib/scoreQueue';
 import { getReviewOptedOut, setReviewOptedOut, reviewRunGateOpen, openNativeReview, getReviewLastPrompted, setReviewLastPrompted, setHasRated, reviewCooldownPassed, getReviewPendingFromPurchase, clearReviewPendingFromPurchase, getNativeReviewQuotaAvailable, recordNativeReviewRequest } from '@/lib/reviewPrompt';
 import ReviewPromptModal from '@/components/ReviewPromptModal';
+import { formatNumber } from '@/lib/i18n';
 
 // No tab bar in this screen — more space for the board
 const HUD_H    = 96;
@@ -312,8 +313,8 @@ export default function GameScreen() {
     const gain = game.score - chainStartScoreRef.current;
     if (gain > 0) {
       const rot = (Math.random() - 0.5) * 40;
-      addFloatingLabel('chain', `+${gain.toLocaleString()}`, x, y, colors.accent, 42 * popScale, rot, 'Rubik_700Bold', undefined, colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)');
-      setScoreGain(`+${gain.toLocaleString()}`);
+      addFloatingLabel('chain', `+${formatNumber(gain)}`, x, y, colors.accent, 42 * popScale, rot, 'Rubik_700Bold', undefined, colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)');
+      setScoreGain(`+${formatNumber(gain)}`);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.lastMergeEvents]);
@@ -332,7 +333,7 @@ export default function GameScreen() {
     if (prev === 'resolving' && game.phase === 'spawning') {
       // Capture final gain including any all-clear bonus added in the same state update
       const gain = game.score - chainStartScoreRef.current;
-      if (gain > 0) setScoreGain(`+${gain.toLocaleString()}`);
+      if (gain > 0) setScoreGain(`+${formatNumber(gain)}`);
       setScoreGainActive(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
