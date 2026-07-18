@@ -348,52 +348,74 @@ function GrayscaleAmbient({ clock, W, H, particle }: { clock: SharedValue<number
   return <>{motes.map((s, i) => <Dust key={`d${i}`} clock={clock} s={s} color={particle} />)}</>;
 }
 
-interface SeedEmber { baseX: number; offset: number; speed: number; swayF: number; swayA: number; phase: number; blink: number; pb: number; r: number; base: number; amp: number }
+// Pip layouts (die-face dot arrangements) on a 3x3 grid, in units of one
+// pip-spacing step from the face's center. No die border — just the dots.
+const PIP_OFFSETS: Record<number, [number, number][]> = {
+  1: [[0, 0]],
+  2: [[-1, -1], [1, 1]],
+  3: [[-1, -1], [0, 0], [1, 1]],
+  4: [[-1, -1], [1, -1], [-1, 1], [1, 1]],
+  5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]],
+  6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]],
+};
 
-// An ember — a tiny warm mote rising slowly from the bottom with a gentle
-// sway and a firefly-style flicker, fading out as it nears the top. Cozy and
-// understated for the signature Dice Drop theme.
-function Ember({ clock, s, H, color }: { clock: SharedValue<number>; s: SeedEmber; H: number; color: string }) {
-  const range = H + 60;
-  const cy = useDerivedValue(() => {
+interface SeedPip { baseX: number; offset: number; speed: number; swayF: number; swayA: number; phase: number; rotF: number; blink: number; pb: number; r: number; spacing: number; value: number; base: number; amp: number }
+
+// A drifting die face — a borderless pip cluster (1-6) falling gently with
+// the same lazy sway + firefly flicker the old embers had, plus a slow
+// tumble, fading out as it nears the bottom. On-theme for Dice Drop: the
+// background literally rains faint dice.
+function PipDrift({ clock, s, H, color }: { clock: SharedValue<number>; s: SeedPip; H: number; color: string }) {
+  const range = H + 80;
+  const transform = useDerivedValue(() => {
     'worklet';
-    return (H + 30) - (((clock.value / 1000) * s.speed + s.offset) % range);   // rise + wrap
+    const t = clock.value / 1000;
+    const y = ((t * s.speed + s.offset) % range) - 40;                          // fall + wrap
+    const x = s.baseX + Math.sin(t * s.swayF + s.phase) * s.swayA;              // blown sideways
+    return [{ translateX: x }, { translateY: y }, { rotate: t * s.rotF + s.phase }];
   });
-  const cx = useDerivedValue(() => { 'worklet'; return s.baseX + Math.sin(clock.value / 1000 * s.swayF + s.phase) * s.swayA; });
   const opacity = useDerivedValue(() => {
     'worklet';
-    const y = (H + 30) - (((clock.value / 1000) * s.speed + s.offset) % range);
-    const fade = y < H * 0.25 ? Math.max(0, y / (H * 0.25)) : 1;               // die out near the top
+    const y = ((clock.value / 1000) * s.speed + s.offset) % range - 40;
+    const fade = y > H * 0.75 ? Math.max(0, (H - y) / (H * 0.25)) : 1;          // die out near the bottom
     const flicker = s.base + s.amp * (0.5 + 0.5 * Math.sin(clock.value / 1000 * s.blink + s.pb));
     return flicker * fade;
   });
   return (
-    <Group opacity={opacity}>
-      <Circle cx={cx} cy={cy} r={s.r} color={color}>
-        <BlurMask blur={s.r * 1.4} style="normal" />
-      </Circle>
+    <Group transform={transform} opacity={opacity}>
+      {PIP_OFFSETS[s.value].map(([ox, oy], i) => (
+        <Circle key={i} cx={ox * s.spacing} cy={oy * s.spacing} r={s.r} color={color}>
+          <BlurMask blur={s.r * 1.3} style="normal" />
+        </Circle>
+      ))}
     </Group>
   );
 }
 
 function DiceDropAmbient({ clock, W, H, particle }: { clock: SharedValue<number>; W: number; H: number; particle: string }) {
-  const embers = useMemo<SeedEmber[]>(() => {
-    const n = LOW ? 9 : 15;
-    return Array.from({ length: n }, () => ({
+  const pips = useMemo<SeedPip[]>(() => {
+    // Fewer than the old single-dot embers: a cluster is up to 6 blurred
+    // circles, so this keeps total draw cost (and perceived density) in the
+    // same ballpark.
+    const n = LOW ? 7 : 12;
+    return Array.from({ length: n }, (_, i) => ({
       baseX: Math.random() * W,
-      offset: Math.random() * (H + 60),
-      speed: 9 + Math.random() * 15,           // slow, lazy rise
+      offset: Math.random() * (H + 80),
+      speed: 11 + Math.random() * 17,          // slow, gentle fall
       swayF: 0.25 + Math.random() * 0.5,
       swayA: 8 + Math.random() * 18,
       phase: Math.random() * Math.PI * 2,
+      rotF: (Math.random() < 0.5 ? -1 : 1) * (0.06 + Math.random() * 0.16),  // slow tumble
       blink: 0.6 + Math.random() * 1.4,
       pb: Math.random() * Math.PI * 2,
-      r: 1.2 + Math.random() * 2.0,
+      r: 1.3 + Math.random() * 1.1,            // pip dot radius
+      spacing: 3.6 + Math.random() * 2.6,      // pip grid step (cluster size)
+      value: (i % 6) + 1,                      // even spread of faces 1-6
       base: 0.14,
       amp: 0.24,
     }));
   }, [W, H]);
-  return <>{embers.map((s, i) => <Ember key={`e${i}`} clock={clock} s={s} H={H} color={particle} />)}</>;
+  return <>{pips.map((s, i) => <PipDrift key={`p${i}`} clock={clock} s={s} H={H} color={particle} />)}</>;
 }
 
 // Soft blob of light — used for dappled sun / caustic pools / neon bloom.
