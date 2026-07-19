@@ -65,6 +65,7 @@ function makeStyles(c: ThemeColors) {
     },
     card: {
       width: '100%',
+      maxWidth: 440, // matches the app's other modals — was stretching nearly full-width on tablets
       backgroundColor: c.card,
       borderRadius: 24,
       borderWidth: 1,

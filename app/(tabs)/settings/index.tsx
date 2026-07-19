@@ -280,8 +280,13 @@ export default function SettingsScreen() {
 
         {/* About */}
         <Section label={t('settings.sections.about')} styles={styles}>
+          {/* "Rated" can be a false positive — the tap is all we can observe
+              (the store gives no completion signal), so someone who cancelled
+              would otherwise hit a dead end. Keep the thank-you row tappable:
+              it reopens the write-review page (also lets happy raters update
+              their review later). */}
           {hasRated ? (
-            <RowItem label={t('settings.about.rated')} colors={colors} styles={styles} />
+            <RowItem label={t('settings.about.rated')} colors={colors} styles={styles} onPress={() => { openStoreReviewPage(); }} />
           ) : (
             <RowItem label={t('settings.about.rate')} colors={colors} styles={styles} onPress={handleRate} />
           )}
