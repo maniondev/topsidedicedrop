@@ -61,7 +61,7 @@ export default function LobbyScreen() {
   const { difficulty, setDifficulty } = useDifficulty();
   const { hasCustomization, hasNoAds } = usePremium();
   const { soundEnabled, setSoundEnabled } = useSound();
-  const { musicEnabled, setMusicEnabled, devMusicIncluded, musicSyncStartedAt, menuLoopDurationMs, musicSyncEpoch, musicLoopStartedAt } = useMusic();
+  const { musicEnabled, setMusicEnabled, devMusicIncluded, musicSyncStartedAt, menuLoopDurationMs, musicSyncEpoch, musicLoopStartedAt, launchIntroActive } = useMusic();
   const { top } = useSafeAreaInsets();
   const [hasSavedGame, setHasSavedGame] = useState(false);
   const [howToOpen, setHowToOpen] = useState(false);
@@ -181,15 +181,24 @@ export default function LobbyScreen() {
   const dividerMode: 'static' | 'comet' =
     homeAnimActive && !appResuming && idleTier >= 2 ? 'comet' : 'static';
 
+  // First-launch How to Play. Two-step: the AsyncStorage read only flags it
+  // pending; the modal opens once the launch intro overlay has cleared. RN's
+  // Modal is a native window that draws ABOVE the overlay (most visibly on
+  // Android), so opening it immediately let it pop over the loading screen.
+  // "Seen" is marked when the modal actually shows, not when it's queued.
+  const [firstHowToPending, setFirstHowToPending] = useState(false);
   useEffect(() => {
     AsyncStorage.getItem('tm_seen_how_to_play').then(v => {
-      if (!v) {
-        setHowToIsFirstOpen(true);
-        setHowToOpen(true);
-        AsyncStorage.setItem('tm_seen_how_to_play', '1').catch(() => {});
-      }
+      if (!v) setFirstHowToPending(true);
     }).catch(() => {});
   }, []);
+  useEffect(() => {
+    if (!firstHowToPending || launchIntroActive) return;
+    setFirstHowToPending(false);
+    setHowToIsFirstOpen(true);
+    setHowToOpen(true);
+    AsyncStorage.setItem('tm_seen_how_to_play', '1').catch(() => {});
+  }, [firstHowToPending, launchIntroActive]);
   const [newGameConfirmOpen, setNewGameConfirmOpen] = useState(false);
   const [premiumModalVisible, setPremiumModalVisible] = useState(false);
 

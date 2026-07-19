@@ -1,5 +1,5 @@
 diff --git a/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt b/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt
-index 749ea14..88be92d 100644
+index 749ea14..ce9d8cb 100644
 --- a/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt
 +++ b/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt
 @@ -20,6 +20,16 @@ import java.io.IOException
@@ -50,7 +50,7 @@ index 749ea14..88be92d 100644
      player.setOnCompletionListener(object : OnCompletionListener {
        var callbackWasCalled: Boolean = false
  
-@@ -250,6 +277,73 @@ open class Sound internal constructor(context:ReactApplicationContext):AudioMana
+@@ -250,6 +277,84 @@ open class Sound internal constructor(context:ReactApplicationContext):AudioMana
      }
    }
  
@@ -106,11 +106,22 @@ index 749ea14..88be92d 100644
 +        // The framework already started `next` at the exact final sample.
 +        playerPool[key] = next
 +        mp.setOnCompletionListener(null)
-+        try {
-+          mp.release()
-+        } catch (e: Exception) {
-+        }
-+        armChainLoop(key)
++        // Release the finished player OFF the UI thread — synchronous codec
++        // teardown can block for tens of ms, which showed up as a visible
++        // animation hitch right at the loop wrap. Re-priming the following
++        // loop is deferred a beat too, so its file I/O doesn't land on the
++        // wrap frame either (a ~59s loop leaves enormous margin).
++        Thread {
++          try {
++            mp.release()
++          } catch (e: Exception) {
++          }
++        }.start()
++        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
++          if (chainLoopKeys.contains(key) && playerPool[key] === next) {
++            armChainLoop(key)
++          }
++        }, 250)
 +      } else {
 +        try {
 +          mp.seekTo(0)
@@ -124,7 +135,7 @@ index 749ea14..88be92d 100644
  
    fun pause(key: Double?, callback: Callback?) {
      val player = playerPool[key]
-@@ -285,6 +379,18 @@ open class Sound internal constructor(context:ReactApplicationContext):AudioMana
+@@ -285,6 +390,18 @@ open class Sound internal constructor(context:ReactApplicationContext):AudioMana
  
  
    fun release(key: Double) {
@@ -143,7 +154,7 @@ index 749ea14..88be92d 100644
      val player = playerPool[key]
      if (player != null) {
        player.reset()
-@@ -304,6 +410,15 @@ open class Sound internal constructor(context:ReactApplicationContext):AudioMana
+@@ -304,6 +421,15 @@ open class Sound internal constructor(context:ReactApplicationContext):AudioMana
    fun setVolume(key: Double?, left: Float?, right: Float?) {
      val player = playerPool[key]
      player?.setVolume(left!!, right!!)
@@ -159,7 +170,7 @@ index 749ea14..88be92d 100644
    }
  
  
-@@ -335,6 +450,22 @@ open class Sound internal constructor(context:ReactApplicationContext):AudioMana
+@@ -335,6 +461,22 @@ open class Sound internal constructor(context:ReactApplicationContext):AudioMana
    fun setLooping(key: Double?, looping: Boolean?) {
      val player = playerPool[key]
      if (player != null) {
