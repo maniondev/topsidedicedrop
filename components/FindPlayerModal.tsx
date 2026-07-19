@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { formatNumber } from '@/lib/i18n';
+import { formatScore } from '@/lib/i18n';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLocalizedFont } from '@/lib/fonts';
@@ -22,10 +22,10 @@ interface Props {
   onChanged: () => void;
 }
 
-function formatScore(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}K`;
-  return n > 0 ? formatNumber(n) : '—';
+// Shared localized abbreviation (lib/i18n formatScore), plus this modal's
+// em-dash for empty scores.
+function formatScoreOrDash(n: number): string {
+  return n > 0 ? formatScore(n) : '—';
 }
 
 export default function FindPlayerModal({ visible, playerId, mode, onClose, onChanged }: Props) {
@@ -202,7 +202,7 @@ export default function FindPlayerModal({ visible, playerId, mode, onClose, onCh
                         <View style={styles.rowInfo}>
                           <Text style={[styles.rowName, { color: colors.text }]}>{r.display_name}</Text>
                           <Text style={[styles.rowSub, { color: colors.textMuted }]}>
-                            {t('findPlayer.best', { score: formatScore(r.best_score) })}
+                            {t('findPlayer.best', { score: formatScoreOrDash(r.best_score) })}
                           </Text>
                         </View>
                         {r.is_following ? (

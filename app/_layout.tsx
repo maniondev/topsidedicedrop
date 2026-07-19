@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
-import { loadStoredLanguage } from '@/lib/i18n';
+import { storedLanguageReady } from '@/lib/i18n';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, Platform, AppState } from 'react-native';
 import { useEffect, useState } from 'react';
@@ -50,10 +50,11 @@ export default function RootLayout() {
 
   // Apply any saved manual language choice before first render so the UI never
   // flashes the device language first. Falls through to device language if
-  // nothing is stored (or on error).
+  // nothing is stored (or on error). The read itself starts at lib/i18n.ts
+  // module load; this only awaits the already-in-flight promise.
   const [langLoaded, setLangLoaded] = useState(false);
   useEffect(() => {
-    loadStoredLanguage().finally(() => setLangLoaded(true));
+    storedLanguageReady.finally(() => setLangLoaded(true));
   }, []);
 
   useEffect(() => {

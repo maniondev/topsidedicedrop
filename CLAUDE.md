@@ -40,6 +40,10 @@ components/
   PremiumModal.tsx
   haptic-tab.tsx
 
+locales/                   # en.json is source of truth; 8 translations mirror it
+scripts/
+  check-i18n.js            # npm run check-i18n — locale key-parity check
+
 hooks/
   useGame.ts               # Central game state reducer — all game logic lives here
   useRewardedAd.ts
@@ -107,6 +111,19 @@ game/                      # (empty — reserved)
 - Sound themes are selected in `SoundContext`; each theme folder mirrors the same filename set.
 - Skia renders the board; gesture handling goes through react-native-gesture-handler.
 - Player identity is a UUID stored in AsyncStorage (`lib/playerIdentity.ts`).
+
+## Localization (i18n)
+
+- 9 languages: en (source of truth), es, fr, de, pt-BR, it, ja, ko, zh-Hans — bundles in `locales/*.json`.
+- ALL user-facing strings go through i18next `t()` keys. Never hardcode English in UI.
+- `npm run check-i18n` verifies every locale stays key-for-key in sync with en.json — must pass before commit when locales change.
+- Translated `<Text>` uses `useLocalizedFont()` (`lib/fonts.ts`) to resolve fontFamily — CJK falls back to the system font (custom Latin faces render tofu). Brand text and pure digits keep custom fonts.
+- Dates/numbers/abbreviated scores: `formatDate` / `formatNumber` / `formatScore` from `lib/i18n.ts` (app-language, cached formatters) — never bare `toLocaleString()` (device locale ≠ app language once the user picks one in Settings → Language).
+- Language resolution: device locale with pt→pt-BR, zh→zh-Hans (zh-Hant prefers another supported language first); manual pick persisted and applied before first render.
+
+## iOS project gotcha
+
+`ios/` is checked in, so **prebuild never runs on iOS**: app.json `plugins` and `infoPlist` changes DO NOT reach the iOS build. Native config (e.g. the CFBundleLocalizations language declarations) must be edited directly in `ios/TopsideMerge/Info.plist`. Android has no committed project and DOES get app.json plugin config via EAS prebuild.
 
 ## RevenueCat
 

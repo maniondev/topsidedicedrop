@@ -317,8 +317,9 @@ export default function GameScreen() {
     const gain = game.score - chainStartScoreRef.current;
     if (gain > 0) {
       const rot = (Math.random() - 0.5) * 40;
-      addFloatingLabel('chain', `+${formatNumber(gain)}`, x, y, colors.accent, 42 * popScale, rot, 'Rubik_700Bold', undefined, colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)');
-      setScoreGain(`+${formatNumber(gain)}`);
+      const gainText = `+${formatNumber(gain)}`;
+      addFloatingLabel('chain', gainText, x, y, colors.accent, 42 * popScale, rot, 'Rubik_700Bold', undefined, colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)');
+      setScoreGain(gainText);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.lastMergeEvents]);

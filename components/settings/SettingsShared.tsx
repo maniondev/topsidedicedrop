@@ -1,5 +1,5 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Switch, Platform, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Switch } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring, withSequence, Easing,
@@ -12,7 +12,10 @@ import { ThemeColors, ThemeId, ThemeMeta, Themes } from '@/constants/theme';
 import { AnimPackId } from '@/contexts/AnimationContext';
 import { DiceStyleId } from '@/contexts/DiceStyleContext';
 
-export const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
+// Re-exported so existing importers keep working; the definition lives in
+// lib/breakpoints.ts — import from there in new code.
+import { IS_LARGE } from '@/lib/breakpoints';
+export { IS_LARGE };
 
 // Custom header for Settings sub-screens — deliberately not the native header,
 // since iOS wraps native headerLeft buttons in a pill/capsule container that

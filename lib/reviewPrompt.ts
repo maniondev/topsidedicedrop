@@ -13,7 +13,18 @@ const PURCHASE_FLAG = 'tm_review_pending_purchase';
 export const REVIEW_FIRST_AT = 3;
 export const REVIEW_EVERY    = 10;
 
-/** Unified cooldown: at least REVIEW_EVERY runs since the last prompt (any source).
+// ⚠️ Two deliberately DIFFERENT run-count gates below — do not "unify" them:
+//  - reviewCooldownPassed (purchase path): allows a prompt at ANY game over
+//    once never-prompted (lastPrompted === 0), and uses >= for repeats. A
+//    player who buys premium during games 1-3 gets the thank-you prompt at
+//    their very next game over, riding the purchase goodwill.
+//  - reviewRunGateOpen (milestone path): strictly MORE than REVIEW_FIRST_AT
+//    games for the first prompt and strictly more than REVIEW_EVERY since the
+//    last for repeats (the caller additionally requires a new best score).
+// Net effect: the purchase prompt can fire up to one game earlier than a
+// milestone could — intentional, not drift.
+
+/** Purchase-path cooldown: at least REVIEW_EVERY runs since the last prompt (any source).
  *  lastPrompted === 0 means "never prompted yet", so the first prompt is allowed. */
 export function reviewCooldownPassed(totalRuns: number, lastPrompted: number): boolean {
   return lastPrompted === 0 || totalRuns - lastPrompted >= REVIEW_EVERY;

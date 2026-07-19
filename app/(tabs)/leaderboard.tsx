@@ -4,7 +4,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator
 const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 import Animated, { useSharedValue, withTiming, Easing, useAnimatedStyle, interpolateColor } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
-import { formatDate, formatNumber } from '@/lib/i18n';
+import { formatDate, formatNumber, formatScore } from '@/lib/i18n';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,13 +22,6 @@ type LifetimeEntry = { player_id: string; display_name: string; lifetime_score: 
 type RankInfo      = { rank: number; percentile: number } | null;
 type LbMode        = 'best' | 'lifetime';
 type TimePeriod    = 'all' | 'day' | 'week' | 'month';
-
-function formatScore(n: number): string {
-  // Localized decimal separator in the abbreviated forms too (de "1,2K").
-  if (n >= 1_000_000) return `${formatNumber(n / 1_000_000, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
-  if (n >= 1_000)     return `${formatNumber(n / 1_000, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}K`;
-  return formatNumber(n);
-}
 
 const DIFF_COLOR: Record<Difficulty, string> = { easy: '#27AE60', medium: '#F5A623', hard: '#E45757' };
 

@@ -61,16 +61,24 @@ function resolveDeviceLanguage(): SupportedLanguage {
   // can never crash i18n init — fall back to English instead.
   let locales: ReturnType<typeof getLocales> = [];
   try { locales = getLocales(); } catch { return 'en'; }
+  // Traditional-script Chinese (zh-Hant) isn't shipped. Rather than forcing
+  // those users straight to Simplified, prefer any OTHER supported language
+  // later in their preference list; only when none exists fall back to
+  // zh-Hans — still closer to their language than English. Simplified-script
+  // (and script-unspecified) Chinese maps to zh-Hans immediately as before.
+  let deferred: SupportedLanguage | null = null;
   for (const loc of locales) {
     const tag = loc.languageTag;                       // e.g. 'pt-BR', 'zh-Hans-CN'
     const lang = (loc.languageCode ?? '').toLowerCase(); // e.g. 'pt', 'zh'
     if (tag && supported.has(tag)) return tag as SupportedLanguage;
     if (lang === 'pt') return 'pt-BR';
-    // TODO: distinguish Traditional (zh-Hant) — we only ship Simplified today.
-    if (lang === 'zh') return 'zh-Hans';
+    if (lang === 'zh') {
+      if (loc.languageScriptCode === 'Hant') { deferred = deferred ?? 'zh-Hans'; continue; }
+      return 'zh-Hans';
+    }
     if (lang && supported.has(lang)) return lang as SupportedLanguage;
   }
-  return 'en';
+  return deferred ?? 'en';
 }
 
 i18n
@@ -117,17 +125,56 @@ export async function setLanguage(code: SupportedLanguage): Promise<void> {
 // render these all use useTranslation(), so a language switch re-renders them
 // and the helpers pick up the new language on that render.
 
+// Formatter instances are cached — formatNumber sits in per-frame paths (the
+// HUD's animated score count-up during merge chains), and constructing an
+// Intl formatter is a native allocation per call. Keyed by options signature;
+// both caches are dropped whenever the app language changes.
+let numberFormatCache = new Map<string, Intl.NumberFormat>();
+let dateFormatCache: Intl.DateTimeFormat | null = null;
+i18n.on('languageChanged', () => {
+  numberFormatCache = new Map();
+  dateFormatCache = null;
+});
+
 /** App-language digit grouping (en 12,345 / de 12.345 / fr 12 345). */
 export function formatNumber(n: number, options?: Intl.NumberFormatOptions): string {
-  try { return n.toLocaleString(i18n.language, options); }
-  catch { return n.toLocaleString(); }
+  try {
+    const key = options ? JSON.stringify(options) : '';
+    let fmt = numberFormatCache.get(key);
+    if (!fmt) {
+      fmt = new Intl.NumberFormat(i18n.language, options);
+      numberFormatCache.set(key, fmt);
+    }
+    return fmt.format(n);
+  } catch {
+    return n.toLocaleString();
+  }
+}
+
+/** Abbreviated score (1,234 / 1.2K / 3.4M) with the app language's separators
+ *  (de "1,2K"). Shared by the leaderboard and Find Players so the two can't
+ *  drift apart. */
+export function formatScore(n: number): string {
+  if (n >= 1_000_000) return `${formatNumber(n / 1_000_000, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
+  if (n >= 1_000)     return `${formatNumber(n / 1_000, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}K`;
+  return formatNumber(n);
 }
 
 /** App-language short date (en "Jul 17, 2026" / de "17. Juli 2026" / ja "2026年7月17日"). */
 export function formatDate(ts: number): string {
   const opts = { month: 'short', day: 'numeric', year: 'numeric' } as const;
-  try { return new Date(ts).toLocaleDateString(i18n.language, opts); }
-  catch { return new Date(ts).toLocaleDateString(undefined, opts); }
+  try {
+    if (!dateFormatCache) dateFormatCache = new Intl.DateTimeFormat(i18n.language, opts);
+    return dateFormatCache.format(ts);
+  } catch {
+    return new Date(ts).toLocaleDateString(undefined, opts);
+  }
 }
+
+// Kick the stored-language read off at module load — the root layout gates its
+// first render on this promise, and starting it here (instead of in a
+// post-mount effect) overlaps the AsyncStorage round-trip with font loading
+// and native module init instead of serializing it after React mounts.
+export const storedLanguageReady: Promise<void> = loadStoredLanguage();
 
 export default i18n;

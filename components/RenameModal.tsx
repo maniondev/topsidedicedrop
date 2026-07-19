@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, Platform, Dimensions } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLocalizedFont } from '@/lib/fonts';
 import { generateCandidateName, commitDisplayName } from '@/lib/playerIdentity';
+import { IS_LARGE } from '@/lib/breakpoints';
 
-const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
 
 interface Props {
   visible: boolean;

@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View, Platform, Dimensions, LayoutChangeEvent } from 'react-native';
+import { Animated, Modal, StyleSheet, Text, TouchableOpacity, View, LayoutChangeEvent } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLocalizedFont } from '@/lib/fonts';
-
-const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
+import { IS_LARGE } from '@/lib/breakpoints';
 
 // Page 1: controls. Page 2: the objective — same 3-row structure so the card
 // keeps the same height and the button stays in the same place (an exact
@@ -53,6 +52,18 @@ export default function TutorialOverlay({ onDismiss }: Props) {
 
   const hints = page === 0 ? CONTROL_HINTS : OBJECTIVE_HINTS;
 
+  // Single row renderer shared by the visible page AND both measurers — the
+  // height lock is only correct if measurer rows lay out identically to the
+  // visible ones, so the markup must exist exactly once. `colored` is the only
+  // difference (measurers are invisible; color never affects layout).
+  const renderRows = (hs: typeof CONTROL_HINTS, colored: boolean) =>
+    hs.map((h, i) => (
+      <View key={h.key} style={[styles.row, i < hs.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colored ? colors.border : 'transparent' }]}>
+        <Text style={[styles.icon, colored && { color: colors.accent }]}>{h.icon}</Text>
+        <Text style={[styles.label, colored && { color: colors.text }]}>{t(h.key)}</Text>
+      </View>
+    ));
+
   return (
     <Modal visible transparent animationType="none" onRequestClose={dismiss}>
       <Animated.View style={[styles.backdrop, { opacity }]}>
@@ -60,28 +71,13 @@ export default function TutorialOverlay({ onDismiss }: Props) {
           {/* Invisible measurers: both pages rendered at the real content
               width so lockH reflects true wrapped heights in every locale. */}
           <View style={styles.measurer} pointerEvents="none" onLayout={onMeasure1}>
-            {CONTROL_HINTS.map((h, i) => (
-              <View key={h.key} style={[styles.row, i < CONTROL_HINTS.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth }]}>
-                <Text style={styles.icon}>{h.icon}</Text>
-                <Text style={styles.label}>{t(h.key)}</Text>
-              </View>
-            ))}
+            {renderRows(CONTROL_HINTS, false)}
           </View>
           <View style={styles.measurer} pointerEvents="none" onLayout={onMeasure2}>
-            {OBJECTIVE_HINTS.map((h, i) => (
-              <View key={h.key} style={[styles.row, i < OBJECTIVE_HINTS.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth }]}>
-                <Text style={styles.icon}>{h.icon}</Text>
-                <Text style={styles.label}>{t(h.key)}</Text>
-              </View>
-            ))}
+            {renderRows(OBJECTIVE_HINTS, false)}
           </View>
           <View style={lockH != null ? { height: lockH, justifyContent: 'center' } : undefined}>
-            {hints.map((h, i) => (
-              <View key={h.key} style={[styles.row, i < hints.length - 1 && { borderBottomColor: colors.border, borderBottomWidth: StyleSheet.hairlineWidth }]}>
-                <Text style={[styles.icon, { color: colors.accent }]}>{h.icon}</Text>
-                <Text style={[styles.label, { color: colors.text }]}>{t(h.key)}</Text>
-              </View>
-            ))}
+            {renderRows(hints, true)}
           </View>
           <TouchableOpacity
             style={[styles.btn, { backgroundColor: colors.accent }]}
@@ -105,7 +101,9 @@ const styles = StyleSheet.create({
   icon:     { fontSize: IS_LARGE ? 30 : 22, width: IS_LARGE ? 44 : 32, textAlign: 'center' },
   label:    { fontSize: IS_LARGE ? 21 : 15, flex: 1, flexWrap: 'wrap' },
   btn:      { marginTop: IS_LARGE ? 18 : 12, borderRadius: IS_LARGE ? 14 : 10, paddingVertical: IS_LARGE ? 22 : 16, alignItems: 'center' },
-  btnText:  { fontSize: IS_LARGE ? 22 : 16, fontFamily: 'Rubik_700Bold' },
+  // fontFamily deliberately absent — the render applies font('Rubik_700Bold')
+  // inline so CJK locales fall back to the system font.
+  btnText:  { fontSize: IS_LARGE ? 22 : 16 },
   // Same content width as the visible rows (absolute children sit inside the
   // card's padding box), zero visual/interaction footprint.
   measurer: { position: 'absolute', left: 0, right: 0, opacity: 0 },
