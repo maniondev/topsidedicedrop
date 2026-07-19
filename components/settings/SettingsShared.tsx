@@ -1,5 +1,5 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Switch } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Switch, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, withSpring, withSequence, Easing,
@@ -21,11 +21,15 @@ export { IS_LARGE };
 // since iOS wraps native headerLeft buttons in a pill/capsule container that
 // can't be stripped from JS. This gives full control: plain chevron + label,
 // no background, centered title.
+// Android needs extra breathing room above the sub-screen header — the safe
+// area inset alone leaves the back button/title nearly touching the status bar.
+const SUBHEADER_EXTRA_TOP = Platform.OS === 'android' ? 20 : 8;
+
 export function SettingsSubHeader({ title, colors }: { title: string; colors: ThemeColors }) {
   const { t } = useTranslation();
   const { top } = useSafeAreaInsets();
   return (
-    <View style={[subHeaderStyles.container, { paddingTop: top + 8, backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+    <View style={[subHeaderStyles.container, { paddingTop: top + SUBHEADER_EXTRA_TOP, backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
       <TouchableOpacity
         onPress={() => router.back()}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}

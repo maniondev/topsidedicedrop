@@ -591,9 +591,12 @@ const styles = StyleSheet.create({
   titleText:      {},
   titleFlyRow:    { flexDirection: 'row', alignItems: 'baseline' },
   titleMeasurer:  { position: 'absolute', flexDirection: 'row', alignItems: 'baseline', opacity: 0 },
-  titleTopside:   { fontFamily: 'PlayfairDisplay_700Bold', letterSpacing: 0.5 },
-  titleColon:     { fontFamily: 'PlayfairDisplay_700Bold' },
-  titleDiceDrop:  { fontFamily: 'Rubik_700Bold', letterSpacing: 0.5 },
+  // includeFontPadding is Android-only (ignored on iOS): without it Android
+  // reserves extra ascender/descender space inside the title text boxes,
+  // which read as a too-large gap between the title row and the subtitle.
+  titleTopside:   { fontFamily: 'PlayfairDisplay_700Bold', letterSpacing: 0.5, includeFontPadding: false },
+  titleColon:     { fontFamily: 'PlayfairDisplay_700Bold', includeFontPadding: false },
+  titleDiceDrop:  { fontFamily: 'Rubik_700Bold', letterSpacing: 0.5, includeFontPadding: false },
   subtitleText:   { fontWeight: '600', letterSpacing: 0.3, marginLeft: 2 },
 
   heroLabel:      { fontWeight: '700', letterSpacing: 1.5, textAlign: 'center' },
