@@ -93,7 +93,12 @@
         }
       ],
       "expo-tracking-transparency",
-      "expo-localization"
+      [
+        "expo-localization",
+        {
+          "supportedLocales": ["en", "es", "fr", "de", "pt-BR", "it", "ja", "ko", "zh-Hans"]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
