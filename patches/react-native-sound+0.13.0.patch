@@ -1,3 +1,187 @@
+diff --git a/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt b/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt
+index 749ea14..88be92d 100644
+--- a/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt
++++ b/node_modules/react-native-sound/android/src/main/java/com/zmxv/RNSound/Sound.kt
+@@ -20,6 +20,16 @@ import java.io.IOException
+ 
+ open class Sound internal constructor(context:ReactApplicationContext):AudioManager.OnAudioFocusChangeListener  {
+   private var playerPool: MutableMap<Double, MediaPlayer> = mutableMapOf()
++  // PATCHED (Topside): state for gapless looping via setNextMediaPlayer chaining.
++  // MediaPlayer.setLooping restarts with an audible gap (~50-200ms, device-
++  // dependent) because the loop seeks back through the decoder pipeline. For
++  // looping players we instead keep a second player pre-prepared on the same
++  // source and attach it with setNextMediaPlayer: the framework hands playback
++  // off at the exact final sample, and we re-prime a fresh "next" each loop.
++  private var nextPlayerPool: MutableMap<Double, MediaPlayer> = mutableMapOf()
++  private var sourcePool: MutableMap<Double, String> = mutableMapOf()
++  private var volumePool: MutableMap<Double, Pair<Float, Float>> = mutableMapOf()
++  private var chainLoopKeys: MutableSet<Double> = mutableSetOf()
+   private val reactContext: ReactApplicationContext = context
+   var category: String? = null
+   private var mixWithOthers: Boolean = true
+@@ -48,6 +58,9 @@ open class Sound internal constructor(context:ReactApplicationContext):AudioMana
+     }
+     if (key != null) {
+       playerPool[key] = player
++      // PATCHED (Topside): remember the source so a chained "next" player can
++      // be created for gapless looping (see armChainLoop).
++      sourcePool[key] = fileName
+     }
+ 
+     val module: Sound = this
+@@ -207,6 +220,20 @@ open class Sound internal constructor(context:ReactApplicationContext):AudioMana
+       this.focusedPlayerKey = key
+     }
+ 
++    // PATCHED (Topside): looping players take the gapless chain path instead
++    // of MediaPlayer's gapped native looping. JS API is unchanged —
++    // setNumberOfLoops(-1) before play() still lands in setLooping(true).
++    if (key != null && (player.isLooping || chainLoopKeys.contains(key))) {
++      if (player.isLooping) {
++        player.isLooping = false
++        chainLoopKeys.add(key)
++      }
++      armChainLoop(key)
++      player.start()
++      setOnPlay(true, key)
++      return
++    }
++
+     player.setOnCompletionListener(object : OnCompletionListener {
+       var callbackWasCalled: Boolean = false
+ 
+@@ -250,6 +277,73 @@ open class Sound internal constructor(context:ReactApplicationContext):AudioMana
+     }
+   }
+ 
++  // PATCHED (Topside): apply the last JS-set volume to a player (used so the
++  // pre-prepared "next" loop player starts at the current fade level).
++  private fun applyStoredVolume(key: Double, player: MediaPlayer) {
++    val v = volumePool[key]
++    if (v != null) {
++      player.setVolume(v.first, v.second)
++    }
++  }
++
++  // PATCHED (Topside): arm gapless looping for the active player of `key`:
++  // prime a second player on the same source, attach it via setNextMediaPlayer
++  // once prepared, and on completion swap it in as the new active player and
++  // prime the following loop. If the next player isn't ready when the track
++  // ends (never in practice for minute-long music), fall back to the old
++  // seek-to-zero restart rather than going silent.
++  private fun armChainLoop(key: Double) {
++    val active = playerPool[key] ?: return
++    if (!nextPlayerPool.containsKey(key)) {
++      val source = sourcePool[key]
++      if (source != null) {
++        val next = createMediaPlayer(source)
++        if (next != null) {
++          next.isLooping = false
++          next.setOnPreparedListener { mp ->
++            val current = playerPool[key]
++            if (current != null && chainLoopKeys.contains(key)) {
++              applyStoredVolume(key, mp)
++              nextPlayerPool[key] = mp
++              try {
++                current.setNextMediaPlayer(mp)
++              } catch (e: Exception) {
++                nextPlayerPool.remove(key)
++                mp.release()
++              }
++            } else {
++              mp.release()
++            }
++          }
++          try {
++            next.prepareAsync()
++          } catch (e: Exception) {
++            // Priming failed — the completion fallback below restarts by seek.
++          }
++        }
++      }
++    }
++    active.setOnCompletionListener { mp ->
++      val next = nextPlayerPool.remove(key)
++      if (next != null && chainLoopKeys.contains(key)) {
++        // The framework already started `next` at the exact final sample.
++        playerPool[key] = next
++        mp.setOnCompletionListener(null)
++        try {
++          mp.release()
++        } catch (e: Exception) {
++        }
++        armChainLoop(key)
++      } else {
++        try {
++          mp.seekTo(0)
++          mp.start()
++        } catch (e: Exception) {
++        }
++      }
++    }
++  }
++
+ 
+   fun pause(key: Double?, callback: Callback?) {
+     val player = playerPool[key]
+@@ -285,6 +379,18 @@ open class Sound internal constructor(context:ReactApplicationContext):AudioMana
+ 
+ 
+   fun release(key: Double) {
++    // PATCHED (Topside): tear down any gapless-loop chain state for this key.
++    chainLoopKeys.remove(key)
++    sourcePool.remove(key)
++    volumePool.remove(key)
++    val next = nextPlayerPool.remove(key)
++    if (next != null) {
++      try {
++        next.reset()
++        next.release()
++      } catch (e: Exception) {
++      }
++    }
+     val player = playerPool[key]
+     if (player != null) {
+       player.reset()
+@@ -304,6 +410,15 @@ open class Sound internal constructor(context:ReactApplicationContext):AudioMana
+   fun setVolume(key: Double?, left: Float?, right: Float?) {
+     val player = playerPool[key]
+     player?.setVolume(left!!, right!!)
++    // PATCHED (Topside): mirror the volume onto the primed next-loop player so
++    // a fade in progress carries across the gapless handoff.
++    if (key != null && left != null && right != null) {
++      volumePool[key] = Pair(left, right)
++      try {
++        nextPlayerPool[key]?.setVolume(left, right)
++      } catch (e: Exception) {
++      }
++    }
+   }
+ 
+ 
+@@ -335,6 +450,22 @@ open class Sound internal constructor(context:ReactApplicationContext):AudioMana
+   fun setLooping(key: Double?, looping: Boolean?) {
+     val player = playerPool[key]
+     if (player != null) {
++      // PATCHED (Topside): if this key is chain-looping, turning looping off
++      // must dismantle the chain (native isLooping is already false).
++      if (key != null && chainLoopKeys.contains(key)) {
++        if (looping == false) {
++          chainLoopKeys.remove(key)
++          player.setOnCompletionListener(null)
++          val next = nextPlayerPool.remove(key)
++          if (next != null) {
++            try {
++              next.release()
++            } catch (e: Exception) {
++            }
++          }
++        }
++        return
++      }
+       player.isLooping = looping!!
+     }
+   }
 diff --git a/node_modules/react-native-sound/ios/RNSound.mm b/node_modules/react-native-sound/ios/RNSound.mm
 index 94b2335..0141518 100644
 --- a/node_modules/react-native-sound/ios/RNSound.mm
