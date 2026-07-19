@@ -316,7 +316,12 @@
     "tutorial": {
       "move": "Swipe to move",
       "rotate": "Tap to rotate",
-      "drop": "Swipe down to drop"
+      "drop": "Swipe down to drop",
+      "next": "Next",
+      "letsGo": "Let's go!",
+      "objMerge": "Matching dice merge into the next value",
+      "objSixes": "Merge sixes to clear them from the board for extra points",
+      "objSurvive": "Game over when there's no room for new dice"
     }
   },
   "howToPlay": {

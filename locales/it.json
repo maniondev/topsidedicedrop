@@ -316,7 +316,12 @@
     "tutorial": {
       "move": "Scorri per spostare",
       "rotate": "Tocca per ruotare",
-      "drop": "Scorri verso il basso per lasciar cadere"
+      "drop": "Scorri verso il basso per lasciar cadere",
+      "next": "Avanti",
+      "letsGo": "Andiamo!",
+      "objMerge": "I dadi uguali si fondono nel valore successivo",
+      "objSixes": "Fondi i sei per toglierli dal tabellone e ottenere punti extra",
+      "objSurvive": "La partita finisce quando non c'è spazio per nuovi dadi"
     }
   },
   "howToPlay": {

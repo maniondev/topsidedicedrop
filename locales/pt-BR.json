@@ -316,7 +316,12 @@
     "tutorial": {
       "move": "Deslize para mover",
       "rotate": "Toque para girar",
-      "drop": "Deslize para baixo para soltar"
+      "drop": "Deslize para baixo para soltar",
+      "next": "Próximo",
+      "letsGo": "Vamos lá!",
+      "objMerge": "Dados iguais se fundem no valor seguinte",
+      "objSixes": "Funda os seis para tirá-los do tabuleiro e ganhar pontos extras",
+      "objSurvive": "O jogo acaba quando não há espaço para novos dados"
     }
   },
   "howToPlay": {

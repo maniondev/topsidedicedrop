@@ -316,7 +316,12 @@
     "tutorial": {
       "move": "Glissez pour déplacer",
       "rotate": "Touchez pour tourner",
-      "drop": "Glissez vers le bas pour lâcher"
+      "drop": "Glissez vers le bas pour lâcher",
+      "next": "Suivant",
+      "letsGo": "C'est parti !",
+      "objMerge": "Les dés identiques fusionnent en la valeur suivante",
+      "objSixes": "Fusionnez les six pour les retirer du plateau et gagner des points bonus",
+      "objSurvive": "La partie s'arrête quand les nouveaux dés n'ont plus de place"
     }
   },
   "howToPlay": {

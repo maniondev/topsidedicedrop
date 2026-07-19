@@ -316,7 +316,12 @@
     "tutorial": {
       "move": "Wischen zum Bewegen",
       "rotate": "Tippen zum Drehen",
-      "drop": "Nach unten wischen zum Fallenlassen"
+      "drop": "Nach unten wischen zum Fallenlassen",
+      "next": "Weiter",
+      "letsGo": "Los geht's!",
+      "objMerge": "Gleiche Würfel verschmelzen zum nächsten Wert",
+      "objSixes": "Sechser verschmelzen, um sie vom Brett zu räumen — für Extrapunkte",
+      "objSurvive": "Spiel vorbei, wenn neue Würfel keinen Platz mehr haben"
     }
   },
   "howToPlay": {

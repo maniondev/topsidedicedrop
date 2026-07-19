@@ -316,7 +316,12 @@
     "tutorial": {
       "move": "Desliza para mover",
       "rotate": "Toca para rotar",
-      "drop": "Desliza abajo para soltar"
+      "drop": "Desliza abajo para soltar",
+      "next": "Siguiente",
+      "letsGo": "¡Vamos!",
+      "objMerge": "Los dados iguales se fusionan en el valor siguiente",
+      "objSixes": "Fusiona los seises para eliminarlos del tablero y ganar puntos extra",
+      "objSurvive": "La partida termina cuando no hay espacio para nuevos dados"
     }
   },
   "howToPlay": {
