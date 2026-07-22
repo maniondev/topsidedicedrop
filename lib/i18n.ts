@@ -177,4 +177,19 @@ export function formatDate(ts: number): string {
 // and native module init instead of serializing it after React mounts.
 export const storedLanguageReady: Promise<void> = loadStoredLanguage();
 
+// URL slug for each language's localized legal pages (topside.games). English
+// is the canonical page at the path root (no slug); the others live one folder
+// deeper. Matches the folders generated in the topside site repo.
+const LEGAL_SLUG: Record<SupportedLanguage, string> = {
+  en: '', es: 'es/', fr: 'fr/', de: 'de/', 'pt-BR': 'pt/',
+  it: 'it/', ja: 'ja/', ko: 'ko/', 'zh-Hans': 'zh/',
+};
+
+/** Localized privacy/TOS URL for the app's current language (falls back to the
+ *  English canonical page for any unmapped language). */
+export function legalUrl(kind: 'privacy' | 'tos'): string {
+  const slug = LEGAL_SLUG[i18n.language as SupportedLanguage] ?? '';
+  return `https://topside.games/dicedrop/${kind}/${slug}`;
+}
+
 export default i18n;

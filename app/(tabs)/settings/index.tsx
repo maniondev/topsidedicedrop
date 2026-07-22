@@ -12,12 +12,12 @@ import { useAnimation } from '@/contexts/AnimationContext';
 import { useDiceStyle } from '@/contexts/DiceStyleContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useStats } from '@/contexts/StatsContext';
-import { CONTROLS_SEEN_KEY, saveGame } from '@/lib/storage';
+import { CONTROLS_SEEN_KEY, saveGame, loadStats, saveStats, type RunRecord } from '@/lib/storage';
 import { buildDemoSave } from '@/lib/demoBoard';
 import { useDifficulty } from '@/contexts/DifficultyContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PremiumModal from '@/components/PremiumModal';
-import { LANGUAGE_NAMES, type SupportedLanguage } from '@/lib/i18n';
+import { LANGUAGE_NAMES, legalUrl, type SupportedLanguage } from '@/lib/i18n';
 import { openStoreReviewPage, getHasRated, setHasRated, setReviewOptedOut } from '@/lib/reviewPrompt';
 import { Section, RowItem, ToggleRow, makeSettingsStyles } from '@/components/settings/SettingsShared';
 import { getAppIcon, APP_ICON_SUPPORTED, type AppIconId } from '@/lib/appIcon';
@@ -34,7 +34,7 @@ export default function SettingsScreen() {
   const { diceStyle } = useDiceStyle();
   const { hasCustomization, hasNoAds, restorePurchases, redeemCode, devToggleCustomization, devToggleNoAds } = usePremium();
   const isFullyUnlocked = hasCustomization && hasNoAds;
-  const { resetStats } = useStats();
+  const { resetStats, refresh } = useStats();
   const { difficulty } = useDifficulty();
   const [devControlsRevealed, setDevControlsRevealed] = useState(false);
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
@@ -48,6 +48,49 @@ export default function SettingsScreen() {
   }, []));
 
   const handleUpgrade = () => setPremiumModalOpen(true);
+
+  // Dev-only: populate believable stats for App Store screenshots. Writes
+  // ONLY to local AsyncStorage (loadStats/saveStats) and refreshes from there
+  // — it never calls Supabase, so the global leaderboard is completely
+  // untouched. `refresh()` reloads from local storage, and the mount-time
+  // Supabase seed only runs when local stats are empty, so the boost persists.
+  // Boosts all three difficulties (the old version did medium only) so the
+  // Play/Stats tabs read populated on whichever difficulty is selected.
+  const boostStatsForScreenshots = async () => {
+    const s = await loadStats();
+    const DAY = 24 * 60 * 60 * 1000;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const boost = {
+      easy:   { bestScore: 8210,  bestUnassisted: 3050, totalRuns: 38, bestChain: 5, lifetimeScore: 121400 },
+      medium: { bestScore: 12294, bestUnassisted: 4174, totalRuns: 47, bestChain: 6, lifetimeScore: 189430 },
+      hard:   { bestScore: 9860,  bestUnassisted: 3720, totalRuns: 41, bestChain: 6, lifetimeScore: 164900 },
+    } as const;
+    (['easy', 'medium', 'hard'] as const).forEach(d => {
+      const cur = s.byDifficulty[d];
+      s.byDifficulty[d] = {
+        bestScore:      Math.max(cur.bestScore,      boost[d].bestScore),
+        bestUnassisted: Math.max(cur.bestUnassisted, boost[d].bestUnassisted),
+        totalRuns:      Math.max(cur.totalRuns,      boost[d].totalRuns),
+        bestChain:      Math.max(cur.bestChain,      boost[d].bestChain),
+        lifetimeScore:  Math.max(cur.lifetimeScore,  boost[d].lifetimeScore),
+      };
+    });
+    // Inject consecutive daily runs (one per day) so the day-streak stat reads high.
+    const existingDays = new Set(s.recentRuns.map(r => {
+      const dt = new Date(r.date); dt.setHours(0, 0, 0, 0); return dt.getTime();
+    }));
+    const fakeRuns: RunRecord[] = [];
+    for (let i = 0; i < 17; i++) {
+      const day = today.getTime() - i * DAY;
+      if (!existingDays.has(day)) {
+        fakeRuns.push({ score: Math.floor(800 + Math.random() * 3000), date: day + 10 * 60 * 1000, bestChain: Math.floor(1 + Math.random() * 5), difficulty: 'medium', usedContinue: false });
+      }
+    }
+    s.recentRuns = [...fakeRuns, ...s.recentRuns].slice(0, 100);
+    await saveStats(s);
+    await refresh();
+    Alert.alert('Done', 'Stats boosted for screenshots (local only — leaderboard untouched).');
+  };
 
   // Explicit "Rate" tap → the store's write-review page (no quota, always
   // works — unlike requestReview(), which is reserved for the unprompted
@@ -156,6 +199,14 @@ export default function SettingsScreen() {
             <RowItem
               label="⚙️ Dev: Reset Controls Tutorial"
               onPress={() => AsyncStorage.removeItem(CONTROLS_SEEN_KEY)}
+              colors={colors}
+              styles={styles}
+            />
+          )}
+          {__DEV__ && devControlsRevealed && (
+            <RowItem
+              label="⚙️ Dev: Boost Stats (screenshots)"
+              onPress={boostStatsForScreenshots}
               colors={colors}
               styles={styles}
             />
@@ -292,8 +343,8 @@ export default function SettingsScreen() {
           )}
           <RowItem label={t('settings.about.moreGames')} colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games')} />
           <RowItem label={`${t('settings.soundtrack.composerLabel')} ${COMPOSER_NAME}`} colors={colors} styles={styles} onPress={openComposerIG} />
-          <RowItem label={t('settings.about.privacy')} colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/dicedrop/privacy')} />
-          <RowItem label={t('settings.about.terms')} colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/dicedrop/tos')} />
+          <RowItem label={t('settings.about.privacy')} colors={colors} styles={styles} onPress={() => Linking.openURL(legalUrl('privacy'))} />
+          <RowItem label={t('settings.about.terms')} colors={colors} styles={styles} onPress={() => Linking.openURL(legalUrl('tos'))} />
           <RowItem label={t('settings.about.contact')} colors={colors} styles={styles} onPress={() => Linking.openURL('https://topside.games/contact')} />
           <RowItem label={t('settings.about.version')} value={Constants.expoConfig?.version ?? '—'} colors={colors} styles={styles} />
         </Section>

@@ -3,10 +3,9 @@ import { Modal, View, Text, TouchableOpacity, StyleSheet, Platform, Dimensions, 
 import { useTranslation, Trans } from 'react-i18next';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLocalizedFont } from '@/lib/fonts';
+import { legalUrl } from '@/lib/i18n';
 
 const IS_LARGE = (Platform as any).isPad || Dimensions.get('window').width >= 600;
-const TOS_URL     = 'https://topside.games/dicedrop/tos';
-const PRIVACY_URL = 'https://topside.games/dicedrop/privacy';
 
 interface Props {
   visible: boolean;
@@ -60,8 +59,8 @@ export default function HowToPlayModal({ visible, onClose, showConsent }: Props)
               <Trans
                 i18nKey="howToPlay.consent"
                 components={{
-                  terms:   <Text style={{ color: colors.accent }} onPress={() => Linking.openURL(TOS_URL)} />,
-                  privacy: <Text style={{ color: colors.accent }} onPress={() => Linking.openURL(PRIVACY_URL)} />,
+                  terms:   <Text style={{ color: colors.accent }} onPress={() => Linking.openURL(legalUrl('tos'))} />,
+                  privacy: <Text style={{ color: colors.accent }} onPress={() => Linking.openURL(legalUrl('privacy'))} />,
                 }}
               />
             </Text>
