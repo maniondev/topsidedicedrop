@@ -6,7 +6,7 @@ import { applyGravity } from '@/lib/gravity';
 import { scoreMerge, scoreClear } from '@/lib/scoring';
 import { RNG, weightedValue } from '@/lib/rng';
 import {
-  COLS, ROWS, LOCK_DELAY_MS, LOCK_DELAY_MAX_MS, SPAWN_DELAY_MS,
+  COLS, ROWS, LOCK_DELAY_MS, LOCK_DELAY_MAX_MS, SPAWN_LOCK_GRACE_MS, SPAWN_DELAY_MS,
   QUEUE_SIZE, GRAVITY_BASE_MS, ENABLED_PIECE_IDS, chainResolveDelay,
 } from '@/constants/game';
 
@@ -500,12 +500,28 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
   }, [state.phase, gravityMs, paused]);
 
   // Lock delay — resets on phase change to locking or explicit lockResetKey
-  // bump. The delay eases up when the board is stacked near the top (see
-  // lockDelayForBoard); the board is stable while a piece is locking, so adding
-  // it to the deps doesn't cause the timer to restart mid-lock.
+  // bump. Two eases stack the odds in the player's favor near the top:
+  //  1. A piece that spawns already in contact (spawning -> locking, skipping
+  //     'falling') gets a fixed generous SPAWN_LOCK_GRACE_MS window, latched
+  //     for the whole locking session so moving the piece keeps the grace.
+  //  2. Otherwise the delay eases with stack height (lockDelayForBoard).
+  // The board is stable while a piece is locking, so reading it (and bumping
+  // lockResetKey on moves) doesn't restart the timer with a different value
+  // mid-lock — except intentionally, on a move that resets the timer.
+  const prevPhaseRef = useRef<GamePhase>(state.phase);
+  const spawnGraceRef = useRef(false);
   useEffect(() => {
-    if (state.phase !== 'locking' || paused) return;
-    const id = setTimeout(() => dispatch({ type: 'LOCK_PIECE' }), lockDelayForBoard(state.board));
+    const prevPhase = prevPhaseRef.current;
+    prevPhaseRef.current = state.phase;
+    if (state.phase !== 'locking' || paused) {
+      spawnGraceRef.current = false;
+      return;
+    }
+    // Latch spawn-grace once, when this locking session begins, so it survives
+    // the lockResetKey re-runs caused by moving the piece.
+    if (prevPhase !== 'locking') spawnGraceRef.current = prevPhase === 'spawning';
+    const delay = spawnGraceRef.current ? SPAWN_LOCK_GRACE_MS : lockDelayForBoard(state.board);
+    const id = setTimeout(() => dispatch({ type: 'LOCK_PIECE' }), delay);
     return () => clearTimeout(id);
   }, [state.phase, state.lockResetKey, paused, state.board]);
 

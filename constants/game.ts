@@ -9,6 +9,11 @@ export const LOCK_DELAY_MS   = 300;
 // (see lockDelayForBoard in useGame) so the player has more time to slide or
 // rotate a piece into place instead of it snapping down almost instantly.
 export const LOCK_DELAY_MAX_MS = 700;
+// A piece that spawns already touching the stack skips the 'falling' phase and
+// starts locking immediately (SPAWN_NEXT). Give that case a guaranteed generous
+// window — otherwise, on a near-full board, it feels like the piece spawns
+// pre-locked with no chance to slide it to a save.
+export const SPAWN_LOCK_GRACE_MS = 800;
 export const RESOLVE_PAUSE_MS = 110;
 export const MERGE_ANIM_MS   = 150;
 export const SPAWN_DELAY_MS  = 120;
