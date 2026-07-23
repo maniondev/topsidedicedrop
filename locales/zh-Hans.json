@@ -290,8 +290,8 @@
   "game": {
     "over": "游戏结束",
     "newBest": "新纪录！",
-    "allClearLine1": "全部",
-    "allClearLine2": "消除！",
+    "allClearLine1": "全消",
+    "allClearLine2": "",
     "previousBest": "之前最佳：{{score}}",
     "best": "最佳：{{score}}",
     "continue": "继续",

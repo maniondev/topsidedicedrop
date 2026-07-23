@@ -290,8 +290,8 @@
   "game": {
     "over": "ゲームオーバー",
     "newBest": "自己ベスト更新！",
-    "allClearLine1": "オール",
-    "allClearLine2": "クリア！",
+    "allClearLine1": "全消し！",
+    "allClearLine2": "",
     "previousBest": "前回のベスト: {{score}}",
     "best": "ベスト: {{score}}",
     "continue": "つづける",

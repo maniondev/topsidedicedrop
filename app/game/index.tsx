@@ -360,23 +360,42 @@ export default function GameScreen() {
     allClearCountRef.current = game.allClearCount;
     hapticSuccess();
     const cx = boardW / 2;
-    // Anchor for the stacked All/Clear/+500 labels. Nudged DOWN from a full-cell
-    // up-shift to ~a third of a cell so the top "All" label clears the newly
-    // spawned dice at the top of the board (they were overlapping). Increase the
-    // 0.35 toward 1 to raise it again, toward 0 to drop it further.
+    // Anchor for the stacked All-Clear-phrase / +500 labels. Nudged DOWN from a
+    // full-cell up-shift to ~a third of a cell so the top label clears the newly
+    // spawned dice at the top of the board (they were overlapping).
     const cy = (cellSize * ROWS) / 2 - cellSize * 0.15;
-    const id1 = String(floatingLabelIdRef.current++);
-    const id2 = String(floatingLabelIdRef.current++);
-    const id3 = String(floatingLabelIdRef.current++);
     const outline = colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)';
     const boardH  = cellSize * ROWS;
     const gap     = 86 * popScale;                       // vertical spacing between stacked labels
-    const topY    = Math.max(cy - 112 * popScale, 4);    // 'All' baseline, clamped to board top
+    // The All Clear phrase is one or two lines depending on the language
+    // (e.g. "All"/"Clear!" and "Plateau"/"vide !" split across two; "¡Pleno!"
+    // and "全消" are a single line). Build the rows dynamically and keep the
+    // whole block (phrase line(s) + the +500 score) vertically centered on cy.
+    const line1 = t('game.allClearLine1');
+    const line2 = t('game.allClearLine2');
+    const phraseLines = [line1, ...(line2 ? [line2] : [])];
+    const totalRows = phraseLines.length + 1;            // phrase line(s) + score
+    const topY = Math.max(cy - ((totalRows - 1) * gap) / 2 - 26 * popScale, 4);
+    const wordFont = font('Fredoka_700Bold');
+    const labels = phraseLines.map((text, i) => ({
+      id: String(floatingLabelIdRef.current++),
+      type: 'chain' as const,
+      text, x: cx, y: topY + gap * i,
+      color: colors.accent, fontSize: 62 * popScale,
+      rotation: i % 2 === 0 ? -9 : 9,
+      fontFamily: wordFont, travelY: -35, glowColor: outline, centerH: true,
+    }));
+    labels.push({
+      id: String(floatingLabelIdRef.current++),
+      type: 'chain' as const,
+      text: '+500', x: cx,
+      y: Math.min(topY + gap * phraseLines.length, boardH - 58 * popScale),
+      color: colors.accent, fontSize: 44 * popScale, rotation: -7,
+      fontFamily: 'Fredoka_600SemiBold', travelY: -35, glowColor: outline, centerH: true,
+    });
     setFloatingLabels(prev => [
       ...prev.filter(l => l.type !== 'chain'),
-      { id: id1, type: 'chain', text: t('game.allClearLine1'), x: cx, y: topY,       color: colors.accent, fontSize: 62 * popScale, rotation: -9, fontFamily: font('Fredoka_700Bold'), travelY: -35, glowColor: outline, centerH: true },
-      { id: id2, type: 'chain', text: t('game.allClearLine2'), x: cx, y: topY + gap, color: colors.accent, fontSize: 62 * popScale, rotation:  9, fontFamily: font('Fredoka_700Bold'), travelY: -35, glowColor: outline, centerH: true },
-      { id: id3, type: 'chain', text: '+500',  x: cx, y: Math.min(topY + gap * 2, boardH - 58 * popScale), color: colors.accent, fontSize: 44 * popScale, rotation: -7, fontFamily: 'Fredoka_600SemiBold', travelY: -35, glowColor: outline, centerH: true },
+      ...labels,
     ]);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game.allClearCount]);

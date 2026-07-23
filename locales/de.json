@@ -291,7 +291,7 @@
     "over": "Spiel vorbei",
     "newBest": "Neuer Rekord!",
     "allClearLine1": "Alles",
-    "allClearLine2": "Leer!",
+    "allClearLine2": "weg!",
     "previousBest": "Vorheriger Rekord: {{score}}",
     "best": "Beste: {{score}}",
     "continue": "Fortsetzen",
