@@ -6,23 +6,9 @@ import { applyGravity } from '@/lib/gravity';
 import { scoreMerge, scoreClear } from '@/lib/scoring';
 import { RNG, weightedValue } from '@/lib/rng';
 import {
-  COLS, ROWS, LOCK_DELAY_MS, LOCK_DELAY_MAX_MS, SPAWN_LOCK_GRACE_MS, SPAWN_DELAY_MS,
+  COLS, ROWS, LOCK_DELAY_MS, SPAWN_LOCK_GRACE_MS, SPAWN_DELAY_MS,
   QUEUE_SIZE, GRAVITY_BASE_MS, ENABLED_PIECE_IDS, chainResolveDelay,
 } from '@/constants/game';
-
-// Ease the lock delay when the board is stacked near the top. `emptyTop` is the
-// number of empty rows above the highest filled cell; once only 1-2 rows remain
-// the delay ramps from LOCK_DELAY_MS up toward LOCK_DELAY_MAX_MS, giving the
-// player more time to maneuver a piece before it locks. Normal play (3+ empty
-// rows) is unchanged.
-function lockDelayForBoard(board: Board): number {
-  let emptyTop = ROWS;
-  for (let r = 0; r < ROWS; r++) {
-    if (board[r].some(cell => cell !== null)) { emptyTop = r; break; }
-  }
-  if (emptyTop >= 3) return LOCK_DELAY_MS;
-  return Math.min(LOCK_DELAY_MAX_MS, LOCK_DELAY_MS + (3 - emptyTop) * 200);
-}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -500,14 +486,11 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
   }, [state.phase, gravityMs, paused]);
 
   // Lock delay — resets on phase change to locking or explicit lockResetKey
-  // bump. Two eases stack the odds in the player's favor near the top:
-  //  1. A piece that spawns already in contact (spawning -> locking, skipping
-  //     'falling') gets a fixed generous SPAWN_LOCK_GRACE_MS window, latched
-  //     for the whole locking session so moving the piece keeps the grace.
-  //  2. Otherwise the delay eases with stack height (lockDelayForBoard).
-  // The board is stable while a piece is locking, so reading it (and bumping
-  // lockResetKey on moves) doesn't restart the timer with a different value
-  // mid-lock — except intentionally, on a move that resets the timer.
+  // bump. Normal landings use the flat LOCK_DELAY_MS. The one exception: a piece
+  // that spawns already in contact (spawning -> locking, skipping 'falling')
+  // gets a fixed generous SPAWN_LOCK_GRACE_MS window instead, latched for the
+  // whole locking session so moving the piece keeps the grace — otherwise, on a
+  // near-full board, such a piece feels pre-locked with no chance to slide it.
   const prevPhaseRef = useRef<GamePhase>(state.phase);
   const spawnGraceRef = useRef(false);
   useEffect(() => {
@@ -520,10 +503,10 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
     // Latch spawn-grace once, when this locking session begins, so it survives
     // the lockResetKey re-runs caused by moving the piece.
     if (prevPhase !== 'locking') spawnGraceRef.current = prevPhase === 'spawning';
-    const delay = spawnGraceRef.current ? SPAWN_LOCK_GRACE_MS : lockDelayForBoard(state.board);
+    const delay = spawnGraceRef.current ? SPAWN_LOCK_GRACE_MS : LOCK_DELAY_MS;
     const id = setTimeout(() => dispatch({ type: 'LOCK_PIECE' }), delay);
     return () => clearTimeout(id);
-  }, [state.phase, state.lockResetKey, paused, state.board]);
+  }, [state.phase, state.lockResetKey, paused]);
 
   // Board resolution — stops when paused.
   // Cadence builds suspense: the first two merges are fast, then each subsequent

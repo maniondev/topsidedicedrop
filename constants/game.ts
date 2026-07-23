@@ -5,10 +5,6 @@ export const ROWS = 8;
 
 export const GRAVITY_BASE_MS = 960;
 export const LOCK_DELAY_MS   = 300;
-// When the stack nears the top of the board, the lock delay eases up to this
-// (see lockDelayForBoard in useGame) so the player has more time to slide or
-// rotate a piece into place instead of it snapping down almost instantly.
-export const LOCK_DELAY_MAX_MS = 700;
 // A piece that spawns already touching the stack skips the 'falling' phase and
 // starts locking immediately (SPAWN_NEXT). Give that case a guaranteed generous
 // window — otherwise, on a near-full board, it feels like the piece spawns
