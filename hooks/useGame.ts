@@ -6,9 +6,23 @@ import { applyGravity } from '@/lib/gravity';
 import { scoreMerge, scoreClear } from '@/lib/scoring';
 import { RNG, weightedValue } from '@/lib/rng';
 import {
-  COLS, ROWS, LOCK_DELAY_MS, SPAWN_DELAY_MS,
+  COLS, ROWS, LOCK_DELAY_MS, LOCK_DELAY_MAX_MS, SPAWN_DELAY_MS,
   QUEUE_SIZE, GRAVITY_BASE_MS, ENABLED_PIECE_IDS, chainResolveDelay,
 } from '@/constants/game';
+
+// Ease the lock delay when the board is stacked near the top. `emptyTop` is the
+// number of empty rows above the highest filled cell; once only 1-2 rows remain
+// the delay ramps from LOCK_DELAY_MS up toward LOCK_DELAY_MAX_MS, giving the
+// player more time to maneuver a piece before it locks. Normal play (3+ empty
+// rows) is unchanged.
+function lockDelayForBoard(board: Board): number {
+  let emptyTop = ROWS;
+  for (let r = 0; r < ROWS; r++) {
+    if (board[r].some(cell => cell !== null)) { emptyTop = r; break; }
+  }
+  if (emptyTop >= 3) return LOCK_DELAY_MS;
+  return Math.min(LOCK_DELAY_MAX_MS, LOCK_DELAY_MS + (3 - emptyTop) * 200);
+}
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -485,12 +499,15 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
     return () => clearInterval(id);
   }, [state.phase, gravityMs, paused]);
 
-  // Lock delay — resets on phase change to locking or explicit lockResetKey bump.
+  // Lock delay — resets on phase change to locking or explicit lockResetKey
+  // bump. The delay eases up when the board is stacked near the top (see
+  // lockDelayForBoard); the board is stable while a piece is locking, so adding
+  // it to the deps doesn't cause the timer to restart mid-lock.
   useEffect(() => {
     if (state.phase !== 'locking' || paused) return;
-    const id = setTimeout(() => dispatch({ type: 'LOCK_PIECE' }), LOCK_DELAY_MS);
+    const id = setTimeout(() => dispatch({ type: 'LOCK_PIECE' }), lockDelayForBoard(state.board));
     return () => clearTimeout(id);
-  }, [state.phase, state.lockResetKey, paused]);
+  }, [state.phase, state.lockResetKey, paused, state.board]);
 
   // Board resolution — stops when paused.
   // Cadence builds suspense: the first two merges are fast, then each subsequent
