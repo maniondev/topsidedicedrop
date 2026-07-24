@@ -516,6 +516,33 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Self-heal a yield to "other audio": AVAudioSession.isOtherAudioPlaying can
+  // read a phantom true (a stale/transitioning session), which used to silence
+  // music until the NEXT foreground event — i.e. it never came back after
+  // backgrounding, or didn't start on launch. After any yield we re-check a few
+  // times; if the reading has cleared (no real other audio) we start music.
+  // Bounded so we don't spin while the user genuinely has Spotify going, and
+  // reset on a fresh background/foreground cycle.
+  const reloadMenuTrackRef = useRef<(() => void) | null>(null);
+  const yieldRecheckRef = useRef<{ timer: ReturnType<typeof setTimeout> | null; tries: number }>({ timer: null, tries: 0 });
+  const resetYieldRecheck = useCallback(() => {
+    const s = yieldRecheckRef.current;
+    if (s.timer) { clearTimeout(s.timer); s.timer = null; }
+    s.tries = 0;
+  }, []);
+  const scheduleYieldRecheck = useCallback(() => {
+    const s = yieldRecheckRef.current;
+    if (s.timer || s.tries >= 4) return;
+    s.timer = setTimeout(() => {
+      s.timer = null;
+      if (AppState.currentState !== 'active' || isAdInterrupting()) return;
+      if (!enabledRef.current || !devIncludedRef.current) return;
+      if (musicSyncStartedAtRef.current) { s.tries = 0; return; } // already playing
+      s.tries++;
+      reloadMenuTrackRef.current?.();
+    }, 2000);
+  }, []);
+
   // Backgrounding mid-stinger (app switcher during the launch intro) can
   // leave playLaunchSequence's stinger playback stuck/interrupted — its
   // completion callback may never fire, so launchIntroActive would never
@@ -531,15 +558,20 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     // leave two menu Sound instances playing (one leaked). Claimed BEFORE the
     // other-audio check below so yielding also cancels any in-flight reload.
     const gen = ++reloadGenRef.current;
+    // Reactivate the audio session BEFORE checking for other audio — reading
+    // isOtherAudioPlaying mid-transition returns phantom values. Our mixable
+    // category doesn't interrupt the user's playback, so this is safe.
+    await reactivateAudioSessionOnResume();
+    if (gen !== reloadGenRef.current) { setLaunchPlaybackStarted(false); setLaunchIntroActive(false); return; }
     // Yield to the user's own audio — the stinger is abandoned and the overlay
-    // cleared above regardless, but don't start our soundtrack over their
-    // playback. A later resume will start it once their audio has stopped.
+    // cleared regardless, but don't start our soundtrack over their playback.
+    // Re-check shortly after in case the reading was a transient false positive.
     if (refreshOtherAudio()) {
       setLaunchPlaybackStarted(false);
       setLaunchIntroActive(false);
+      scheduleYieldRecheck();
       return;
     }
-    await reactivateAudioSessionOnResume();
     const old = soundsRef.current.menu;
     try { old?.stop(); old?.release(); } catch {}
     const asset = Asset.fromModule(SOUNDTRACK_SOURCES[soundtrackIdRef.current]);
@@ -569,7 +601,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }
     setLaunchPlaybackStarted(false);
     setLaunchIntroActive(false);
-  }, [refreshOtherAudio]);
+  }, [refreshOtherAudio, scheduleYieldRecheck]);
 
   // Single-track mode: "switching" tracks just ducks/restores the one menu
   // track's volume — no pause, no restart, no second track ever plays.
@@ -617,18 +649,21 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
   const reloadMenuTrack = useCallback(async () => {
     const gen = ++reloadGenRef.current;
-    // Yield to the user's own audio — don't rebuild/restart our soundtrack over
-    // it. The gen bump above also cancels any reload already in flight (e.g. a
-    // prior resume that's mid-load when the user starts their music), so it
-    // can't finish and play. A later resume, once their audio has stopped,
-    // reloads and plays.
-    if (refreshOtherAudio()) return;
-    // Shared with SoundContext's own foreground handler — waits out
-    // whichever context's native setCategory/setActive call is in flight
-    // before either constructs new Sound instances, avoiding the same
-    // concurrent-construction race that broke cold-launch playback.
+    // Reactivate the audio session BEFORE reading isOtherAudioPlaying. Reading
+    // that property mid-foreground-transition (session still stale) returned
+    // phantom values that silently kept music from ever restarting after
+    // backgrounding — the bug this fixes. Our category is always set with
+    // mixWithOthers, so reactivating never interrupts the user's own audio.
+    // (Also shared with SoundContext's foreground handler: it waits out
+    // whichever context's native setCategory/setActive is in flight, avoiding
+    // the concurrent-construction race that once broke cold-launch playback.)
     await reactivateAudioSessionOnResume();
     if (gen !== reloadGenRef.current) return;
+    // Yield to the user's own audio — don't rebuild/restart our soundtrack over
+    // it. The gen bump above cancels any reload already in flight. On yield,
+    // re-check shortly after in case the reading was a transient false positive
+    // (rather than waiting for the next foreground event, which left music dead).
+    if (refreshOtherAudio()) { scheduleYieldRecheck(); return; }
     const old = soundsRef.current.menu;
     try { old?.stop(); old?.release(); } catch {}
     const asset = Asset.fromModule(SOUNDTRACK_SOURCES[soundtrackIdRef.current]);
@@ -663,10 +698,14 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }
     if (gen !== reloadGenRef.current) return;
     if (started) {
+      resetYieldRecheck(); // music is up — cancel any pending yield re-check
       setMusicSyncStartedAt(started);
       setMusicSyncEpoch(e => e + 1);
     }
-  }, [fadeTo, refreshOtherAudio]);
+  }, [fadeTo, refreshOtherAudio, scheduleYieldRecheck, resetYieldRecheck]);
+  // Ref so scheduleYieldRecheck can call the latest reloadMenuTrack without a
+  // circular useCallback dependency.
+  reloadMenuTrackRef.current = reloadMenuTrack;
 
   // User picked a different song in Settings. Shares reloadGenRef with
   // reloadMenuTrack so a soundtrack switch mid-resume (or vice versa) can't
@@ -781,6 +820,9 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } else {
+        // Fresh background/foreground cycle — cancel any pending yield re-check
+        // and reset its attempt budget so the next resume gets a clean run.
+        resetYieldRecheck();
         // Also silence an in-flight launch stinger — it's a separate Sound
         // from the tracks below, and with the Playback category it would
         // otherwise keep playing audibly in the background. The foreground
@@ -797,7 +839,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       }
     });
     return () => sub.remove();
-  }, [fadeTo, reloadMenuTrack, completeLaunchOnResume]);
+  }, [fadeTo, reloadMenuTrack, completeLaunchOnResume, resetYieldRecheck]);
 
   // Audio-session interruptions (alarms, timers, Siri, calls). These can fire
   // with NO AppState change — a banner alarm leaves the app 'active' — so the
@@ -1015,19 +1057,20 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       hasPlayedLaunchRef.current = true;
       if (musicEnabled && devMusicIncluded) {
         // Yield to the user's own audio: if something is already playing, skip
-        // the launch stinger + soundtrack and just drop the intro overlay. The
-        // foreground handler will start our music on a later resume if their
-        // audio has stopped by then. (hasPlayedLaunchRef is already set, so that
-        // path uses reloadMenuTrack, not the launch sequence.)
+        // the launch stinger + soundtrack and just drop the intro overlay. A
+        // re-check shortly after covers a transient false-positive reading (why
+        // music "sometimes doesn't start on launch"); it starts the theme via
+        // reloadMenuTrack (hasPlayedLaunchRef is already set, so no stinger).
         if (refreshOtherAudio()) {
           setLaunchPlaybackStarted(false);
           setLaunchIntroActive(false);
+          scheduleYieldRecheck();
         } else {
           playLaunchSequence();
         }
       }
     }
-  }, [tracksReady, settingsReady, musicEnabled, devMusicIncluded, playLaunchSequence, refreshOtherAudio]);
+  }, [tracksReady, settingsReady, musicEnabled, devMusicIncluded, playLaunchSequence, refreshOtherAudio, scheduleYieldRecheck]);
 
   // Loop-boundary ticker: fires at each predicted wrap of the looping menu
   // track, re-anchoring musicLoopStartedAt so beat-synced animations reset
