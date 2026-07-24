@@ -9,6 +9,9 @@ export function scoreMerge(newValue: CellValue, chainPass: number, diceCount: nu
   return Math.round((newValue - 1) * diceCount * multiplier(chainPass));
 }
 
+// A six-clear is worth SIX_CLEAR_BASE for the clear itself (the first two 6s)
+// plus SIX_CLEAR_BASE for each additional 6 in the group — i.e. 20 / 40 / 60 /
+// 80 for 2 / 3 / 4 / 5 sixes — all scaled by the chain multiplier.
 export function scoreClear(chainPass: number, sixCount: number = 2): number {
-  return Math.round(SIX_CLEAR_BASE * sixCount * multiplier(chainPass));
+  return Math.round(SIX_CLEAR_BASE * (sixCount - 1) * multiplier(chainPass));
 }
