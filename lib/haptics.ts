@@ -26,6 +26,13 @@ export function hapticMedium() {
   fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
 }
 
+/** Light tap for a deliberate UI action (swipe-to-pause) — matches the pause
+ * button's feedback. Fires at a calm, non-gameplay moment, so it's exempt from
+ * the payoff-only rule above (no cascade frames to contend with). */
+export function hapticLight() {
+  fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light));
+}
+
 /** All Clear. Bypasses the gap: on a common single-pass All Clear the empty
  * board is detected one resolve step (~110ms) after the clear's medium hit,
  * and the gate was swallowing the game's biggest payoff buzz. The

@@ -28,7 +28,7 @@ import EmergencyCondenseOverlay from '@/components/game/EmergencyCondenseOverlay
 import { FloatingLabelsOverlay, FloatingLabelData } from '@/components/game/FloatingLabels';
 import AdBanner from '@/components/AdBanner';
 import { preloadAllAds, setGameplayActive } from '@/lib/adManager';
-import { hapticMedium, hapticSuccess } from '@/lib/haptics';
+import { hapticMedium, hapticSuccess, hapticLight } from '@/lib/haptics';
 import { addAudioInterruptionListener } from '@/modules/native-audio-info';
 import { saveGame, loadSavedGame, clearSavedGame, savePendingRun, clearPendingRun, hasSeenControls, markControlsSeen } from '@/lib/storage';
 import TutorialOverlay from '@/components/game/TutorialOverlay';
@@ -121,6 +121,10 @@ export default function GameScreen() {
   const game = useGame(gravityMs, paused || reviewPromptVisible || showTutorial);
 
   const handlePause = useCallback(() => setPaused(true), []);
+  // Swipe-up pauses — identical mechanism to the pause button (setPaused(true)
+  // drives the pause modal, game freeze, and music behavior), plus the same
+  // light haptic the button fires.
+  const handleSwipePause = useCallback(() => { hapticLight(); handlePause(); }, [handlePause]);
 
   const [freeContinueUsed,  setFreeContinueUsed]  = useState(false);
   const [adContinueUsed,   setAdContinueUsed]    = useState(false);
@@ -778,9 +782,15 @@ export default function GameScreen() {
           if (axis.current === 'v' && e.velocityY > 650 && e.translationY > cellSize * 0.6) {
             runOnJS(hardDropWithSound)();
           }
+          // A quick UPWARD flick pauses — mirror of the hard-drop threshold.
+          // Up isn't used by any other control, so it's a safe, deliberate
+          // gesture; the velocity + travel floor rejects accidental drifts.
+          else if (axis.current === 'v' && e.velocityY < -650 && e.translationY < -cellSize * 0.6) {
+            runOnJS(handleSwipePause)();
+          }
         }),
     );
-  }, [rotateWithSound, hardDropWithSound, game.moveLeft, game.moveRight, game.softDrop, cellSize]);
+  }, [rotateWithSound, hardDropWithSound, handleSwipePause, game.moveLeft, game.moveRight, game.softDrop, cellSize]);
 
   const freeContinueAvailable = hasNoAds;
 
