@@ -792,6 +792,25 @@ export default function GameScreen() {
     );
   }, [rotateWithSound, hardDropWithSound, handleSwipePause, game.moveLeft, game.moveRight, game.softDrop, cellSize]);
 
+  // Pause-only gesture used while the full board controls are disabled
+  // (resolving / spawning / condensing / idle). Move/rotate/drop stay blocked
+  // during those phases, but swipe-up-to-pause must remain available in every
+  // phase — exactly like the pause button, which is never gated. Detects a
+  // predominantly-vertical upward flick with the same threshold as the board
+  // gesture's pause swipe.
+  const pauseSwipeGesture = useMemo(() =>
+    Gesture.Pan()
+      .minDistance(4)
+      .onEnd(e => {
+        if (
+          Math.abs(e.translationY) > Math.abs(e.translationX) &&
+          e.velocityY < -650 && e.translationY < -cellSize * 0.6
+        ) {
+          runOnJS(handleSwipePause)();
+        }
+      }),
+    [handleSwipePause, cellSize]);
+
   const freeContinueAvailable = hasNoAds;
 
   return (
@@ -822,7 +841,7 @@ export default function GameScreen() {
             that matches the board, while boardWrap keeps overflow:hidden for its
             border-radius and the GameBoard canvas. */}
         <View>
-          <GestureDetector gesture={controlsDisabled ? Gesture.Tap() : boardGesture}>
+          <GestureDetector gesture={controlsDisabled ? pauseSwipeGesture : boardGesture}>
             <View style={[styles.boardWrap, { backgroundColor: colors.surfaceRaise }]}>
               <GameBoard
                 board={game.board}
