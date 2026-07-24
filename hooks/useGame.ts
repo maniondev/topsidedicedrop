@@ -7,7 +7,7 @@ import { scoreMerge, scoreClear } from '@/lib/scoring';
 import { RNG, weightedValue } from '@/lib/rng';
 import {
   COLS, ROWS, LOCK_DELAY_MS, SPAWN_LOCK_GRACE_MS, SPAWN_DELAY_MS,
-  QUEUE_SIZE, GRAVITY_BASE_MS, ENABLED_PIECE_IDS, chainResolveDelay,
+  QUEUE_SIZE, GRAVITY_BASE_MS, ENABLED_PIECE_IDS, chainResolveDelay, ALL_CLEAR_BONUS,
 } from '@/constants/game';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -188,8 +188,6 @@ function initialState(): GameState {
   };
 }
 
-const ALL_CLEAR_BONUS = 500;
-
 function isBoardEmpty(board: Board): boolean {
   return board.every(row => row.every(cell => cell === null));
 }
@@ -345,10 +343,12 @@ function reducer(state: GameState, action: Action): GameState {
         const { newBoard: gravBoard, moved } = applyGravity(state.board);
         if (!moved) {
           const allClear = isBoardEmpty(state.board);
+          // Escalating within a run: the Nth All Clear is worth BONUS * N.
+          // allClearCount is still the pre-increment value here, so N = count+1.
           return {
             ...state,
             phase: 'spawning',
-            score: allClear ? state.score + ALL_CLEAR_BONUS : state.score,
+            score: allClear ? state.score + ALL_CLEAR_BONUS * (state.allClearCount + 1) : state.score,
             allClearCount: allClear ? state.allClearCount + 1 : state.allClearCount,
           };
         }
@@ -367,7 +367,7 @@ function reducer(state: GameState, action: Action): GameState {
       const pass = state.chainPass;
       let gain = 0;
       for (const evt of events) {
-        if (evt.newValue === 'clear') gain += scoreClear(pass);
+        if (evt.newValue === 'clear') gain += scoreClear(pass, evt.group.length);
         else gain += scoreMerge(evt.newValue as CellValue, pass, evt.group.length);
       }
 

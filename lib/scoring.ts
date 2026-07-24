@@ -9,6 +9,6 @@ export function scoreMerge(newValue: CellValue, chainPass: number, diceCount: nu
   return Math.round((newValue - 1) * diceCount * multiplier(chainPass));
 }
 
-export function scoreClear(chainPass: number): number {
-  return Math.round(SIX_CLEAR_BASE * multiplier(chainPass));
+export function scoreClear(chainPass: number, sixCount: number = 2): number {
+  return Math.round(SIX_CLEAR_BASE * sixCount * multiplier(chainPass));
 }

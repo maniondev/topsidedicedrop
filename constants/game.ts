@@ -48,8 +48,15 @@ export const VALUE_DOT_COLORS_DEFAULT: Record<number, string> = {
   6: '#ffffff',
 };
 
-export const CHAIN_MULTIPLIERS = [1.0, 1.4, 1.8, 2.2, 2.6, 3.0];
+// Chain multiplier by resolution pass (0-indexed), capped at the last entry.
+// Accelerating curve: deeper cascades pay increasingly more, rewarding big
+// chains without inflating routine shallow ones.
+export const CHAIN_MULTIPLIERS = [1.0, 1.2, 1.6, 2.2, 3.0, 4.0, 5.0];
+// Points per six cleared (scaled by how many 6s clear and the chain multiplier).
 export const SIX_CLEAR_BASE    = 20;
+// All Clear (empty board) bonus, escalating within a run: the Nth All Clear of
+// a run is worth ALL_CLEAR_BONUS * N.
+export const ALL_CLEAR_BONUS   = 500;
 
 // Delay before the next chain resolution pass. First two merges are fast, then
 // each subsequent pass waits +100ms (capped) for slot-machine build-up.

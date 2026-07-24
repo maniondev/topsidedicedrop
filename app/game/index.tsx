@@ -33,7 +33,7 @@ import { addAudioInterruptionListener } from '@/modules/native-audio-info';
 import { saveGame, loadSavedGame, clearSavedGame, savePendingRun, clearPendingRun, hasSeenControls, markControlsSeen } from '@/lib/storage';
 import TutorialOverlay from '@/components/game/TutorialOverlay';
 import { runMergePhase, computeClearSteps } from '@/lib/condense';
-import { COLS, ROWS } from '@/constants/game';
+import { COLS, ROWS, ALL_CLEAR_BONUS } from '@/constants/game';
 import { submitScoreForCurrentPlayer, updateBestUnassistedForCurrentPlayer } from '@/lib/scoreQueue';
 import { getReviewOptedOut, setReviewOptedOut, reviewRunGateOpen, openNativeReview, getReviewLastPrompted, setReviewLastPrompted, setHasRated, reviewCooldownPassed, getReviewPendingFromPurchase, clearReviewPendingFromPurchase, getNativeReviewQuotaAvailable, recordNativeReviewRequest } from '@/lib/reviewPrompt';
 import ReviewPromptModal from '@/components/ReviewPromptModal';
@@ -367,14 +367,22 @@ export default function GameScreen() {
     const outline = colors.popupOutlineColor ?? colors.titleColor ?? 'rgba(0,0,0,0.88)';
     const boardH  = cellSize * ROWS;
     const gap     = 86 * popScale;                       // vertical spacing between stacked labels
+    // Hold the whole popup ~300ms longer than a normal floating label now that
+    // it stacks an extra "×N" row (default hold is 220ms).
+    const hold    = 520;
+    // The Nth All Clear of the run is worth ALL_CLEAR_BONUS * N; game.allClearCount
+    // is the post-increment count, so it IS N. Shown as an "×N" badge (language-
+    // neutral) so the escalating +value explains itself: 500 × N.
+    const mult  = game.allClearCount;
+    const bonus = ALL_CLEAR_BONUS * mult;
     // The All Clear phrase is one or two lines depending on the language
     // (e.g. "All"/"Clear!" and "Plateau"/"vide !" split across two; "¡Pleno!"
-    // and "全消" are a single line). Build the rows dynamically and keep the
-    // whole block (phrase line(s) + the +500 score) vertically centered on cy.
+    // and "全消" are a single line). Rows: phrase line(s), the ×N badge, then the
+    // +bonus score — built dynamically and kept vertically centered on cy.
     const line1 = t('game.allClearLine1');
     const line2 = t('game.allClearLine2');
     const phraseLines = [line1, ...(line2 ? [line2] : [])];
-    const totalRows = phraseLines.length + 1;            // phrase line(s) + score
+    const totalRows = phraseLines.length + 2;            // phrase line(s) + ×N + score
     const topY = Math.max(cy - ((totalRows - 1) * gap) / 2 - 26 * popScale, 4);
     const wordFont = font('Fredoka_700Bold');
     const labels = phraseLines.map((text, i) => ({
@@ -383,15 +391,24 @@ export default function GameScreen() {
       text, x: cx, y: topY + gap * i,
       color: colors.accent, fontSize: 62 * popScale,
       rotation: i % 2 === 0 ? -9 : 9,
-      fontFamily: wordFont, travelY: -35, glowColor: outline, centerH: true,
+      fontFamily: wordFont, travelY: -35, glowColor: outline, centerH: true, holdMs: hold,
     }));
+    // ×N multiplier badge (× and digits render in Fredoka in every locale, so it
+    // is NOT routed through the CJK-fallback font wrapper).
     labels.push({
       id: String(floatingLabelIdRef.current++),
       type: 'chain' as const,
-      text: '+500', x: cx,
-      y: Math.min(topY + gap * phraseLines.length, boardH - 58 * popScale),
+      text: `×${mult}`, x: cx, y: topY + gap * phraseLines.length,
+      color: colors.accent, fontSize: 52 * popScale, rotation: 6,
+      fontFamily: 'Fredoka_700Bold', travelY: -35, glowColor: outline, centerH: true, holdMs: hold,
+    });
+    labels.push({
+      id: String(floatingLabelIdRef.current++),
+      type: 'chain' as const,
+      text: `+${formatNumber(bonus)}`, x: cx,
+      y: Math.min(topY + gap * (phraseLines.length + 1), boardH - 58 * popScale),
       color: colors.accent, fontSize: 44 * popScale, rotation: -7,
-      fontFamily: 'Fredoka_600SemiBold', travelY: -35, glowColor: outline, centerH: true,
+      fontFamily: 'Fredoka_600SemiBold', travelY: -35, glowColor: outline, centerH: true, holdMs: hold,
     });
     setFloatingLabels(prev => [
       ...prev.filter(l => l.type !== 'chain'),
