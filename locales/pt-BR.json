@@ -317,6 +317,7 @@
       "move": "Deslize para mover",
       "rotate": "Toque para girar",
       "drop": "Deslize para baixo para soltar",
+      "pause": "Deslize para cima para pausar",
       "next": "Próximo",
       "letsGo": "Vamos lá!",
       "objMerge": "Dados iguais se fundem no valor seguinte",
@@ -329,7 +330,8 @@
     "controls": {
       "move": "Deslize para a esquerda/direita para mover",
       "rotate": "Toque para girar",
-      "drop": "Deslize para baixo para soltar mais rápido"
+      "drop": "Deslize para baixo para soltar mais rápido",
+      "pause": "Deslize para cima para pausar"
     },
     "rules": {
       "mergeTitle": "Combine valores iguais",

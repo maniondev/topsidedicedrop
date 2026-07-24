@@ -317,6 +317,7 @@
       "move": "Glissez pour déplacer",
       "rotate": "Touchez pour tourner",
       "drop": "Glissez vers le bas pour lâcher",
+      "pause": "Balayez vers le haut pour mettre en pause",
       "next": "Suivant",
       "letsGo": "C'est parti !",
       "objMerge": "Les dés identiques fusionnent en la valeur suivante",
@@ -329,7 +330,8 @@
     "controls": {
       "move": "Glissez à gauche/droite pour déplacer",
       "rotate": "Touchez pour tourner",
-      "drop": "Glissez vers le bas pour lâcher plus vite"
+      "drop": "Glissez vers le bas pour lâcher plus vite",
+      "pause": "Balayez vers le haut pour mettre en pause"
     },
     "rules": {
       "mergeTitle": "Fusionnez les valeurs identiques",

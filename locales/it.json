@@ -317,6 +317,7 @@
       "move": "Scorri per spostare",
       "rotate": "Tocca per ruotare",
       "drop": "Scorri verso il basso per lasciar cadere",
+      "pause": "Scorri verso l'alto per mettere in pausa",
       "next": "Avanti",
       "letsGo": "Andiamo!",
       "objMerge": "I dadi uguali si fondono nel valore successivo",
@@ -329,7 +330,8 @@
     "controls": {
       "move": "Scorri a sinistra/destra per spostare",
       "rotate": "Tocca per ruotare",
-      "drop": "Scorri verso il basso per lasciar cadere più in fretta"
+      "drop": "Scorri verso il basso per lasciar cadere più in fretta",
+      "pause": "Scorri verso l'alto per mettere in pausa"
     },
     "rules": {
       "mergeTitle": "Fondi valori uguali",

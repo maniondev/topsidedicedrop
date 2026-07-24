@@ -12,6 +12,7 @@ const CONTROL_HINTS = [
   { icon: '← →', key: 'game.tutorial.move' },
   { icon: '↻',   key: 'game.tutorial.rotate' },
   { icon: '↓',   key: 'game.tutorial.drop' },
+  { icon: '↑',   key: 'game.tutorial.pause' },
 ];
 const OBJECTIVE_HINTS = [
   { icon: '⚁⚁', key: 'game.tutorial.objMerge' },

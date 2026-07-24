@@ -317,6 +317,7 @@
       "move": "Swipe to move",
       "rotate": "Tap to rotate",
       "drop": "Swipe down to drop",
+      "pause": "Swipe up to pause",
       "next": "Next",
       "letsGo": "Let's go!",
       "objMerge": "Matching dice merge into the next value",
@@ -329,7 +330,8 @@
     "controls": {
       "move": "Swipe left/right to move",
       "rotate": "Tap to rotate",
-      "drop": "Swipe down to drop faster"
+      "drop": "Swipe down to drop faster",
+      "pause": "Swipe up to pause"
     },
     "rules": {
       "mergeTitle": "Merge matching values",

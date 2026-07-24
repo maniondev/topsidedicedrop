@@ -13,7 +13,7 @@ interface Props {
   showConsent?: boolean;
 }
 
-const CONTROLS = ['howToPlay.controls.move', 'howToPlay.controls.rotate', 'howToPlay.controls.drop'];
+const CONTROLS = ['howToPlay.controls.move', 'howToPlay.controls.rotate', 'howToPlay.controls.drop', 'howToPlay.controls.pause'];
 
 const RULES: { title: string; body: string }[] = [
   { title: 'howToPlay.rules.mergeTitle',   body: 'howToPlay.rules.mergeBody' },
