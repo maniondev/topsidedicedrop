@@ -91,7 +91,7 @@
     "restoreFailedTitle": "Échec de la restauration",
     "restoreFailedBody": "Une erreur est survenue.",
     "errorTitle": "Erreur",
-    "noPackage": "Aucun forfait trouvé. Réessayez plus tard.",
+    "noPackage": "Aucun produit trouvé. Réessayez plus tard.",
     "purchaseFailedTitle": "Échec de l'achat",
     "redeemTitle": "Utiliser un code",
     "redeemAndroidBody": "Ouvrez l'app Play Store et allez dans Paiements et abonnements > Utiliser un code.",
@@ -210,7 +210,7 @@
     "renameModal": {
       "title": "Nouveau nom",
       "current": "Actuel",
-      "shuffle": "Autre",
+      "shuffle": "Mélanger",
       "confirm": "Confirmer",
       "errorTitle": "Impossible de changer le nom",
       "errorBody": "Veuillez réessayer."
@@ -317,7 +317,7 @@
       "move": "Glissez pour déplacer",
       "rotate": "Touchez pour tourner",
       "drop": "Glissez vers le bas pour lâcher",
-      "pause": "Balayez vers le haut pour mettre en pause",
+      "pause": "Glissez vers le haut pour mettre en pause",
       "next": "Suivant",
       "letsGo": "C'est parti !",
       "objMerge": "Les dés identiques fusionnent en la valeur suivante",
@@ -331,7 +331,7 @@
       "move": "Glissez à gauche/droite pour déplacer",
       "rotate": "Touchez pour tourner",
       "drop": "Glissez vers le bas pour lâcher plus vite",
-      "pause": "Balayez vers le haut pour mettre en pause"
+      "pause": "Glissez vers le haut pour mettre en pause"
     },
     "rules": {
       "mergeTitle": "Fusionnez les valeurs identiques",

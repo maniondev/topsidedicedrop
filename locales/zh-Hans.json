@@ -191,7 +191,7 @@
     "unlockBanner": "解锁音效包、主题等更多内容",
     "stats": {
       "bestUnassisted": "最佳（无助攻）",
-      "bestOverall": "最佳（总）",
+      "bestOverall": "最佳（综合）",
       "lastRun": "上一局",
       "dayStreak": "连续天数"
     },
@@ -294,8 +294,8 @@
     "allClearLine2": "",
     "previousBest": "之前最佳：{{score}}",
     "best": "最佳：{{score}}",
-    "continue": "继续",
-    "continueAd": "▶ 继续",
+    "continue": "续玩",
+    "continueAd": "▶ 续玩",
     "watchLongerAd": "观看较长广告",
     "home": "← 主页",
     "paused": "已暂停",
@@ -320,8 +320,8 @@
       "pause": "向上滑动暂停",
       "next": "下一步",
       "letsGo": "开始！",
-      "objMerge": "相同点数的骰子会合并成更大点数",
-      "objSixes": "合并 6 点可将其从棋盘消除并获得额外分数",
+      "objMerge": "相同点数的骰子会合成为更大点数",
+      "objSixes": "合成 6 点可将其从棋盘消除并获得额外分数",
       "objSurvive": "新骰子无处生成时游戏结束"
     }
   },

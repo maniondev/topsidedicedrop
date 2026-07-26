@@ -180,7 +180,7 @@
     "AppIcon-IconBlue": "Icona blu"
   },
   "home": {
-    "subtitle": "Un gioco di caduta e fusione.",
+    "subtitle": "Un gioco di caduta e unione.",
     "continue": "Continua",
     "newGame": "Nuova partita",
     "play": "Gioca",
@@ -268,7 +268,7 @@
       "allRunsTerm": "Tutte le partite",
       "allRunsDesc": " — tutte le partite, comprese quelle in cui è stato usato un continua per prolungare il gioco.",
       "scoringTerm": "Punteggio",
-      "scoringDesc": " — fondere i dadi fa guadagnare punti, con un moltiplicatore per le reazioni a catena. Eliminare i sei dà un bonus, e svuotare l'intero tabellone dà un bonus ancora più grande.",
+      "scoringDesc": " — unire i dadi fa guadagnare punti, con un moltiplicatore per le reazioni a catena. Eliminare i sei dà un bonus, e svuotare l'intero campo dà un bonus ancora più grande.",
       "anonymousTerm": "Anonimo",
       "anonymousDesc": " — il tuo nome visualizzato è generato in modo casuale. Nella classifica non viene raccolta né usata alcuna informazione personale.",
       "gotIt": "Ho capito"
@@ -320,8 +320,8 @@
       "pause": "Scorri verso l'alto per mettere in pausa",
       "next": "Avanti",
       "letsGo": "Andiamo!",
-      "objMerge": "I dadi uguali si fondono nel valore successivo",
-      "objSixes": "Fondi i sei per toglierli dal tabellone e ottenere punti extra",
+      "objMerge": "I dadi uguali si uniscono nel valore successivo",
+      "objSixes": "Unisci i sei per toglierli dal campo e ottenere punti extra",
       "objSurvive": "La partita finisce quando non c'è spazio per nuovi dadi"
     }
   },
@@ -334,12 +334,12 @@
       "pause": "Scorri verso l'alto per mettere in pausa"
     },
     "rules": {
-      "mergeTitle": "Fondi valori uguali",
-      "mergeBody": "Due o più dadi adiacenti dello stesso valore si fondono in un dado del valore successivo: 1+1→2, 2+2→3, e così via.",
+      "mergeTitle": "Unisci valori uguali",
+      "mergeBody": "Due o più dadi adiacenti dello stesso valore si uniscono in un dado del valore successivo: 1+1→2, 2+2→3, e così via.",
       "sixesTitle": "Elimina i sei",
-      "sixesBody": "Fondi due o più sei per rimuoverli dal tabellone e ottenere un grande bonus. Il modo migliore per liberare spazio.",
+      "sixesBody": "Unisci due o più sei per rimuoverli dal campo e ottenere un grande bonus. Il modo migliore per liberare spazio.",
       "chainsTitle": "Crea catene",
-      "chainsBody": "Una fusione può innescarne altre mentre i dadi si assestano. Più lunga è la catena, maggiore è il moltiplicatore di punteggio.",
+      "chainsBody": "Un'unione può innescarne altre mentre i dadi si assestano. Più lunga è la catena, maggiore è il moltiplicatore di punteggio.",
       "surviveTitle": "Sopravvivi",
       "surviveBody": "Le pile senza sostegno cadono. La partita finisce quando un nuovo pezzo non entra più. Batti il tuo record e scala la classifica!"
     },

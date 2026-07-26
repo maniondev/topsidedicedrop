@@ -180,7 +180,7 @@
     "AppIcon-IconBlue": "Ícone azul"
   },
   "home": {
-    "subtitle": "Um jogo de soltar e combinar.",
+    "subtitle": "Um jogo de soltar e juntar.",
     "continue": "Continuar",
     "newGame": "Novo jogo",
     "play": "Jogar",
@@ -210,7 +210,7 @@
     "renameModal": {
       "title": "Novo nome",
       "current": "Atual",
-      "shuffle": "Outro",
+      "shuffle": "Sortear",
       "confirm": "Confirmar",
       "errorTitle": "Não foi possível mudar o nome",
       "errorBody": "Tente novamente."
@@ -224,7 +224,7 @@
     "noScoresNetwork": "Nenhuma pontuação na sua rede ainda.",
     "noScoresGlobal": "Nenhuma pontuação ainda — seja o primeiro!",
     "viewFollowing": "Ver seguindo",
-    "findPlayers": "Encontrar jogadores",
+    "findPlayers": "Buscar jogadores",
     "top100": "TOP 100 · {{mode}}",
     "select": "Selecionar",
     "selected": "Selecionado",
@@ -266,9 +266,9 @@
       "unassistedTerm": "Jogos sem ajuda",
       "unassistedDesc": " — pontuações de jogos concluídos antes de usar uma continuação.",
       "allRunsTerm": "Todos os jogos",
-      "allRunsDesc": " — todos os jogos, incluindo aqueles em que uma continuação foi usada para estender a partida.",
+      "allRunsDesc": " — todos os jogos, incluindo aqueles em que uma continuação foi usada para estender o jogo.",
       "scoringTerm": "Pontuação",
-      "scoringDesc": " — combinar dados rende pontos, com um multiplicador para reações em cadeia. Eliminar seis dá um bônus, e limpar o tabuleiro inteiro dá um bônus ainda maior.",
+      "scoringDesc": " — juntar dados rende pontos, com um multiplicador para reações em cadeia. Eliminar seis dá um bônus, e limpar a mesa inteira dá um bônus ainda maior.",
       "anonymousTerm": "Anônimo",
       "anonymousDesc": " — seu nome de exibição é gerado aleatoriamente. Nenhuma informação pessoal é coletada ou usada no ranking.",
       "gotIt": "Entendi"
@@ -296,7 +296,7 @@
     "best": "Melhor: {{score}}",
     "continue": "Continuar",
     "continueAd": "▶ Continuar",
-    "watchLongerAd": "Assistir a um anúncio mais longo",
+    "watchLongerAd": "Ver anúncio mais longo",
     "home": "← Início",
     "paused": "Pausado",
     "resume": "▶  Retomar",
@@ -307,7 +307,7 @@
     "logScore": "Registrar pontuação",
     "discardScore": "Descartar pontuação",
     "back": "← Voltar",
-    "condensing": "Condensando…",
+    "condensing": "Compactando…",
     "hud": {
       "score": "PONTUAÇÃO",
       "best": "MELHOR",
@@ -320,8 +320,8 @@
       "pause": "Deslize para cima para pausar",
       "next": "Próximo",
       "letsGo": "Vamos lá!",
-      "objMerge": "Dados iguais se fundem no valor seguinte",
-      "objSixes": "Funda os seis para tirá-los do tabuleiro e ganhar pontos extras",
+      "objMerge": "Dados iguais se juntam no valor seguinte",
+      "objSixes": "Junte os seis para tirá-los da mesa e ganhar pontos extras",
       "objSurvive": "O jogo acaba quando não há espaço para novos dados"
     }
   },
@@ -334,14 +334,14 @@
       "pause": "Deslize para cima para pausar"
     },
     "rules": {
-      "mergeTitle": "Combine valores iguais",
-      "mergeBody": "Dois ou mais dados encostados de mesmo valor se combinam em um dado do valor seguinte: 1+1→2, 2+2→3, e assim por diante.",
+      "mergeTitle": "Junte valores iguais",
+      "mergeBody": "Dois ou mais dados encostados do mesmo valor se juntam em um dado do valor seguinte: 1+1→2, 2+2→3, e assim por diante.",
       "sixesTitle": "Elimine os seis",
-      "sixesBody": "Combine dois ou mais seis para removê-los do tabuleiro e ganhar um grande bônus. A melhor forma de liberar espaço.",
-      "chainsTitle": "Crie correntes",
-      "chainsBody": "Uma combinação pode desencadear outras conforme os dados se assentam. Quanto mais longa a corrente, maior o multiplicador de pontos.",
+      "sixesBody": "Junte dois ou mais seis para removê-los da mesa e ganhar um grande bônus. A melhor forma de liberar espaço.",
+      "chainsTitle": "Crie cadeias",
+      "chainsBody": "Uma junção pode desencadear outras conforme os dados se assentam. Quanto mais longa a cadeia, maior o multiplicador de pontos.",
       "surviveTitle": "Sobreviva",
-      "surviveBody": "Pilhas sem apoio caem. A partida termina quando uma nova peça não cabe mais. Bata seu recorde e suba no ranking!"
+      "surviveBody": "Pilhas sem apoio caem. O jogo termina quando uma nova peça não cabe mais. Bata seu recorde e suba no ranking!"
     },
     "consent": "Ao continuar, você concorda com nossos <terms>Termos</terms> e nossa <privacy>Política de privacidade</privacy>."
   },

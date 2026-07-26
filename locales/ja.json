@@ -27,8 +27,8 @@
     "premium": {
       "active": "プレミアム有効",
       "removeAds": "すべての広告を削除",
-      "unlockCustomization": "カスタマイズをアンロック",
-      "unlockPremium": "プレミアムをアンロック"
+      "unlockCustomization": "カスタマイズを解放",
+      "unlockPremium": "プレミアムを解放"
     },
     "sound": {
       "breakSilent": "サイレントモードを無視",
@@ -91,7 +91,7 @@
     "restoreFailedTitle": "復元に失敗しました",
     "restoreFailedBody": "問題が発生しました。",
     "errorTitle": "エラー",
-    "noPackage": "パッケージが見つかりません。後でもう一度お試しください。",
+    "noPackage": "商品が見つかりません。後でもう一度お試しください。",
     "purchaseFailedTitle": "購入に失敗しました",
     "redeemTitle": "コードを利用",
     "redeemAndroidBody": "Play ストアアプリを開き、「お支払いと定期購入」＞「コードを利用」に進んでください。",
@@ -99,11 +99,11 @@
     "perkNoAds": "広告なし",
     "perkFreeContinues": "無料コンティニュー",
     "perkThemes": "すべてのテーマとサウンドパック",
-    "perkDiceAnims": "すべてのサイコロアニメーションとスタイル",
+    "perkDiceAnims": "すべてのサイコロアニメとスタイル",
     "allInTitle": "Topside: Dice Drop プレミアム",
     "removeAdsTitle": "広告を削除",
-    "customizationTitle": "カスタマイズをアンロック",
-    "everythingUnlocked": "すべてアンロック済みです！",
+    "customizationTitle": "カスタマイズを解放",
+    "everythingUnlocked": "すべて解放済みです！",
     "close": "閉じる",
     "notNow": "後で",
     "restorePurchase": "購入を復元",
@@ -180,7 +180,7 @@
     "AppIcon-IconBlue": "ブルーアイコン"
   },
   "home": {
-    "subtitle": "落として合体させるゲーム。",
+    "subtitle": "落として合成するゲーム。",
     "continue": "つづける",
     "newGame": "新しいゲーム",
     "play": "プレイ",
@@ -188,7 +188,7 @@
     "soundOn": "サウンド オン",
     "soundOff": "サウンド オフ",
     "removeAds": "すべての広告を削除",
-    "unlockBanner": "サウンドパック、テーマなどをアンロック",
+    "unlockBanner": "サウンドパック、テーマなどを解放",
     "stats": {
       "bestUnassisted": "ベスト（ノーヘルプ）",
       "bestOverall": "ベスト（総合）",
@@ -268,7 +268,7 @@
       "allRunsTerm": "すべてのゲーム",
       "allRunsDesc": " — コンティニューでゲームを延長したものを含む、すべてのゲームです。",
       "scoringTerm": "スコア計算",
-      "scoringDesc": " — サイコロを合体させると得点でき、連鎖反応には倍率がかかります。6を消すとボーナス、盤面全体を消すとさらに大きなボーナスが得られます。",
+      "scoringDesc": " — サイコロを合成すると得点でき、連鎖反応には倍率がかかります。6を消すとボーナス、盤面全体を消すとさらに大きなボーナスが得られます。",
       "anonymousTerm": "匿名",
       "anonymousDesc": " — 表示名はランダムに生成されます。ランキングでは個人情報の収集・使用は行いません。",
       "gotIt": "OK"
@@ -320,9 +320,9 @@
       "pause": "上にスワイプで一時停止",
       "next": "次へ",
       "letsGo": "スタート！",
-      "objMerge": "同じ数字のダイスは合体して次の数字に",
-      "objSixes": "6同士を合体させるとボードから消えてボーナス点",
-      "objSurvive": "新しいダイスを置く場所がなくなるとゲームオーバー"
+      "objMerge": "同じ数字のサイコロが合成されて次の数字に",
+      "objSixes": "6同士を合成すると盤面から消えてボーナス点",
+      "objSurvive": "新しいサイコロを置く場所がなくなるとゲームオーバー"
     }
   },
   "howToPlay": {
@@ -334,12 +334,12 @@
       "pause": "上にスワイプで一時停止"
     },
     "rules": {
-      "mergeTitle": "同じ数字を合体",
-      "mergeBody": "同じ数字のサイコロが2つ以上隣り合うと、1つ上の数字のサイコロに合体します：1+1→2、2+2→3、と続きます。",
+      "mergeTitle": "同じ数字を合成",
+      "mergeBody": "同じ数字のサイコロが2つ以上隣り合うと、1つ上の数字のサイコロに合成されます：1+1→2、2+2→3、と続きます。",
       "sixesTitle": "6を消す",
-      "sixesBody": "6を2つ以上合体させて盤面から消すと、大きなボーナスが得られます。スペースを空ける最善の方法です。",
+      "sixesBody": "6を2つ以上合成して盤面から消すと、大きなボーナスが得られます。スペースを空ける一番の方法です。",
       "chainsTitle": "連鎖を作る",
-      "chainsBody": "サイコロが落ち着く際に、合体がさらなる合体を引き起こすことがあります。連鎖が長いほど、スコア倍率が大きくなります。",
+      "chainsBody": "サイコロが落ち着くと、ひとつの合成が次の合成を呼ぶことがあります。連鎖が長いほど、スコア倍率が大きくなります。",
       "surviveTitle": "生き残る",
       "surviveBody": "支えのない山は崩れます。新しいピースが入らなくなるとゲーム終了です。自己ベストを更新してランキングを駆け上がろう！"
     },

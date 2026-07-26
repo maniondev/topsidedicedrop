@@ -180,7 +180,7 @@
     "AppIcon-IconBlue": "Blaues Symbol"
   },
   "home": {
-    "subtitle": "Ein Fall- und Kombinierspiel.",
+    "subtitle": "Fallen lassen und verschmelzen.",
     "continue": "Fortsetzen",
     "newGame": "Neues Spiel",
     "play": "Spielen",
@@ -210,7 +210,7 @@
     "renameModal": {
       "title": "Neuer Name",
       "current": "Aktuell",
-      "shuffle": "Anderer",
+      "shuffle": "Mischen",
       "confirm": "Bestätigen",
       "errorTitle": "Name konnte nicht geändert werden",
       "errorBody": "Bitte versuche es erneut."
@@ -268,7 +268,7 @@
       "allRunsTerm": "Alle Spiele",
       "allRunsDesc": " — alle Spiele, einschließlich derer, in denen eine Fortsetzung genutzt wurde, um das Spiel zu verlängern.",
       "scoringTerm": "Wertung",
-      "scoringDesc": " — das Kombinieren von Würfeln bringt Punkte, mit einem Multiplikator für Kettenreaktionen. Das Entfernen von Sechsen bringt einen Bonus, und das Leeren des gesamten Boards bringt einen noch größeren Bonus.",
+      "scoringDesc": " — das Verschmelzen von Würfeln bringt Punkte, mit einem Multiplikator für Kettenreaktionen. Das Entfernen von Sechsen bringt einen Bonus, und das Leeren des gesamten Spielfelds bringt einen noch größeren Bonus.",
       "anonymousTerm": "Anonym",
       "anonymousDesc": " — dein Anzeigename wird zufällig generiert. In der Rangliste werden keine persönlichen Daten erhoben oder verwendet.",
       "gotIt": "Verstanden"
@@ -321,7 +321,7 @@
       "next": "Weiter",
       "letsGo": "Los geht's!",
       "objMerge": "Gleiche Würfel verschmelzen zum nächsten Wert",
-      "objSixes": "Sechser verschmelzen, um sie vom Brett zu räumen — für Extrapunkte",
+      "objSixes": "Sechser verschmelzen, um sie vom Spielfeld zu räumen — für Extrapunkte",
       "objSurvive": "Spiel vorbei, wenn neue Würfel keinen Platz mehr haben"
     }
   },
@@ -334,12 +334,12 @@
       "pause": "Nach oben wischen zum Pausieren"
     },
     "rules": {
-      "mergeTitle": "Gleiche Werte kombinieren",
+      "mergeTitle": "Gleiche Werte verschmelzen",
       "mergeBody": "Zwei oder mehr sich berührende Würfel mit gleichem Wert verschmelzen zu einem Würfel des nächsthöheren Werts: 1+1→2, 2+2→3, und so weiter.",
       "sixesTitle": "Beseitige die Sechsen",
-      "sixesBody": "Kombiniere zwei oder mehr Sechsen, um sie für einen großen Bonus vom Board zu entfernen. Der beste Weg, Platz zu schaffen.",
+      "sixesBody": "Verschmilz zwei oder mehr Sechsen, um sie für einen großen Bonus vom Spielfeld zu entfernen. Der beste Weg, Platz zu schaffen.",
       "chainsTitle": "Baue Ketten",
-      "chainsBody": "Eine Kombination kann weitere auslösen, während sich die Würfel setzen. Je länger die Kette, desto größer der Punkte-Multiplikator.",
+      "chainsBody": "Eine Verschmelzung kann weitere auslösen, während sich die Würfel setzen. Je länger die Kette, desto größer der Punkte-Multiplikator.",
       "surviveTitle": "Überlebe",
       "surviveBody": "Nicht gestützte Stapel fallen. Das Spiel endet, wenn ein neues Teil nicht mehr passt. Schlage deinen Rekord und klettere in der Rangliste nach oben!"
     },

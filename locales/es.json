@@ -87,15 +87,15 @@
     "restoreTitle": "¡Restaurado!",
     "restoreBody": "Compras restauradas.",
     "nothingTitle": "Nada que restaurar",
-    "nothingBody": "No se encontró ninguna compra anterior.",
+    "nothingBody": "No se ha encontrado ninguna compra anterior.",
     "restoreFailedTitle": "Error al restaurar",
-    "restoreFailedBody": "Algo salió mal.",
+    "restoreFailedBody": "Algo ha salido mal.",
     "errorTitle": "Error",
-    "noPackage": "No se encontró el paquete. Inténtalo más tarde.",
+    "noPackage": "No se ha encontrado el producto. Inténtalo más tarde.",
     "purchaseFailedTitle": "Error en la compra",
     "redeemTitle": "Canjear código",
     "redeemAndroidBody": "Abre la app de Play Store y ve a Pagos y suscripciones > Canjear código.",
-    "redeemErrorBody": "No se pudo abrir la pantalla de canje. Asegúrate de haber iniciado sesión en la App Store e inténtalo de nuevo.",
+    "redeemErrorBody": "No se ha podido abrir la pantalla de canje. Asegúrate de haber iniciado sesión en la App Store e inténtalo de nuevo.",
     "perkNoAds": "Sin anuncios",
     "perkFreeContinues": "Continuaciones gratis",
     "perkThemes": "Todos los temas y packs de sonido",
@@ -153,7 +153,7 @@
     "retro": "Retro",
     "electric": "Eléctrico",
     "twist": "Giro",
-    "flip": "Voltear",
+    "flip": "Volteo",
     "shatter": "Añicos",
     "glitch": "Glitch"
   },
@@ -180,7 +180,7 @@
     "AppIcon-IconBlue": "Icono azul"
   },
   "home": {
-    "subtitle": "Un juego de soltar y combinar.",
+    "subtitle": "Un juego de soltar y fusionar.",
     "continue": "Continuar",
     "newGame": "Nueva partida",
     "play": "Jugar",
@@ -212,14 +212,14 @@
       "current": "Actual",
       "shuffle": "Otro",
       "confirm": "Confirmar",
-      "errorTitle": "No se pudo cambiar el nombre",
+      "errorTitle": "No se ha podido cambiar el nombre",
       "errorBody": "Inténtalo de nuevo."
     },
     "youSuffix": " (tú)",
     "unassisted": "sin ayuda",
     "runsCount_one": "{{count}} partida",
     "runsCount_other": "{{count}} partidas",
-    "loadError": "No se pudo cargar la clasificación.",
+    "loadError": "No se ha podido cargar la clasificación.",
     "noRunsYet": "Aún no hay partidas.",
     "noScoresNetwork": "Aún no hay puntuaciones en tu red.",
     "noScoresGlobal": "Aún no hay puntuaciones. ¡Sé el primero!",
@@ -268,7 +268,7 @@
       "allRunsTerm": "Todas las partidas",
       "allRunsDesc": " — todas las partidas, incluidas aquellas en las que se usó una continuación para extender el juego.",
       "scoringTerm": "Puntuación",
-      "scoringDesc": " — combinar dados otorga puntos, con un multiplicador por reacciones en cadena. Eliminar seises da una bonificación, y despejar todo el tablero da una bonificación aún mayor.",
+      "scoringDesc": " — fusionar dados otorga puntos, con un multiplicador por reacciones en cadena. Eliminar seises da una bonificación, y despejar todo el tablero da una bonificación aún mayor.",
       "anonymousTerm": "Anónimo",
       "anonymousDesc": " — tu nombre se genera de forma aleatoria. No se recopila ni se usa información personal en la clasificación.",
       "gotIt": "Entendido"
@@ -277,18 +277,18 @@
   "findPlayer": {
     "searchPlaceholder": "Buscar por nombre…",
     "following": "SIGUIENDO",
-    "loadError": "No se pudo cargar la lista de seguidos.",
+    "loadError": "No se ha podido cargar la lista de seguidos.",
     "retry": "Reintentar",
     "noneFollowing": "Aún no sigues a nadie.",
     "unfollow": "Dejar de seguir",
     "followingBtn": "Siguiendo",
     "follow": "Seguir",
     "results": "RESULTADOS",
-    "noPlayers": "No se encontraron jugadores.",
+    "noPlayers": "No se han encontrado jugadores.",
     "best": "Mejor {{score}}"
   },
   "game": {
-    "over": "Fin del juego",
+    "over": "Fin de la partida",
     "newBest": "¡Nuevo récord!",
     "allClearLine1": "¡Pleno!",
     "allClearLine2": "",
@@ -307,7 +307,7 @@
     "logScore": "Registrar puntuación",
     "discardScore": "Descartar puntuación",
     "back": "← Atrás",
-    "condensing": "Condensando…",
+    "condensing": "Compactando…",
     "hud": {
       "score": "PUNTUACIÓN",
       "best": "MEJOR",
@@ -334,12 +334,12 @@
       "pause": "Desliza hacia arriba para pausar"
     },
     "rules": {
-      "mergeTitle": "Combina valores iguales",
-      "mergeBody": "Dos o más dados contiguos del mismo valor se combinan en uno del valor siguiente: 1+1→2, 2+2→3, y así sucesivamente.",
+      "mergeTitle": "Fusiona valores iguales",
+      "mergeBody": "Dos o más dados contiguos del mismo valor se fusionan en uno del valor siguiente: 1+1→2, 2+2→3, y así sucesivamente.",
       "sixesTitle": "Elimina los seises",
-      "sixesBody": "Combina dos o más seises para eliminarlos del tablero y ganar una gran bonificación. La mejor forma de liberar espacio.",
+      "sixesBody": "Fusiona dos o más seises para eliminarlos del tablero y ganar una gran bonificación. La mejor forma de liberar espacio.",
       "chainsTitle": "Crea cadenas",
-      "chainsBody": "Una combinación puede provocar más al asentarse los dados. Cuanto más larga sea la cadena, mayor será el multiplicador de puntos.",
+      "chainsBody": "Una fusión puede provocar más al asentarse los dados. Cuanto más larga sea la cadena, mayor será el multiplicador de puntos.",
       "surviveTitle": "Sobrevive",
       "surviveBody": "Las pilas sin apoyo caen. La partida termina cuando una nueva pieza ya no cabe. ¡Supera tu récord y sube en la clasificación!"
     },
@@ -350,6 +350,6 @@
     "body": "Si te estás divirtiendo, una valoración significa mucho y ayuda a que otros descubran el juego.",
     "rate": "Dejar una valoración",
     "notNow": "Ahora no",
-    "dontAsk": "No preguntar de nuevo"
+    "dontAsk": "No volver a preguntar"
   }
 }
