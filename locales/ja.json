@@ -170,11 +170,11 @@
     "rubber": "ラバー"
   },
   "appIconNames": {
-    "default": "ブラウンスタック",
+    "default": "ブラウンアイコン",
     "AppIcon-Cream": "クリームスタック",
     "AppIcon-Neon": "ネオンスタック",
     "AppIcon-Blue": "ブルースタック",
-    "AppIcon-IconBrown": "ブラウンアイコン",
+    "AppIcon-IconBrown": "ブラウンスタック",
     "AppIcon-IconCream": "クリームアイコン",
     "AppIcon-IconNeon": "ネオンアイコン",
     "AppIcon-IconBlue": "ブルーアイコン"

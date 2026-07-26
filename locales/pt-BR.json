@@ -170,11 +170,11 @@
     "rubber": "Borracha"
   },
   "appIconNames": {
-    "default": "Pilha marrom",
+    "default": "Ícone marrom",
     "AppIcon-Cream": "Pilha creme",
     "AppIcon-Neon": "Pilha neon",
     "AppIcon-Blue": "Pilha azul",
-    "AppIcon-IconBrown": "Ícone marrom",
+    "AppIcon-IconBrown": "Pilha marrom",
     "AppIcon-IconCream": "Ícone creme",
     "AppIcon-IconNeon": "Ícone neon",
     "AppIcon-IconBlue": "Ícone azul"

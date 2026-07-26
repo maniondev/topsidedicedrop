@@ -170,11 +170,11 @@
     "rubber": "Gomma"
   },
   "appIconNames": {
-    "default": "Pila marrone",
+    "default": "Icona marrone",
     "AppIcon-Cream": "Pila crema",
     "AppIcon-Neon": "Pila neon",
     "AppIcon-Blue": "Pila blu",
-    "AppIcon-IconBrown": "Icona marrone",
+    "AppIcon-IconBrown": "Pila marrone",
     "AppIcon-IconCream": "Icona crema",
     "AppIcon-IconNeon": "Icona neon",
     "AppIcon-IconBlue": "Icona blu"

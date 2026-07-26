@@ -170,11 +170,11 @@
     "rubber": "Rubber"
   },
   "appIconNames": {
-    "default": "Brown Stack",
+    "default": "Brown Icon",
     "AppIcon-Cream": "Cream Stack",
     "AppIcon-Neon": "Neon Stack",
     "AppIcon-Blue": "Blue Stack",
-    "AppIcon-IconBrown": "Brown Icon",
+    "AppIcon-IconBrown": "Brown Stack",
     "AppIcon-IconCream": "Cream Icon",
     "AppIcon-IconNeon": "Neon Icon",
     "AppIcon-IconBlue": "Blue Icon"

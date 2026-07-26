@@ -170,11 +170,11 @@
     "rubber": "러버"
   },
   "appIconNames": {
-    "default": "브라운 스택",
+    "default": "브라운 아이콘",
     "AppIcon-Cream": "크림 스택",
     "AppIcon-Neon": "네온 스택",
     "AppIcon-Blue": "블루 스택",
-    "AppIcon-IconBrown": "브라운 아이콘",
+    "AppIcon-IconBrown": "브라운 스택",
     "AppIcon-IconCream": "크림 아이콘",
     "AppIcon-IconNeon": "네온 아이콘",
     "AppIcon-IconBlue": "블루 아이콘"

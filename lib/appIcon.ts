@@ -11,19 +11,21 @@ export type AppIconId =
   | 'AppIcon-IconBlue';
 
 export const APP_ICON_META: Record<AppIconId, { label: string }> = {
-  'default':            { label: 'Brown Stack' },
+  'default':            { label: 'Brown Icon' },
   'AppIcon-Cream':      { label: 'Cream Stack' },
   'AppIcon-Neon':       { label: 'Neon Stack' },
   'AppIcon-Blue':       { label: 'Blue Stack' },
-  'AppIcon-IconBrown':  { label: 'Brown Icon' },
+  'AppIcon-IconBrown':  { label: 'Brown Stack' },
   'AppIcon-IconCream':  { label: 'Cream Icon' },
   'AppIcon-IconNeon':   { label: 'Neon Icon' },
   'AppIcon-IconBlue':   { label: 'Blue Icon' },
 };
 
 export const APP_ICON_IDS: AppIconId[] = [
-  'default', 'AppIcon-Cream', 'AppIcon-Neon', 'AppIcon-Blue',
-  'AppIcon-IconBrown', 'AppIcon-IconCream', 'AppIcon-IconNeon', 'AppIcon-IconBlue',
+  // Icon group (default is now Brown Icon — the primary/App Store icon)
+  'default', 'AppIcon-IconCream', 'AppIcon-IconNeon', 'AppIcon-IconBlue',
+  // Stack group (AppIcon-IconBrown now holds the Brown Stack art)
+  'AppIcon-IconBrown', 'AppIcon-Cream', 'AppIcon-Neon', 'AppIcon-Blue',
 ];
 
 // iOS-only for now — Android's equivalent (activity-alias) needs a persistent

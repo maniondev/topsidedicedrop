@@ -170,11 +170,11 @@
     "rubber": "橡胶"
   },
   "appIconNames": {
-    "default": "棕色堆叠",
+    "default": "棕色图标",
     "AppIcon-Cream": "米色堆叠",
     "AppIcon-Neon": "霓虹堆叠",
     "AppIcon-Blue": "蓝色堆叠",
-    "AppIcon-IconBrown": "棕色图标",
+    "AppIcon-IconBrown": "棕色堆叠",
     "AppIcon-IconCream": "米色图标",
     "AppIcon-IconNeon": "霓虹图标",
     "AppIcon-IconBlue": "蓝色图标"

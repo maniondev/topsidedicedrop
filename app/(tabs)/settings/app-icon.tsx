@@ -7,11 +7,11 @@ import { makeSettingsStyles, PickerRow, SettingsSubHeader } from '@/components/s
 import { APP_ICON_IDS, APP_ICON_SUPPORTED, AppIconId, getAppIcon, setAppIcon } from '@/lib/appIcon';
 
 const PREVIEW_SOURCES: Record<AppIconId, any> = {
-  'default':            require('@/assets/images/app-icons/default.png'),
+  'default':            require('@/assets/images/app-icons/icon-brown.png'),
   'AppIcon-Cream':      require('@/assets/images/app-icons/cream.png'),
   'AppIcon-Neon':       require('@/assets/images/app-icons/neon.png'),
   'AppIcon-Blue':       require('@/assets/images/app-icons/blue.png'),
-  'AppIcon-IconBrown':  require('@/assets/images/app-icons/icon-brown.png'),
+  'AppIcon-IconBrown':  require('@/assets/images/app-icons/default.png'),
   'AppIcon-IconCream':  require('@/assets/images/app-icons/icon-cream.png'),
   'AppIcon-IconNeon':   require('@/assets/images/app-icons/icon-neon.png'),
   'AppIcon-IconBlue':   require('@/assets/images/app-icons/icon-blue.png'),
