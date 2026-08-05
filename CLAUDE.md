@@ -125,6 +125,50 @@ game/                      # (empty — reserved)
 
 `ios/` is checked in, so **prebuild never runs on iOS**: app.json `plugins` and `infoPlist` changes DO NOT reach the iOS build. Native config (e.g. the CFBundleLocalizations language declarations) must be edited directly in `ios/TopsideMerge/Info.plist`. Android has no committed project and DOES get app.json plugin config via EAS prebuild.
 
+## iOS app variants (dev installs alongside production)
+
+Dev and production builds have **different bundle identifiers**, so both can be
+installed on one device at once and never share storage, Keychain, or the
+install slot. This is what keeps test runs from writing to the real save file or
+submitting scores to the live leaderboard under the production player UUID.
+
+Because `ios/` is committed, this is NOT done the usual Expo way (`app.config.js`
++ `APP_VARIANT` + prebuild) — that config is ignored on iOS. It is set per Xcode
+build configuration in `ios/TopsideMerge.xcodeproj/project.pbxproj`:
+
+| | Debug (EAS `development`) | Release (EAS `production`) |
+|---|---|---|
+| `PRODUCT_BUNDLE_IDENTIFIER` | `com.topside.dicedrop.dev` | `com.topside.dicedrop` |
+| `ASSETCATALOG_COMPILER_APPICON_NAME` | `AppIcon-IconBlue` | `AppIcon` |
+
+The blue icon is how you tell the two apart on the home screen — display names
+are identical on purpose, since changing `CFBundleDisplayName` would mean
+editing a key shared by both configurations.
+
+Careful with the asset names: they do NOT match the labels shown in the app.
+`AppIcon-IconBlue` is "Blue Icon"; `AppIcon-Blue` is "Blue Stack". See the
+`APP_ICON_META` map in `lib/appIcon.ts` for the full mapping before changing it.
+
+**Never edit the Release rows.** Changing the production bundle identifier would
+orphan the App Store listing. Verify any change to this file with:
+
+```
+xcodebuild -showBuildSettings -workspace ios/TopsideMerge.xcworkspace \
+  -scheme TopsideMerge -configuration Release | grep PRODUCT_BUNDLE_IDENTIFIER
+```
+
+Consequences of the dev bundle id, all expected:
+- **RevenueCat** offerings do not resolve under `.dev` (the SDK key is bound to
+  the production bundle id). Use the dev premium toggles in Settings instead.
+- The dev build gets its **own player UUID**, so it never appears on the live
+  leaderboard as you.
+- In dev, the in-app icon picker's "default" entry renders blue, because blue is
+  the primary icon there. `INCLUDE_ALL_APPICON_ASSETS = YES` in both configs, so
+  all eight alternates still work.
+
+Android is untouched by this — it still prebuilds from app.json and has a single
+package name.
+
 ## RevenueCat
 
 - **Project**: Topside: Dice Drop (separate from Topside Classic)
