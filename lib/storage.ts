@@ -63,6 +63,11 @@ export interface SavedGame {
   // run NEVER submits to stats or the leaderboard — the game screen checks
   // this flag and skips every submit/persist path.
   demo?: boolean;
+  // Pieces generated so far this run. Under move-based spawn ramping this is
+  // the difficulty key, so losing it on resume would silently reset a
+  // mid-to-late run back to the easiest spawn bracket. Optional so saves
+  // written by older builds still load (they resume at 0, as before).
+  pieceCount?: number;
 }
 
 export async function saveGame(game: SavedGame): Promise<void> {

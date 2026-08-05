@@ -13,6 +13,7 @@ import { useSound } from '@/contexts/SoundContext';
 import { useMusic } from '@/contexts/MusicContext';
 import { usePremium } from '@/contexts/PremiumContext';
 import { useDifficulty } from '@/contexts/DifficultyContext';
+import { useRampMode } from '@/contexts/RampModeContext';
 import { useAnimation } from '@/contexts/AnimationContext';
 import { useGame } from '@/hooks/useGame';
 import { useRewardedAd } from '@/hooks/useRewardedAd';
@@ -62,6 +63,7 @@ export default function GameScreen() {
   const { playTrack } = useMusic();
   const { hasNoAds } = usePremium();
   const { gravityMs, difficulty } = useDifficulty();
+  const { rampMode } = useRampMode();
   const { showChainPopups, performanceMode } = useAnimation();
   const bestScore = statsFor(difficulty).bestScore;
   const bestUnassisted = statsFor(difficulty).bestUnassisted;
@@ -118,7 +120,7 @@ export default function GameScreen() {
   // they stay proportional to the bigger board/dice (position already scales via cellSize).
   const popScale      = isLargeScreen ? 1.5 : 1;
 
-  const game = useGame(gravityMs, paused || reviewPromptVisible || showTutorial);
+  const game = useGame(gravityMs, paused || reviewPromptVisible || showTutorial, rampMode);
 
   const handlePause = useCallback(() => setPaused(true), []);
   // Swipe-up pauses — identical mechanism to the pause button (setPaused(true)
@@ -181,7 +183,7 @@ export default function GameScreen() {
       if (saved && Array.isArray(saved.board) && Array.isArray(saved.queue)) {
         clearSavedGame(difficulty);
         demoRunRef.current = !!saved.demo;
-        game.loadSaved(saved.board as any, saved.score, saved.queue as any, saved.runBestChain, saved.activePiece as any);
+        game.loadSaved(saved.board as any, saved.score, saved.queue as any, saved.runBestChain, saved.activePiece as any, saved.pieceCount ?? 0);
       } else {
         game.startGame();
       }
@@ -286,6 +288,7 @@ export default function GameScreen() {
         difficulty,
         savedAt: Date.now(),
         demo: demoRunRef.current,
+        pieceCount: exported.pieceCount,
       }).catch(() => {});
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -665,6 +668,7 @@ export default function GameScreen() {
       difficulty,
       savedAt: Date.now(),
       demo: demoRunRef.current,
+      pieceCount: exported.pieceCount,
     });
     clearPendingRun();
     router.back();

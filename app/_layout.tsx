@@ -22,6 +22,7 @@ import { SoundProvider } from '@/contexts/SoundContext';
 import { MusicProvider } from '@/contexts/MusicContext';
 import { StatsProvider } from '@/contexts/StatsContext';
 import { DifficultyProvider } from '@/contexts/DifficultyContext';
+import { RampModeProvider } from '@/contexts/RampModeContext';
 import { AnimationProvider } from '@/contexts/AnimationContext';
 import { DiceStyleProvider } from '@/contexts/DiceStyleContext';
 import LaunchIntroOverlay from '@/components/LaunchIntroOverlay';
@@ -143,15 +144,17 @@ export default function RootLayout() {
         <PremiumProvider>
           <StatsProvider>
             <DifficultyProvider>
-              <SoundProvider>
-                <MusicProvider>
-                  <AnimationProvider>
-                    <DiceStyleProvider>
-                      <AppShell />
-                    </DiceStyleProvider>
-                  </AnimationProvider>
-                </MusicProvider>
-              </SoundProvider>
+              <RampModeProvider>
+                <SoundProvider>
+                  <MusicProvider>
+                    <AnimationProvider>
+                      <DiceStyleProvider>
+                        <AppShell />
+                      </DiceStyleProvider>
+                    </AnimationProvider>
+                  </MusicProvider>
+                </SoundProvider>
+              </RampModeProvider>
             </DifficultyProvider>
           </StatsProvider>
         </PremiumProvider>

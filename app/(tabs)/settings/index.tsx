@@ -15,6 +15,7 @@ import { useStats } from '@/contexts/StatsContext';
 import { CONTROLS_SEEN_KEY, saveGame, loadStats, saveStats, type RunRecord } from '@/lib/storage';
 import { buildDemoSave } from '@/lib/demoBoard';
 import { useDifficulty } from '@/contexts/DifficultyContext';
+import { useRampMode } from '@/contexts/RampModeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import PremiumModal from '@/components/PremiumModal';
 import { LANGUAGE_NAMES, legalUrl, type SupportedLanguage } from '@/lib/i18n';
@@ -36,6 +37,7 @@ export default function SettingsScreen() {
   const isFullyUnlocked = hasCustomization && hasNoAds;
   const { resetStats, refresh } = useStats();
   const { difficulty } = useDifficulty();
+  const { rampMode, setRampMode } = useRampMode();
   const [devControlsRevealed, setDevControlsRevealed] = useState(false);
   const [premiumModalOpen, setPremiumModalOpen] = useState(false);
   const [hasRated, setHasRatedState] = useState(false);
@@ -255,6 +257,15 @@ export default function SettingsScreen() {
                   );
                 });
               }}
+              colors={colors}
+              styles={styles}
+            />
+          )}
+          {__DEV__ && devControlsRevealed && (
+            <RowItem
+              label="⚙️ Dev: Spawn Ramp Mode"
+              value={rampMode === 'moves' ? 'Moves' : 'Score'}
+              onPress={() => setRampMode(rampMode === 'moves' ? 'score' : 'moves')}
               colors={colors}
               styles={styles}
             />

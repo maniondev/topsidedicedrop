@@ -4,7 +4,7 @@ import { Board, CellValue, emptyBoard, cloneBoard } from '@/lib/board';
 import { MergeEvent, resolveMerges } from '@/lib/merge';
 import { applyGravity } from '@/lib/gravity';
 import { scoreMerge, scoreClear } from '@/lib/scoring';
-import { RNG, weightedValue } from '@/lib/rng';
+import { RNG, weightedValue, RampMode } from '@/lib/rng';
 import {
   COLS, ROWS, LOCK_DELAY_MS, SPAWN_LOCK_GRACE_MS, SPAWN_DELAY_MS,
   QUEUE_SIZE, GRAVITY_BASE_MS, ENABLED_PIECE_IDS, chainResolveDelay, ALL_CLEAR_BONUS,
@@ -446,14 +446,14 @@ function reducer(state: GameState, action: Action): GameState {
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
-function makePiece(shapeId: string, score: number, rng: RNG): QueuedPiece {
+function makePiece(shapeId: string, rampKey: number, rampMode: RampMode, rng: RNG): QueuedPiece {
   const shape = PIECE_MAP[shapeId];
   const rotation = 0;
   const offsets = shape.rotations[rotation];
   return {
     shapeId,
     rotation,
-    tiles: offsets.map(o => ({ dr: o.dr, dc: o.dc, value: weightedValue(score, rng) })),
+    tiles: offsets.map(o => ({ dr: o.dr, dc: o.dc, value: weightedValue(rampKey, rampMode, rng) })),
   };
 }
 
@@ -465,9 +465,17 @@ function drawShape(bag: string[], rng: RNG): { shapeId: string; newBag: string[]
   return { shapeId: bag[0], newBag: bag.slice(1) };
 }
 
-export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = false) {
+export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = false, rampMode: RampMode = 'score') {
   const rngRef = useRef<RNG>(new RNG(Date.now()));
   const bagRef = useRef<string[]>([]);
+  // Pieces-GENERATED counter for the 'moves' ramp mode. Increments once per
+  // nextPiece() call — one tick per whole shape, regardless of tile count, and
+  // independent of score. Because the queue is pre-filled with QUEUE_SIZE + 1
+  // pieces, this runs a constant ~4 ahead of pieces actually placed; the
+  // thresholds in getWeightsByMoves absorb that offset. (Score mode has the
+  // same lookahead — a queued piece is drawn against the score from 4 pieces
+  // ago — so the two modes stay comparable.)
+  const pieceCounterRef = useRef(0);
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -475,8 +483,10 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
   const nextPiece = useCallback((score: number): QueuedPiece => {
     const { shapeId, newBag } = drawShape(bagRef.current, rngRef.current);
     bagRef.current = newBag;
-    return makePiece(shapeId, score, rngRef.current);
-  }, []);
+    const rampKey = rampMode === 'moves' ? pieceCounterRef.current : score;
+    pieceCounterRef.current += 1;
+    return makePiece(shapeId, rampKey, rampMode, rngRef.current);
+  }, [rampMode]);
 
   // Gravity tick — stops when paused
   useEffect(() => {
@@ -534,6 +544,7 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
   const startGame = useCallback(() => {
     rngRef.current = new RNG(Date.now());
     bagRef.current = [];
+    pieceCounterRef.current = 0;
     const q = Array.from({ length: QUEUE_SIZE + 1 }, () => nextPiece(0));
     dispatch({ type: 'START', initialQueue: q });
   }, [nextPiece]);
@@ -541,6 +552,7 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
   const resetGame = useCallback(() => {
     rngRef.current = new RNG(Date.now());
     bagRef.current = [];
+    pieceCounterRef.current = 0;
     const q = Array.from({ length: QUEUE_SIZE + 1 }, () => nextPiece(0));
     dispatch({ type: 'RESET', initialQueue: q });
   }, [nextPiece]);
@@ -568,15 +580,23 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
     queue: state.queue,
     runBestChain: state.runBestChain,
     activePiece: state.activePiece,
+    // Carried across save/resume so move-based spawn ramping doesn't reset to
+    // the easiest bracket when a player uses "Continue Later" mid-run.
+    pieceCount: pieceCounterRef.current,
   }), [state.board, state.score, state.queue, state.runBestChain, state.activePiece]);
 
   /** Restore from a saved game (board + score + queue + the exact active piece) */
   const loadSaved = useCallback((
     board: Board, score: number, queue: QueuedPiece[], runBestChain: number,
-    activePiece: ActivePiece | null,
+    activePiece: ActivePiece | null, pieceCount: number = 0,
   ) => {
     rngRef.current = new RNG(Date.now());
     bagRef.current = [];
+    // Restore the piece counter — under move-based ramping this is the
+    // difficulty key, so resuming without it would drop a late-game board back
+    // to the easiest spawn bracket. Defaults to 0 for saves written before
+    // this field existed.
+    pieceCounterRef.current = pieceCount;
     // Refill queue to QUEUE_SIZE+1 if needed
     const filledQueue = [...queue];
     while (filledQueue.length < QUEUE_SIZE + 1) {
