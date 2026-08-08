@@ -68,6 +68,11 @@ export interface SavedGame {
   // mid-to-late run back to the easiest spawn bracket. Optional so saves
   // written by older builds still load (they resume at 0, as before).
   pieceCount?: number;
+  // All Clears so far this run — the Nth All Clear pays ALL_CLEAR_BONUS * N,
+  // so losing this on resume would reset the escalation (a 2nd All Clear
+  // after resuming would pay as if it were the 1st). Optional for the same
+  // backward-compatibility reason as pieceCount.
+  allClearCount?: number;
 }
 
 export async function saveGame(game: SavedGame): Promise<void> {

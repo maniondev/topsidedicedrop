@@ -183,7 +183,7 @@ export default function GameScreen() {
       if (saved && Array.isArray(saved.board) && Array.isArray(saved.queue)) {
         clearSavedGame(difficulty);
         demoRunRef.current = !!saved.demo;
-        game.loadSaved(saved.board as any, saved.score, saved.queue as any, saved.runBestChain, saved.activePiece as any, saved.pieceCount ?? 0);
+        game.loadSaved(saved.board as any, saved.score, saved.queue as any, saved.runBestChain, saved.activePiece as any, saved.pieceCount ?? 0, saved.allClearCount ?? 0);
       } else {
         game.startGame();
       }
@@ -289,6 +289,7 @@ export default function GameScreen() {
         savedAt: Date.now(),
         demo: demoRunRef.current,
         pieceCount: exported.pieceCount,
+        allClearCount: exported.allClearCount,
       }).catch(() => {});
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -669,6 +670,7 @@ export default function GameScreen() {
       savedAt: Date.now(),
       demo: demoRunRef.current,
       pieceCount: exported.pieceCount,
+      allClearCount: exported.allClearCount,
     });
     clearPendingRun();
     router.back();

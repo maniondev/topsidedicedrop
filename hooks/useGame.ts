@@ -60,7 +60,7 @@ interface GameState {
 
 type Action =
   | { type: 'START'; initialQueue: QueuedPiece[] }
-  | { type: 'LOAD_SAVED'; board: Board; score: number; queue: QueuedPiece[]; runBestChain: number; activePiece: ActivePiece | null }
+  | { type: 'LOAD_SAVED'; board: Board; score: number; queue: QueuedPiece[]; runBestChain: number; activePiece: ActivePiece | null; allClearCount: number }
   | { type: 'TICK' }
   | { type: 'MOVE'; dir: 'left' | 'right' }
   | { type: 'ROTATE' }
@@ -220,6 +220,7 @@ function reducer(state: GameState, action: Action): GameState {
         runBestChain: action.runBestChain,
         continueAvailable: true,
         continueUsed: false,
+        allClearCount: action.allClearCount,
       };
       // Restore the exact in-flight piece (same shape/rotation/values — no free
       // reroll), but move it back to the TOP so resuming never drops you straight
@@ -583,12 +584,15 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
     // Carried across save/resume so move-based spawn ramping doesn't reset to
     // the easiest bracket when a player uses "Continue Later" mid-run.
     pieceCount: pieceCounterRef.current,
-  }), [state.board, state.score, state.queue, state.runBestChain, state.activePiece]);
+    // Carried across save/resume so the All Clear escalation (Nth All Clear
+    // pays BONUS * N) doesn't restart at N=1 after a resume.
+    allClearCount: state.allClearCount,
+  }), [state.board, state.score, state.queue, state.runBestChain, state.activePiece, state.allClearCount]);
 
   /** Restore from a saved game (board + score + queue + the exact active piece) */
   const loadSaved = useCallback((
     board: Board, score: number, queue: QueuedPiece[], runBestChain: number,
-    activePiece: ActivePiece | null, pieceCount: number = 0,
+    activePiece: ActivePiece | null, pieceCount: number = 0, allClearCount: number = 0,
   ) => {
     rngRef.current = new RNG(Date.now());
     bagRef.current = [];
@@ -602,7 +606,7 @@ export function useGame(gravityMs: number = GRAVITY_BASE_MS, paused: boolean = f
     while (filledQueue.length < QUEUE_SIZE + 1) {
       filledQueue.push(nextPiece(score));
     }
-    dispatch({ type: 'LOAD_SAVED', board, score, queue: filledQueue, runBestChain, activePiece });
+    dispatch({ type: 'LOAD_SAVED', board, score, queue: filledQueue, runBestChain, activePiece, allClearCount });
   }, [nextPiece]);
 
   return {
