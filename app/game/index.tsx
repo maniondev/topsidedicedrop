@@ -279,6 +279,14 @@ export default function GameScreen() {
     prevAutosavePhaseRef.current = game.phase;
     if (game.phase === 'spawning' && prev !== 'spawning') {
       const exported = game.exportState();
+      // Never persist a pristine board (empty + no score) — there is nothing to
+      // restore, and writing one here resurrects the Continue button on a run
+      // that already ended. handleGoHome calls resetGame() before navigating
+      // away, which lands this effect in exactly that state right after the
+      // game-over handler cleared the save.
+      const hasProgress =
+        exported.score > 0 || exported.board.some(row => row.some(cell => cell !== null));
+      if (!hasProgress) return;
       saveGame({
         board: exported.board as any,
         score: exported.score,
